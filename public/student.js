@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("stu-school").textContent = session.school || "---";
 
   loadStudentData();
+  renderGachaHistory();
 });
 
 function switchStudentTab(tabId) {
@@ -19,6 +20,8 @@ function switchStudentTab(tabId) {
 }
 
 let studentCoins = 100;
+let studentTotalCoins = 100;
+let studentSpentCoins = 0;
 let studentMemeIds = [];
 let studentMemesCache = [];
 let currentStudentFilter = 'ALL';
@@ -37,6 +40,8 @@ async function loadStudentData() {
 
     if (result.success && result.data) {
       studentCoins = result.data.coins !== undefined ? Number(result.data.coins) : 100;
+      studentTotalCoins = result.data.total_coins !== undefined ? Number(result.data.total_coins) : 100;
+      studentSpentCoins = result.data.spent_coins !== undefined ? Number(result.data.spent_coins) : 0;
       studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
       
       updateCoinsDisplay();
@@ -50,7 +55,10 @@ async function loadStudentData() {
 }
 
 function updateCoinsDisplay() {
-  document.getElementById("user-coins").textContent = studentCoins;
+  const coinsEl = document.getElementById("user-coins");
+  const spentEl = document.getElementById("user-spent-coins");
+  if (coinsEl) coinsEl.textContent = studentCoins;
+  if (spentEl) spentEl.textContent = studentSpentCoins;
 }
 
 async function syncStudentDataToDB() {
@@ -65,6 +73,8 @@ async function syncStudentDataToDB() {
         action: "update_student_items",
         student_id: session.id,
         coins: studentCoins,
+        total_coins: studentTotalCoins,
+        spent_coins: studentSpentCoins,
         meme_id_list: studentMemeIds
       })
     });
@@ -202,11 +212,68 @@ async function endMiniGame() {
 
   if (coinsEarned > 0) {
     studentCoins += coinsEarned;
+    studentTotalCoins += coinsEarned;
     updateCoinsDisplay();
     await syncStudentDataToDB();
   }
 }
 
+/* Lịch sử quay Gacha trong phiên (Session Storage) */
+function getGachaSessionHistory() {
+  try {
+    return JSON.parse(sessionStorage.getItem("gacha_session_history") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function addGachaHistoryItem(meme) {
+  const history = getGachaSessionHistory();
+  const timeNow = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  history.unshift({
+    rarity: meme.rarity,
+    slogan: meme.slogan,
+    image: meme.image,
+    time: timeNow
+  });
+  sessionStorage.setItem("gacha_session_history", JSON.stringify(history));
+  renderGachaHistory();
+}
+
+function renderGachaHistory() {
+  const container = document.getElementById("gacha-history-list");
+  if (!container) return;
+
+  const history = getGachaSessionHistory();
+  if (history.length === 0) {
+    container.innerHTML = `<div style="color: #94a3b8; font-size: 13px; text-align: center; padding: 12px;">Bạn chưa quay lượt nào trong phiên đăng nhập này.</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  history.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "gacha-history-item";
+    div.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="${item.image}" alt="Meme">
+        <div>
+          <span class="rarity-tag" style="padding: 1px 6px; font-size: 10px; margin-bottom: 2px;">${item.rarity}</span>
+          <div style="font-weight: 500; color: #1e293b; max-width: 220px; word-break: break-word;">${item.slogan}</div>
+        </div>
+      </div>
+      <span style="font-size: 11px; color: #94a3b8;">${item.time}</span>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function clearGachaHistory() {
+  sessionStorage.removeItem("gacha_session_history");
+  renderGachaHistory();
+}
+
+/* Vòng quay Gacha với hiệu ứng hoạt hình */
 async function pullGacha() {
   const session = getSession();
   const cost = 30;
@@ -223,6 +290,7 @@ async function pullGacha() {
   
   btnPull.disabled = true;
   gachaBox.classList.add("shaking");
+  notice.textContent = "✨ Đang mở hộp quà bí ẩn... ⏳";
 
   try {
     const res = await fetch("/.netlify/functions/auth", {
@@ -241,14 +309,19 @@ async function pullGacha() {
         return;
       }
 
-      studentCoins = result.data.coins;
+      studentCoins = Number(result.data.coins);
+      studentSpentCoins = Number(result.data.spent_coins !== undefined ? result.data.spent_coins : studentSpentCoins + cost);
+      studentTotalCoins = Number(result.data.total_coins !== undefined ? result.data.total_coins : studentTotalCoins);
       studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+      
       updateCoinsDisplay();
       loadStudentCollection();
 
       const won = result.data.wonMeme;
       notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
-    }, 1000);
+
+      addGachaHistoryItem(won);
+    }, 1200);
 
   } catch (err) {
     gachaBox.classList.remove("shaking");
@@ -318,9 +391,10 @@ function renderStudentCollection() {
     const isUnlocked = count > 0;
     
     const card = document.createElement("div");
-    card.className = `meme-card-item ${isUnlocked ? '' : 'locked'}`;
+    card.className = `meme-card-item ${isUnlocked ? 'unlocked' : 'locked'}`;
 
     if (isUnlocked) {
+      card.onclick = () => openMemeViewModal(meme, count);
       card.innerHTML = `
         <div>
           <span class="rarity-tag">${meme.rarity}</span>
@@ -342,4 +416,24 @@ function renderStudentCollection() {
     }
     grid.appendChild(card);
   });
+}
+
+/* Xem chi tiết Meme dành cho học sinh */
+function openMemeViewModal(meme, count) {
+  const modal = document.getElementById("view-meme-modal");
+  if (!modal) return;
+
+  document.getElementById("view-meme-rarity").textContent = meme.rarity;
+  document.getElementById("view-meme-count").textContent = `Sở hữu: x${count}`;
+  document.getElementById("view-meme-img").src = meme.image;
+  document.getElementById("view-meme-slogan").textContent = meme.slogan;
+
+  modal.classList.add("show");
+}
+
+function closeMemeViewModal() {
+  const modal = document.getElementById("view-meme-modal");
+  if (modal) {
+    modal.classList.remove("show");
+  }
 }

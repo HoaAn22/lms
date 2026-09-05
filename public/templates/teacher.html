@@ -164,12 +164,44 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .admin-meme-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
     .admin-meme-card img {
       width: 100%;
       height: 100px;
       object-fit: cover;
       border-radius: 6px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 440px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      position: relative;
     }
   </style>
 </head>
@@ -416,7 +448,7 @@
               <div style="display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 8px;">
                 <button onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
               </div>
-              <p class="section-desc">Danh sách toàn bộ meme có trong hệ thống gacha.</p>
+              <p class="section-desc">Danh sách toàn bộ meme có trong hệ thống gacha. Nhấp vào meme để chỉnh sửa hoặc xóa.</p>
               
               <div class="filter-bar mt-2" id="admin-filter-bar">
                 <button class="filter-btn active" onclick="filterAdminMemes('ALL', this)">Tất cả</button>
@@ -438,6 +470,100 @@
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Bảng điểm & Thống kê</h4></div></div>
         <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài đặt hệ thống</h4></div></div>
       </section>
+
+      <!-- Modal Chỉnh sửa / Xóa Meme -->
+      <div id="edit-meme-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">✏️ Chỉnh sửa Meme</h3>
+            <button onclick="closeEditMemeModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 16px;">
+            <img id="edit-meme-preview" src="" alt="Meme Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: contain;">
+          </div>
+
+          <form id="edit-meme-form" onsubmit="submitUpdateMeme(event)">
+            <input type="hidden" id="edit-meme-id">
+            
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="edit-meme-slogan">Slogan text / Caption:</label>
+              <input type="text" id="edit-meme-slogan" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="edit-meme-rarity">Độ hiếm:</label>
+              <select id="edit-meme-rarity" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <option value="C">C (Phổ biến)</option>
+                <option value="B">B (Khá)</option>
+                <option value="A">A (Hiếm)</option>
+                <option value="S">S (Cực hiếm)</option>
+                <option value="SS">SS (Huyền thoại)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+              <button type="button" onclick="confirmDeleteMeme()" class="btn" style="background: #ef4444; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🗑️ Xóa Meme</button>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="closeEditMemeModal()" class="btn btn-secondary">Hủy</button>
+                <button type="submit" class="btn btn-primary">💾 Cập nhật</button>
+              </div>
+            </div>
+          </form>
+          <p id="edit-meme-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Modal Chỉnh sửa Học Sinh -->
+      <div id="edit-student-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">✏️ Sửa Thông Tin Học Sinh</h3>
+            <button onclick="closeEditStudentModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="edit-student-form" onsubmit="submitUpdateStudent(event)">
+            <input type="hidden" id="edit-stu-id">
+            
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="edit-stu-lastname">Họ và tên đệm:</label>
+                <input type="text" id="edit-stu-lastname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="edit-stu-firstname">Tên:</label>
+                <input type="text" id="edit-stu-firstname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="edit-stu-class">Lớp:</label>
+                <input type="text" id="edit-stu-class" required style="text-transform:uppercase; width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="edit-stu-password">Mật khẩu mới (bỏ trống nếu không đổi):</label>
+                <input type="text" id="edit-stu-password" placeholder="Để trống nếu giữ nguyên" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                <label for="edit-stu-coindelta" style="font-weight:600; color:#1e293b;">Tăng / Giảm Coin:</label>
+                <span style="font-size:12px; color:#64748b;">Hiện có: <strong id="edit-stu-current-coins" style="color:#d97706;">0</strong> 🪙</span>
+              </div>
+              <input type="text" id="edit-stu-coindelta" placeholder="VD: +100 hoặc -50" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeEditStudentModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" class="btn btn-primary">💾 Cập nhật thông tin</button>
+            </div>
+          </form>
+          <p id="edit-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
 
       <footer class="site-footer">
         <div class="footer-content">
@@ -524,6 +650,7 @@
     let cachedStudentsList = [];
     let adminMemesCache = [];
     let currentAdminFilter = 'ALL';
+    let currentSelectedMeme = null;
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -547,10 +674,6 @@
     const savedTab = sessionStorage.getItem("teacher_active_tab");
     if (savedTab && document.getElementById(savedTab)) {
       switchTab(savedTab);
-    }
-
-    function actionPlaceholder(name) {
-      alert(`Chức năng "${name}" đang được chuẩn bị.`);
     }
 
     function renderSchoolDropdown(schools) {
@@ -606,6 +729,12 @@
         `;
         schoolsManagementList.appendChild(itemDiv);
       });
+
+      // Khôi phục bộ lọc trường đã lưu từ phiên trước
+      const savedFilters = getSavedFilters();
+      if (savedFilters && savedFilters.school) {
+        filterSchoolSelect.value = savedFilters.school;
+      }
     }
 
     function toggleSchoolActions(idSafe) {
@@ -844,9 +973,10 @@
       }
 
       container.innerHTML = "";
-      sorted.forEach(meme => {
+      sorted.forEach((meme) => {
         const card = document.createElement("div");
         card.className = "admin-meme-card";
+        card.onclick = () => openEditMemeModal(meme);
         card.innerHTML = `
           <div>
             <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#2563eb; margin-bottom:4px;">${meme.rarity}</span>
@@ -858,7 +988,219 @@
       });
     }
 
-    async function fetchStudentList() {
+    function openEditMemeModal(meme) {
+      currentSelectedMeme = meme;
+      document.getElementById("edit-meme-id").value = meme._id || meme.id || meme.slogan;
+      document.getElementById("edit-meme-preview").src = meme.image;
+      document.getElementById("edit-meme-slogan").value = meme.slogan || "";
+      document.getElementById("edit-meme-rarity").value = meme.rarity || "C";
+      document.getElementById("edit-meme-status").textContent = "";
+      document.getElementById("edit-meme-status").className = "status-msg mt-2";
+      document.getElementById("edit-meme-modal").classList.add("show");
+    }
+
+    function closeEditMemeModal() {
+      document.getElementById("edit-meme-modal").classList.remove("show");
+      currentSelectedMeme = null;
+    }
+
+    async function submitUpdateMeme(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("edit-meme-status");
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang cập nhật...";
+
+      const memeId = document.getElementById("edit-meme-id").value;
+      const slogan = document.getElementById("edit-meme-slogan").value.trim();
+      const rarity = document.getElementById("edit-meme-rarity").value;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_meme",
+            id: memeId,
+            old_slogan: currentSelectedMeme?.slogan,
+            slogan: slogan,
+            rarity: rarity
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Cập nhật thất bại!";
+          return;
+        }
+
+        alert("Cập nhật meme thành công!");
+        closeEditMemeModal();
+        loadAdminMemeCollection();
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      }
+    }
+
+    async function confirmDeleteMeme() {
+      if (!currentSelectedMeme) return;
+      if (!confirm(`Bạn có chắc chắn muốn xóa meme "${currentSelectedMeme.slogan}" không?`)) return;
+
+      const memeId = document.getElementById("edit-meme-id").value;
+      const statusEl = document.getElementById("edit-meme-status");
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang xóa meme...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete_meme",
+            id: memeId,
+            slogan: currentSelectedMeme.slogan
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Xóa meme thất bại!";
+          return;
+        }
+
+        alert("Đã xóa meme thành công!");
+        closeEditMemeModal();
+        loadAdminMemeCollection();
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      }
+    }
+
+    function openEditStudentModal(index) {
+      const stu = cachedStudentsList[index];
+      if (!stu) return;
+
+      document.getElementById("edit-stu-id").value = stu.id;
+      document.getElementById("edit-stu-lastname").value = stu.lastName || "";
+      document.getElementById("edit-stu-firstname").value = stu.firstName || "";
+      document.getElementById("edit-stu-class").value = stu.className || "";
+      document.getElementById("edit-stu-password").value = "";
+      document.getElementById("edit-stu-current-coins").textContent = stu.coins || 0;
+      document.getElementById("edit-stu-coindelta").value = "";
+
+      const statusEl = document.getElementById("edit-student-status");
+      statusEl.textContent = "";
+      statusEl.className = "status-msg mt-2";
+
+      document.getElementById("edit-student-modal").classList.add("show");
+    }
+
+    function closeEditStudentModal() {
+      document.getElementById("edit-student-modal").classList.remove("show");
+    }
+
+    async function submitUpdateStudent(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("edit-student-status");
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang cập nhật...";
+
+      const studentId = document.getElementById("edit-stu-id").value;
+      const lastName = document.getElementById("edit-stu-lastname").value.trim();
+      const firstName = document.getElementById("edit-stu-firstname").value.trim();
+      const className = document.getElementById("edit-stu-class").value.trim();
+      const password = document.getElementById("edit-stu-password").value.trim();
+      
+      const rawDelta = document.getElementById("edit-stu-coindelta").value.trim();
+      const coinDelta = Number(rawDelta) || 0;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_student",
+            student_id: studentId,
+            lastName,
+            firstName,
+            className,
+            password,
+            coin_delta: coinDelta
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Cập nhật thất bại!";
+          return;
+        }
+
+        alert("Cập nhật thông tin học sinh thành công!");
+        closeEditStudentModal();
+        fetchStudentList(true); // Cập nhật lại danh sách và cập nhật cache
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      }
+    }
+
+    /* Quản lý lưu bộ lọc & kết quả học sinh vào sessionStorage */
+    function getSavedFilters() {
+      try {
+        return JSON.parse(sessionStorage.getItem("teacher_student_filter") || "{}");
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveCurrentFilterState() {
+      const school = filterSchoolSelect.value;
+      const className = document.getElementById("filter-class-input").value.trim();
+      const sortBy = document.getElementById("sort-select").value;
+      
+      const togglers = document.querySelectorAll('.col-toggler');
+      const checkedCols = [];
+      togglers.forEach(chk => {
+        if (chk.checked) checkedCols.push(chk.getAttribute('data-col'));
+      });
+
+      const filterState = {
+        school,
+        className,
+        sortBy,
+        checkedCols,
+        students: cachedStudentsList
+      };
+
+      sessionStorage.setItem("teacher_student_filter", JSON.stringify(filterState));
+    }
+
+    function restoreFilterAndStudents() {
+      const saved = getSavedFilters();
+      if (!saved || !saved.school) return;
+
+      if (saved.school) filterSchoolSelect.value = saved.school;
+      if (saved.className !== undefined) document.getElementById("filter-class-input").value = saved.className;
+      if (saved.sortBy) document.getElementById("sort-select").value = saved.sortBy;
+
+      if (saved.checkedCols && saved.checkedCols.length > 0) {
+        const togglers = document.querySelectorAll('.col-toggler');
+        togglers.forEach(chk => {
+          chk.checked = saved.checkedCols.includes(chk.getAttribute('data-col'));
+        });
+      }
+
+      if (saved.students && saved.students.length > 0) {
+        cachedStudentsList = saved.students;
+        sortAndRenderStudents();
+      }
+    }
+
+    async function fetchStudentList(isSilentUpdate = false) {
       const school = filterSchoolSelect.value;
       const className = document.getElementById("filter-class-input").value.trim();
 
@@ -867,7 +1209,9 @@
         return;
       }
 
-      studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+      if (!isSilentUpdate) {
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+      }
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -884,6 +1228,7 @@
 
         cachedStudentsList = result.data.students || [];
         sortAndRenderStudents();
+        saveCurrentFilterState(); // Lưu tạm lại toàn bộ dữ liệu lọc
       } catch (err) {
         studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
       }
@@ -936,7 +1281,7 @@
           <td data-col="6">${stu.className || '---'}</td>
           <td data-col="7" style="color: #2563eb; font-weight: bold;">${stu.score || '0'}</td>
           <td data-col="8"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
-          <td data-col="9"><button onclick="actionPlaceholder('Sửa')" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">Sửa</button></td>
+          <td data-col="9"><button onclick="openEditStudentModal(${index})" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer;">Sửa</button></td>
         `;
         studentListBody.appendChild(tr);
       });
@@ -984,6 +1329,8 @@
       } else {
         labelSpan.textContent = `Đã chọn (${checkedCount}/${totalCount} cột)`;
       }
+
+      saveCurrentFilterState();
     }
 
     function clearColumnFilter() {
@@ -1040,7 +1387,10 @@
       }
     });
 
-    loadSchools();
+    // Tự động tải trường và khôi phục bộ lọc/danh sách đã lưu
+    loadSchools().then(() => {
+      restoreFilterAndStudents();
+    });
   </script>
 </body>
 </html>

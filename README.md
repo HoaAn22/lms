@@ -3,10 +3,11 @@
 npm run dev
 
 *Cài đặt môi trường (local)*
-1. npm install
+- npm install
+- npm install googleapis
 2. Tạo file lưu biến môi trường `.env`
 
-
+sessionStorage
 
 ## Cài đặt supabase
 

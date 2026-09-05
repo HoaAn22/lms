@@ -24,10 +24,19 @@
       justify-content: space-between;
       transition: all 0.2s;
     }
+    .meme-card-item.unlocked {
+      cursor: pointer;
+    }
+    .meme-card-item.unlocked:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: #93c5fd;
+    }
     .meme-card-item.locked {
       background: #e2e8f0;
       opacity: 0.5;
       filter: grayscale(100%);
+      cursor: not-allowed;
     }
     .meme-img-wrapper {
       position: relative;
@@ -91,6 +100,134 @@
       color: #fff;
       border-color: #2563eb;
     }
+
+    /* Hiệu ứng quay Gacha */
+    .gacha-stage {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 180px;
+      margin: 16px 0;
+      position: relative;
+    }
+    .gacha-box-animation {
+      font-size: 72px;
+      user-select: none;
+      transition: transform 0.2s ease;
+      cursor: default;
+      display: inline-block;
+    }
+    .gacha-box-animation.shaking {
+      animation: gachaShake 0.4s infinite cubic-bezier(.36,.07,.19,.97) both, gachaGlow 0.8s infinite alternate;
+    }
+    @keyframes gachaShake {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1.1); }
+      20% { transform: translate3d(-6px, -4px, 0) rotate(-12deg) scale(1.15); }
+      40% { transform: translate3d(6px, 4px, 0) rotate(12deg) scale(1.15); }
+      60% { transform: translate3d(-4px, 2px, 0) rotate(-8deg) scale(1.18); }
+      80% { transform: translate3d(4px, -2px, 0) rotate(8deg) scale(1.18); }
+    }
+    @keyframes gachaGlow {
+      from { filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.4)); }
+      to { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.9)); }
+    }
+
+    /* Lịch sử quay Gacha */
+    .gacha-history-box {
+      margin-top: 24px;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 16px;
+    }
+    .gacha-history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 10px;
+      padding-right: 4px;
+    }
+    .gacha-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .gacha-history-item img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    /* Modal xem chi tiết Meme */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #f1f5f9;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #64748b;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .modal-close-btn:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .view-meme-img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      margin: 16px 0 12px 0;
+    }
   </style>
 </head>
 <body>
@@ -101,8 +238,12 @@
       </div>
       <div class="user-stats">
         <div class="stat-badge">
-          <span>🪙 Xu thưởng:</span>
+          <span>🪙 Xu hiện có:</span>
           <strong id="user-coins">0</strong>
+        </div>
+        <div class="stat-badge" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);">
+          <span style="color: #ef4444;">💸 Đã tiêu:</span>
+          <strong id="user-spent-coins" style="color: #ef4444;">0</strong>
         </div>
         <div class="user-profile">
           <span id="header-student-name">Học sinh</span>
@@ -231,6 +372,17 @@
             <button id="btn-pull-gacha" onclick="pullGacha()" class="btn btn-success btn-lg">Quay 1 Lần (30 🪙)</button>
           </div>
           <p id="gacha-result-notice" class="status-msg text-center mt-2"></p>
+
+          <!-- Lịch sử quay tạm thời trong phiên -->
+          <div class="gacha-history-box">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4 style="margin: 0; font-size: 15px; color: #1e293b;">📜 Lịch sử quay thưởng trong phiên</h4>
+              <button onclick="clearGachaHistory()" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px;">Xóa lịch sử</button>
+            </div>
+            <div id="gacha-history-list" class="gacha-history-list">
+              <div style="color: #94a3b8; font-size: 13px; text-align: center; padding: 12px;">Bạn chưa quay lượt nào trong phiên đăng nhập này.</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -241,7 +393,7 @@
             <h3>🖼️ Bộ Sưu Tập Meme Của Bạn</h3>
             <button onclick="loadStudentCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
           </div>
-          <p class="section-desc">Meme đã sở hữu hiển thị rõ hình ảnh và số lượng. Chọn thanh lọc bên dưới để xem theo độ hiếm.</p>
+          <p class="section-desc">Meme đã sở hữu hiển thị rõ hình ảnh và số lượng. Nhấn vào meme để phóng to và xem chi tiết!</p>
           
           <div class="filter-bar mt-2" id="student-filter-bar">
             <button class="filter-btn active" onclick="filterStudentMemes('ALL', this)">Tất cả</button>
@@ -258,6 +410,20 @@
         </div>
       </section>
     </main>
+
+    <!-- Modal Xem Chi Tiết Meme -->
+    <div id="view-meme-modal" class="modal-backdrop" onclick="closeMemeViewModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close-btn" onclick="closeMemeViewModal()">✕</button>
+        <div>
+          <span id="view-meme-rarity" class="rarity-tag" style="font-size: 13px; padding: 4px 12px;">SS</span>
+          <span id="view-meme-count" style="font-size: 13px; color: #64748b; font-weight: 600; margin-left: 6px;">Sở hữu: x1</span>
+        </div>
+        <img id="view-meme-img" class="view-meme-img" src="" alt="Meme Image">
+        <h3 id="view-meme-slogan" style="margin: 6px 0 12px 0; color: #1e293b; font-size: 18px; word-break: break-word;">Slogan</h3>
+        <button type="button" class="btn btn-secondary btn-block" onclick="closeMemeViewModal()">Đóng</button>
+      </div>
+    </div>
 
     <footer class="site-footer">
       <div class="footer-content">
