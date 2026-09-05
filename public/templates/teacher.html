@@ -92,7 +92,7 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       display: none;
       z-index: 999;
-      max-height: 145px;
+      max-height: 150px;
       overflow-y: auto;
       margin-top: 4px;
     }
@@ -100,7 +100,8 @@
       display: block;
     }
     .dropdown-item {
-      padding: 10px 10px 0px 10px;
+      position: relative;
+      padding: 15px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -121,8 +122,8 @@
     }
     .dropdown-item input[type="checkbox"] {
       cursor: pointer;
-      position: relative;
-      top: -15px;
+      position: absolute;
+      top: 20px;
       right: 80px;
       margin: 0;
     }
@@ -599,8 +600,8 @@
             </div>
           </div>
           <div class="school-dropdown-actions" id="actions-${idSafe}">
-            <input type="password" id="del-pwd-${idSafe}" placeholder="Nhập mật khẩu giáo viên để xóa..." style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            <button type="button" onclick="verifyAndDeleteSchool('${schoolName}', '${idSafe}')" class="btn" style="background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer;">🗑️ Xác nhận xóa</button>
+            <input type="password" id="del-pwd-${idSafe}" placeholder="Nhập mật khẩu" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <button type="button" onclick="verifyAndDeleteSchool('${schoolName}', '${idSafe}')" class="btn" style="background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer;">Xóa trường</button>
           </div>
         `;
         schoolsManagementList.appendChild(itemDiv);
