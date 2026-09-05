@@ -2,10 +2,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const session = checkAuth("student");
   if (!session) return;
 
-  document.getElementById("header-student-name").textContent = session.fullName || session.username;
+  const displayName = session.fullName || session.username;
+  const headerNameEl = document.getElementById("header-student-name-text");
+  if (headerNameEl) headerNameEl.textContent = displayName;
+
   document.getElementById("stu-fullname").textContent = session.fullName || "---";
   document.getElementById("stu-class").textContent = session.className || "---";
   document.getElementById("stu-school").textContent = session.school || "---";
+
+  // Điền dữ liệu vào tab Tài Khoản
+  const accUserEl = document.getElementById("acc-username");
+  const accFullEl = document.getElementById("acc-fullname");
+  const accClassEl = document.getElementById("acc-class");
+  const accSchoolEl = document.getElementById("acc-school");
+
+  if (accUserEl) accUserEl.textContent = session.username || "---";
+  if (accFullEl) accFullEl.textContent = session.fullName || "---";
+  if (accClassEl) accClassEl.textContent = session.className || "---";
+  if (accSchoolEl) accSchoolEl.textContent = session.school || "---";
+
+  // Khôi phục tab trước đó (chuyển sang tổng quan nếu còn lưu tab mini game cũ)
+  let savedStudentTab = sessionStorage.getItem("student_active_tab");
+  if (savedStudentTab === "tab-minigame") {
+    savedStudentTab = "tab-overview";
+  }
+
+  if (savedStudentTab && document.getElementById(savedStudentTab)) {
+    switchStudentTab(savedStudentTab);
+  }
 
   loadStudentData();
   renderGachaHistory();
@@ -17,8 +41,14 @@ function switchStudentTab(tabId) {
   
   const targetTab = document.getElementById(tabId);
   if (targetTab) targetTab.classList.add("active");
-  if (window.event && window.event.currentTarget) {
-    window.event.currentTarget.classList.add("active");
+
+  const targetBtn = document.getElementById("btn-" + tabId);
+  if (targetBtn) targetBtn.classList.add("active");
+
+  sessionStorage.setItem("student_active_tab", tabId);
+
+  if (tabId === "tab-collection") {
+    loadStudentCollection();
   }
 }
 
@@ -90,6 +120,7 @@ async function syncStudentDataToDB() {
 async function loadStudentScores() {
   const session = getSession();
   const tableBody = document.getElementById("score-table-body");
+  const feedbackEl = document.getElementById("stu-teacher-feedback");
   tableBody.innerHTML = `<tr><td colspan="3">Đang đồng bộ dữ liệu điểm...</td></tr>`;
 
   try {
@@ -100,8 +131,22 @@ async function loadStudentScores() {
     });
     const result = await res.json();
 
-    if (result.success && result.data.scores) {
-      const scores = result.data.scores;
+    if (result.success && result.data) {
+      // 1. Gán nội dung Lời phê của giáo viên
+      if (feedbackEl) {
+        if (result.data.feedback && result.data.feedback.trim() !== "") {
+          feedbackEl.textContent = `"${result.data.feedback.trim()}"`;
+          feedbackEl.style.color = "#1e293b";
+          feedbackEl.style.fontWeight = "500";
+        } else {
+          feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
+          feedbackEl.style.color = "#64748b";
+          feedbackEl.style.fontWeight = "normal";
+        }
+      }
+
+      // 2. Bảng điểm
+      const scores = result.data.scores || [];
       tableBody.innerHTML = "";
       
       let total = 0, count = 0;
@@ -142,83 +187,11 @@ async function loadStudentScores() {
       document.getElementById("academic-rank").textContent = rank;
     } else {
       tableBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu bảng điểm.</td></tr>`;
+      if (feedbackEl) feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
     }
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan="3" style="color:red;">Lỗi kết nối máy chủ!</td></tr>`;
-  }
-}
-
-let gameInterval = null;
-let gameScoreCount = 0;
-let timeLeft = 30;
-
-function startMiniGame() {
-  document.getElementById("game-intro").classList.add("hidden");
-  document.getElementById("game-over").classList.add("hidden");
-  document.getElementById("game-play").classList.remove("hidden");
-
-  gameScoreCount = 0;
-  timeLeft = 30;
-  document.getElementById("game-timer").textContent = timeLeft + "s";
-
-  generateGameQuestion();
-
-  if (gameInterval) clearInterval(gameInterval);
-  gameInterval = setInterval(() => {
-    timeLeft--;
-    document.getElementById("game-timer").textContent = timeLeft + "s";
-    if (timeLeft <= 0) {
-      clearInterval(gameInterval);
-      endMiniGame();
-    }
-  }, 1000);
-}
-
-function generateGameQuestion() {
-  const num1 = Math.floor(Math.random() * 20) + 1;
-  const num2 = Math.floor(Math.random() * 20) + 1;
-  const isAddition = Math.random() > 0.5;
-  const correctAnswer = isAddition ? num1 + num2 : num1 - num2;
-
-  document.getElementById("game-question").textContent = `${num1} ${isAddition ? '+' : '-'} ${num2} = ?`;
-
-  const optionsContainer = document.getElementById("game-options");
-  optionsContainer.innerHTML = "";
-
-  let options = [correctAnswer];
-  while (options.length < 4) {
-    let wrong = correctAnswer + Math.floor(Math.random() * 10) - 5;
-    if (!options.includes(wrong)) options.push(wrong);
-  }
-  options.sort(() => Math.random() - 0.5);
-
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "btn btn-secondary";
-    btn.textContent = opt;
-    btn.onclick = () => {
-      if (opt === correctAnswer) {
-        gameScoreCount++;
-      }
-      generateGameQuestion();
-    };
-    optionsContainer.appendChild(btn);
-  });
-}
-
-async function endMiniGame() {
-  document.getElementById("game-play").classList.add("hidden");
-  document.getElementById("game-over").classList.remove("hidden");
-  
-  document.getElementById("game-score").textContent = gameScoreCount;
-  const coinsEarned = gameScoreCount * 10;
-  document.getElementById("game-coins-earned").textContent = `+${coinsEarned} 🪙`;
-
-  if (coinsEarned > 0) {
-    studentCoins += coinsEarned;
-    studentTotalCoins += coinsEarned;
-    updateCoinsDisplay();
-    await syncStudentDataToDB();
+    if (feedbackEl) feedbackEl.textContent = "Không thể tải nhận xét từ giáo viên.";
   }
 }
 
@@ -285,7 +258,7 @@ async function pullGacha() {
   notice.textContent = "";
 
   if (studentCoins < cost) {
-    notice.textContent = "Bạn không đủ Xu để quay! Hãy làm bài tập hoặc chơi mini-game.";
+    notice.textContent = "Bạn không đủ Xu để quay! Hãy làm bài kiểm tra để nhận thêm Xu.";
     return;
   }
 
@@ -422,7 +395,7 @@ function renderStudentCollection() {
   });
 }
 
-/* Xem chi tiết Meme & Cơ chế Tặng Thẻ Dư */
+/* Xem chi tiết Meme & Tặng Thẻ Dư */
 function openMemeViewModal(meme, count) {
   const modal = document.getElementById("view-meme-modal");
   if (!modal) return;
@@ -439,7 +412,6 @@ function openMemeViewModal(meme, count) {
   const targetInput = document.getElementById("target-student-username");
   const shareNotice = document.getElementById("share-notice");
 
-  // Reset form chia sẻ
   if (shareInputSection) shareInputSection.style.display = "none";
   if (targetInput) targetInput.value = "";
   if (shareNotice) {
@@ -447,7 +419,6 @@ function openMemeViewModal(meme, count) {
     shareNotice.style.color = "";
   }
 
-  // Điều kiện hiển thị nút chia sẻ: số lượng >= 2
   if (shareBox) {
     if (count >= 2) {
       shareBox.style.display = "block";
@@ -505,18 +476,15 @@ async function confirmTransferCard() {
       return;
     }
 
-    // Cập nhật lại kho thẻ của học sinh gửi
     studentMemeIds = (result.data.updated_meme_id_list || []).map(id => Number(id));
     const updatedCount = studentMemeIds.filter(id => id === Number(currentViewingMeme.id)).length;
     
-    // Cập nhật số lượng trên giao diện modal
     document.getElementById("view-meme-count").textContent = `Sở hữu: x${updatedCount}`;
 
     noticeEl.textContent = result.message;
     noticeEl.style.color = "#16a34a";
     targetInput.value = "";
 
-    // Nếu sau khi tặng số lượng thẻ còn lại < 2 thì ẩn khung chia sẻ
     if (updatedCount < 2) {
       setTimeout(() => {
         const shareBox = document.getElementById("view-meme-share-box");
@@ -524,7 +492,6 @@ async function confirmTransferCard() {
       }, 1500);
     }
 
-    // Cập nhật lại toàn bộ bộ sưu tập
     renderStudentCollection();
 
   } catch (err) {
@@ -542,7 +509,6 @@ function closeMemeViewModal() {
   }
 }
 
-// Xóa lịch sử quay gacha khi đăng xuất
 document.querySelectorAll(".btn-logout-sm, [onclick*='logout']").forEach(btn => {
   btn.addEventListener("click", () => {
     sessionStorage.removeItem("gacha_session_history");

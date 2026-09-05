@@ -542,7 +542,7 @@
                 <input type="text" id="edit-stu-class" required style="text-transform:uppercase; width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
               </div>
               <div class="form-group" style="margin-bottom: 12px;">
-                <label for="edit-stu-password">Mật khẩu mới (bỏ trống nếu không đổi):</label>
+                <label for="edit-stu-password">Mật khẩu:</label>
                 <input type="text" id="edit-stu-password" placeholder="Để trống nếu giữ nguyên" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
               </div>
             </div>
@@ -562,6 +562,36 @@
             </div>
           </form>
           <p id="edit-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Modal Nhập Đánh Giá Cho Học Sinh -->
+      <div id="feedback-student-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">✍️ Đánh Giá Học Sinh</h3>
+            <button onclick="closeFeedbackModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="feedback-student-form" onsubmit="submitSaveFeedback(event)">
+            <input type="hidden" id="feedback-stu-id">
+            
+            <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">Học sinh: <strong id="feedback-stu-name" style="color: #1e293b;">---</strong></div>
+              <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Lớp: <span id="feedback-stu-class" style="color: #1e293b; font-weight: 500;">---</span></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="feedback-stu-text" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Lời phê / Nhận xét của giáo viên:</label>
+              <textarea id="feedback-stu-text" rows="4" placeholder="Nhập lời phê, nhận xét về tinh thần học tập, kết quả bài thi..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeFeedbackModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" class="btn btn-primary">💾 Lưu Đánh Giá</button>
+            </div>
+          </form>
+          <p id="feedback-student-status" class="status-msg mt-2"></p>
         </div>
       </div>
 
@@ -734,7 +764,6 @@
         schoolsManagementList.appendChild(itemDiv);
       });
 
-      // Khôi phục bộ lọc trường đã lưu từ phiên trước
       const savedFilters = getSavedFilters();
       if (savedFilters && savedFilters.school) {
         filterSchoolSelect.value = savedFilters.school;
@@ -1083,8 +1112,8 @@
       }
     }
 
-    function openEditStudentModal(index) {
-      const stu = cachedStudentsList[index];
+    function openEditStudentModal(studentId) {
+      const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
       if (!stu) return;
 
       document.getElementById("edit-stu-id").value = stu.id;
@@ -1104,6 +1133,65 @@
 
     function closeEditStudentModal() {
       document.getElementById("edit-student-modal").classList.remove("show");
+    }
+
+    function openFeedbackModal(studentId) {
+      const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+
+      document.getElementById("feedback-stu-id").value = stu.id;
+      document.getElementById("feedback-stu-name").textContent = stu.fullName || `${stu.lastName || ''} ${stu.firstName || ''}`.trim() || stu.username;
+      document.getElementById("feedback-stu-class").textContent = stu.className || "---";
+      document.getElementById("feedback-stu-text").value = stu.feedback || "";
+
+      const statusEl = document.getElementById("feedback-student-status");
+      statusEl.textContent = "";
+      statusEl.className = "status-msg mt-2";
+
+      document.getElementById("feedback-student-modal").classList.add("show");
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById("feedback-student-modal").classList.remove("show");
+    }
+
+    async function submitSaveFeedback(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("feedback-student-status");
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang lưu đánh giá...";
+
+      const studentId = document.getElementById("feedback-stu-id").value;
+      const feedbackText = document.getElementById("feedback-stu-text").value.trim();
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_feedback",
+            student_id: studentId,
+            feedback: feedbackText
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Lưu đánh giá thất bại!";
+          return;
+        }
+
+        const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
+        if (stu) stu.feedback = feedbackText;
+        saveCurrentFilterState();
+
+        alert("Lưu đánh giá cho học sinh thành công!");
+        closeFeedbackModal();
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      }
     }
 
     async function submitUpdateStudent(e) {
@@ -1145,14 +1233,13 @@
 
         alert("Cập nhật thông tin học sinh thành công!");
         closeEditStudentModal();
-        fetchStudentList(true); // Cập nhật lại danh sách và cập nhật cache
+        fetchStudentList(true);
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
         statusEl.textContent = "Lỗi kết nối máy chủ!";
       }
     }
 
-    /* Quản lý lưu bộ lọc & kết quả học sinh vào sessionStorage */
     function getSavedFilters() {
       try {
         return JSON.parse(sessionStorage.getItem("teacher_student_filter") || "{}");
@@ -1232,7 +1319,7 @@
 
         cachedStudentsList = result.data.students || [];
         sortAndRenderStudents();
-        saveCurrentFilterState(); // Lưu tạm lại toàn bộ dữ liệu lọc
+        saveCurrentFilterState();
       } catch (err) {
         studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
       }
@@ -1285,7 +1372,12 @@
           <td data-col="6">${stu.className || '---'}</td>
           <td data-col="7" style="color: #2563eb; font-weight: bold;">${stu.score || '0'}</td>
           <td data-col="8"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
-          <td data-col="9"><button onclick="openEditStudentModal(${index})" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer;">Sửa</button></td>
+          <td data-col="9">
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button onclick="openEditStudentModal('${stu.id}')" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer;">Sửa</button>
+              <button onclick="openFeedbackModal('${stu.id}')" class="btn btn-primary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer; background: #2563eb;">Đánh giá</button>
+            </div>
+          </td>
         `;
         studentListBody.appendChild(tr);
       });
@@ -1391,7 +1483,6 @@
       }
     });
 
-    // Tự động tải trường và khôi phục bộ lọc/danh sách đã lưu
     loadSchools().then(() => {
       restoreFilterAndStudents();
     });

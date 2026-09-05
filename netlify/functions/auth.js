@@ -82,8 +82,22 @@ exports.handler = async (event) => {
       const { data, error } = await supabase.from('scores').select('*').eq('student_id', body.id).single();
       if (error || !data) return createResponse(false, null, "Chưa có bảng điểm.");
       return createResponse(true, {
-        scores: [data.score_1, data.score_2, data.score_3, data.score_4, data.score_5].map(s => s === null ? "" : s)
+        scores: [data.score_1, data.score_2, data.score_3, data.score_4, data.score_5].map(s => s === null ? "" : s),
+        feedback: data.feedback || ""
       });
+    }
+
+    if (action === "save_feedback") {
+      const { student_id, feedback } = body;
+      if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
+
+      const { error } = await supabase
+        .from('scores')
+        .update({ feedback: feedback || "" })
+        .eq('student_id', student_id);
+
+      if (error) return createResponse(false, null, "Lỗi khi lưu đánh giá: " + error.message);
+      return createResponse(true, null, "Lưu đánh giá học sinh thành công!");
     }
 
     if (action === "get_student_info") {
@@ -276,7 +290,6 @@ exports.handler = async (event) => {
       }, "Quay Gacha thành công!");
     }
 
-    // --- CHIA SẺ / TẶNG THẺ MEME TRỰC TIẾP GIỮA HỌC SINH ---
     if (action === "transfer_meme") {
       const { sender_id, recipient_username, meme_id } = body;
 
@@ -286,7 +299,6 @@ exports.handler = async (event) => {
 
       const cleanUsername = recipient_username.trim().toLowerCase();
 
-      // 1. Kiểm tra tài khoản bạn nhận
       const { data: recipient, error: recipErr } = await supabase
         .from('students')
         .select('id, full_name, username')
@@ -301,7 +313,6 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Bạn không thể tự tặng thẻ cho chính mình!");
       }
 
-      // 2. Lấy kho đồ người gửi
       const { data: senderItems, error: senderErr } = await supabase
         .from('items')
         .select('meme_id_list')
@@ -316,12 +327,10 @@ exports.handler = async (event) => {
       const senderList = senderItems.meme_id_list || [];
       const occurrences = senderList.filter(id => Number(id) === parsedMemeId).length;
 
-      // Điều kiện số lượng >= 2 mới có thẻ dư để tặng
       if (occurrences < 2) {
         return createResponse(false, null, "Bạn cần sở hữu từ 2 thẻ trở lên mới có thể tặng thẻ dư!");
       }
 
-      // 3. Lấy kho đồ người nhận (khởi tạo nếu chưa có)
       let { data: recipItems } = await supabase
         .from('items')
         .select('meme_id_list')
@@ -341,13 +350,10 @@ exports.handler = async (event) => {
         recipList = recipItems.meme_id_list || [];
       }
 
-      // 4. Trừ 1 thẻ từ người gửi
       const removeIndex = senderList.findIndex(id => Number(id) === parsedMemeId);
       if (removeIndex > -1) {
         senderList.splice(removeIndex, 1);
       }
-
-      // 5. Thêm 1 thẻ cho người nhận
       recipList.push(parsedMemeId);
 
       const { error: updateSenderErr } = await supabase
@@ -377,7 +383,7 @@ exports.handler = async (event) => {
     if (action === "get_students") {
       let query = supabase.from('students').select(`
         id, full_name, last_name, first_name, class_name, username, password,
-        scores (score_1, score_2, score_3, score_4, score_5),
+        scores (score_1, score_2, score_3, score_4, score_5, feedback),
         items (coins, total_coins, spent_coins, meme_id_list)
       `).eq('school', body.school);
 
@@ -406,6 +412,7 @@ exports.handler = async (event) => {
           className: row.class_name,
           username: row.username, 
           password: row.password, 
+          feedback: s.feedback || "",
           coins: studentItems.coins !== undefined ? studentItems.coins : 100,
           total_coins: studentItems.total_coins !== undefined ? studentItems.total_coins : 100,
           spent_coins: studentItems.spent_coins !== undefined ? studentItems.spent_coins : 0,
@@ -510,7 +517,7 @@ exports.handler = async (event) => {
         throw userErr;
       }
 
-      await supabase.from('scores').insert([{ student_id: newUser.id }]);
+      await supabase.from('scores').insert([{ student_id: newUser.id, feedback: "" }]);
       await supabase.from('items').insert([{
         student_id: newUser.id,
         coins: 100,

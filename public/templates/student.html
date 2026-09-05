@@ -102,6 +102,41 @@
     }
 
     /* Hiệu ứng quay Gacha */
+    .gacha-card-wrapper {
+      position: relative;
+    }
+    .gacha-coins-panel {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+      z-index: 2;
+    }
+    .gacha-stat-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 145px;
+      box-sizing: border-box;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .gacha-stat-pill.coins-current {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #b45309;
+    }
+    .gacha-stat-pill.coins-spent {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
     .gacha-stage {
       display: flex;
       justify-content: center;
@@ -228,6 +263,111 @@
       border: 1px solid #e2e8f0;
       margin: 16px 0 12px 0;
     }
+
+    /* Header Profile Clickable */
+    .header-user-clickable {
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      user-select: none;
+    }
+    .header-user-clickable:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    /* Bố cục 2 hàng x 2 cột cho trang Tài Khoản */
+    .account-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    /* Ô điểm luôn vuông chuẩn 80x80 */
+    .academic-summary {
+      margin-left: 0 !important;
+    }
+    .academic-summary .summary-box {
+      width: 80px !important;
+      height: 80px !important;
+      min-width: 80px !important;
+      max-width: 80px !important;
+      min-height: 80px !important;
+      max-height: 80px !important;
+      aspect-ratio: 1 / 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+      padding: 4px !important;
+      border-radius: 8px !important;
+    }
+
+    @media (max-width: 640px) {
+      .account-card-grid {
+        grid-template-columns: 1fr;
+      }
+      .gacha-coins-panel {
+        position: static;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .banner-content-layout {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+      }
+      .banner-vertical-divider {
+        display: none !important;
+      }
+      .banner-stats-group {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      .banner-stats-group .feedback-box-item {
+        max-width: 100% !important;
+      }
+    }
+    .account-item-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .account-item-box label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .account-item-box p {
+      font-size: 16px;
+      color: #1e293b;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Thanh cuộn nhỏ gọn cho ô nhận xét */
+    .feedback-scroll-inner::-webkit-scrollbar {
+      width: 4px;
+    }
+    .feedback-scroll-inner::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .feedback-scroll-inner::-webkit-scrollbar-thumb {
+      background: #93c5fd;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -237,16 +377,10 @@
         <h2>Trang học sinh</h2>
       </div>
       <div class="user-stats">
-        <div class="stat-badge">
-          <span>🪙 Xu hiện có:</span>
-          <strong id="user-coins">0</strong>
-        </div>
-        <div class="stat-badge" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);">
-          <span style="color: #ef4444;">💸 Đã tiêu:</span>
-          <strong id="user-spent-coins" style="color: #ef4444;">0</strong>
-        </div>
         <div class="user-profile">
-          <span id="header-student-name">Học sinh</span>
+          <span id="header-student-name" class="header-user-clickable" onclick="switchStudentTab('tab-account')" title="Nhấn để xem thông tin tài khoản">
+            👤 <span id="header-student-name-text">Học sinh</span>
+          </span>
           <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
         </div>
       </div>
@@ -255,32 +389,54 @@
     <nav class="student-nav">
       <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
-      <button class="nav-btn" id="btn-tab-minigame" onclick="switchStudentTab('tab-minigame')">🎮 Mini Game</button>
       <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
       <button class="nav-btn" id="btn-tab-collection" onclick="switchStudentTab('tab-collection')">🖼️ Bộ Sưu Tập Meme</button>
+      <button class="nav-btn" id="btn-tab-account" onclick="switchStudentTab('tab-account')">👤 Tài Khoản</button>
     </nav>
 
     <main class="student-content">
       <!-- 1. TỔNG QUAN & BẢNG ĐIỂM -->
       <section id="tab-overview" class="tab-view active">
-        <div class="card info-banner">
-          <div class="profile-info">
-            <h3 id="stu-fullname">---</h3>
-            <p>Trường: <span id="stu-school">---</span> | Lớp: <span id="stu-class">---</span></p>
-          </div>
-          <div class="academic-summary">
-            <div class="summary-box">
-              <span>Điểm TB</span>
-              <strong id="average-score">--</strong>
+        <div class="card info-banner" style="margin-bottom: 20px; padding: 16px 20px;">
+          <div class="banner-content-layout" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
+            <!-- Phần thông tin học sinh -->
+            <div class="profile-info" style="min-width: 160px; flex-shrink: 0;">
+              <h3 id="stu-fullname" style="margin: 0 0 4px 0; font-size: 20px;">---</h3>
+              <p style="margin: 0; opacity: 0.95; font-size: 13px;">Trường: <span id="stu-school">---</span> | Lớp: <span id="stu-class">---</span></p>
             </div>
-            <div class="summary-box">
-              <span>Xếp Loại</span>
-              <strong id="academic-rank">--</strong>
+
+            <!-- Đường kẻ đứng phân cách -->
+            <div class="banner-vertical-divider" style="width: 2px; height: 70px; background: rgba(255, 255, 255, 0.4); border-radius: 2px; flex-shrink: 0;"></div>
+
+            <!-- Cụm bên phải: Đẩy sát mép phải (margin-left: auto), gồm 2 ô điểm rồi đến ô Nhận xét -->
+            <div class="banner-stats-group" style="display: flex; align-items: stretch; gap: 15px; margin-left: auto; max-width: calc(100% - 220px); min-width: 0;">
+              <!-- 2 ô điểm TB và Xếp Loại (Luôn vuông 80x80) -->
+              <div class="academic-summary" style="display: flex; gap: 15px; margin: 0; flex-shrink: 0;">
+                <div class="summary-box">
+                  <span style="font-size: 11px;">Điểm TB</span>
+                  <strong id="average-score" style="font-size: 18px; margin-top: 2px;">--</strong>
+                </div>
+                <div class="summary-box">
+                  <span style="font-size: 11px;">Xếp Loại</span>
+                  <strong id="academic-rank" style="font-size: 18px; margin-top: 2px;">--</strong>
+                </div>
+              </div>
+
+              <!-- Ô Đánh Giá nằm ở mép phải ngoài cùng, chiều cao 80px bằng 2 ô điểm, nền xanh dương #eff6ff -->
+              <div class="feedback-box-item" style="background: #eff6ff; border-radius: 8px; padding: 10px; display: flex; align-items: flex-start; box-shadow: 0 2px 5px rgba(0,0,0,0.06); max-width: 480px; max-height: 80px; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; height: 100%;">
+                  <div style="font-size: 13px; font-weight: bold; color: #1d4ed8; line-height: 1.2; margin-bottom: 4px;">Nhận xét:</div>
+                  <div class="feedback-scroll-inner" style="font-size: 12px; line-height: 1.4; color: #334155; font-style: italic;  overflow-y: auto; word-break: break-all; overflow-wrap: anywhere; white-space: normal; padding-right: 4px;">
+                    <span id="stu-teacher-feedback">Chưa có nhận xét nào từ giáo viên.</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="card mt-4">
+        <!-- Bảng điểm kích thước chuẩn -->
+        <div class="card">
           <div class="card-header">
             <h3>📈 Bảng Tổng Kết 5 Cột Điểm</h3>
             <button onclick="loadStudentScores()" class="btn btn-secondary btn-sm">🔄 Làm mới điểm</button>
@@ -326,39 +482,20 @@
         </div>
       </section>
 
-      <!-- 3. MINI GAME -->
-      <section id="tab-minigame" class="tab-view">
-        <div class="card">
-          <div class="card-header">
-            <h3>⚡ Đố Vui Nhanh: Thử Thách 30 Giây</h3>
-            <span class="game-timer" id="game-timer">30s</span>
-          </div>
-          <p class="section-desc">Mỗi câu trả lời đúng được cộng ngay <strong>10 Xu</strong>!</p>
-
-          <div id="game-intro" class="text-center py-4">
-            <p>Thử tài phản xạ với các phép tính cộng trừ nhân nhanh.</p>
-            <button onclick="startMiniGame()" class="btn btn-success mt-2">Bắt Đầu Thử Thách</button>
-          </div>
-
-          <div id="game-play" class="hidden">
-            <div class="game-question-box">
-              <h2 id="game-question">12 + 15 = ?</h2>
-            </div>
-            <div class="game-options-grid" id="game-options"></div>
-          </div>
-
-          <div id="game-over" class="hidden text-center py-4">
-            <h4>Hết Giờ!</h4>
-            <p>Số câu trả lời đúng: <strong id="game-score">0</strong></p>
-            <p>Xu nhận được: <strong id="game-coins-earned" class="text-success">+0 🪙</strong></p>
-            <button onclick="startMiniGame()" class="btn btn-primary mt-2">Chơi Lại</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. VÒNG QUAY GACHA -->
+      <!-- 3. VÒNG QUAY GACHA -->
       <section id="tab-gacha" class="tab-view">
-        <div class="card gacha-card">
+        <div class="card gacha-card gacha-card-wrapper">
+          <div class="gacha-coins-panel">
+            <div class="gacha-stat-pill coins-current">
+              <span>🪙 Xu hiện có:</span>
+              <strong id="user-coins">0</strong>
+            </div>
+            <div class="gacha-stat-pill coins-spent">
+              <span>💸 Đã tiêu:</span>
+              <strong id="user-spent-coins">0</strong>
+            </div>
+          </div>
+
           <div class="gacha-header text-center">
             <h3>🎰 Hòm Thẻ Bài May Mắn</h3>
             <p>Chi phí: <strong>30 Xu / 1 Lượt Quay</strong></p>
@@ -373,7 +510,6 @@
           </div>
           <p id="gacha-result-notice" class="status-msg text-center mt-2"></p>
 
-          <!-- Lịch sử quay tạm thời trong phiên -->
           <div class="gacha-history-box">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <h4 style="margin: 0; font-size: 15px; color: #1e293b;">Lịch sử Gacha</h4>
@@ -384,7 +520,7 @@
         </div>
       </section>
 
-      <!-- 5. BỘ SƯU TẬP MEME -->
+      <!-- 4. BỘ SƯU TẬP MEME -->
       <section id="tab-collection" class="tab-view">
         <div class="card">
           <div class="card-header">
@@ -407,6 +543,50 @@
           </div>
         </div>
       </section>
+
+      <!-- 5. THÔNG TIN TÀI KHOẢN (2 HÀNG X 2 CỘT) -->
+      <section id="tab-account" class="tab-view">
+        <div class="card">
+          <div class="card-header">
+            <h3>👤 Thông Tin Tài Khoản Học Sinh</h3>
+          </div>
+          <p class="section-desc">Xem thông tin cá nhân và thiết lập tài khoản của bạn.</p>
+
+          <div class="account-card-grid">
+            <!-- HÀNG TRÊN: TRƯỜNG & LỚP -->
+            <div class="account-item-box">
+              <label>Trường đang theo học</label>
+              <p id="acc-school">---</p>
+            </div>
+            <div class="account-item-box">
+              <label>Lớp học</label>
+              <p id="acc-class">---</p>
+            </div>
+
+            <!-- HÀNG DƯỚI: HỌ VÀ TÊN & TÊN ĐĂNG NHẬP -->
+            <div class="account-item-box">
+              <label>Họ và Tên</label>
+              <p id="acc-fullname">---</p>
+            </div>
+            <div class="account-item-box">
+              <label>Tên đăng nhập / Mã tài khoản</label>
+              <p id="acc-username">---</p>
+            </div>
+          </div>
+
+          <div class="mt-4" style="border-top: 1px dashed #cbd5e1; padding-top: 20px;">
+            <h4 style="color: #475569; margin-bottom: 12px;">⚙️ Cài Đặt & Bảo Mật</h4>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" disabled style="cursor: not-allowed; opacity: 0.6;" title="Chức năng đang được phát triển">
+                🔑 Đổi Mật Khẩu (Sắp ra mắt)
+              </button>
+              <button class="btn btn-secondary" disabled style="cursor: not-allowed; opacity: 0.6;" title="Chức năng đang được phát triển">
+                🔔 Cài Đặt Thông Báo (Sắp ra mắt)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Modal Xem Chi Tiết Meme & Tặng Thẻ -->
@@ -420,7 +600,6 @@
         <img id="view-meme-img" class="view-meme-img" src="" alt="Meme Image">
         <h3 id="view-meme-slogan" style="margin: 6px 0 12px 0; color: #1e293b; font-size: 18px; word-break: break-word;">Slogan</h3>
         
-        <!-- Khối chia sẻ / tặng thẻ dư khi sở hữu >= 2 thẻ -->
         <div id="view-meme-share-box" style="display: none; margin-bottom: 12px; background: #f1f5f9; padding: 12px; border-radius: 8px;">
           <button type="button" id="btn-toggle-share" class="btn btn-primary btn-block" onclick="toggleShareInput()">🎁 Tặng Thẻ Dư Cho Bạn</button>
           
@@ -458,28 +637,6 @@
   <script src="/auth-guard.js"></script>
   <script src="/student.js"></script>
   <script>
-    function switchStudentTab(tabId) {
-      document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
-      document.querySelectorAll('.student-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
-
-      const targetTab = document.getElementById(tabId);
-      if (targetTab) targetTab.classList.add('active');
-
-      const targetBtn = document.getElementById('btn-' + tabId);
-      if (targetBtn) targetBtn.classList.add('active');
-
-      sessionStorage.setItem('student_active_tab', tabId);
-
-      if (tabId === 'tab-collection') {
-        loadStudentCollection();
-      }
-    }
-
-    const savedStudentTab = sessionStorage.getItem('student_active_tab');
-    if (savedStudentTab && document.getElementById(savedStudentTab)) {
-      switchStudentTab(savedStudentTab);
-    }
-
     async function checkStudentExamLockStatus() {
       try {
         const session = getSession();
