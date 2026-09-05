@@ -26,7 +26,7 @@ const capitalizeWords = (str) => {
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
-      const { data, error } = await supabase.from('schools').select('name, is_hidden');
+      const { data, error } = await supabase.from('schools').select('name, is_hidden, is_exam_locked');
       if (error) throw error;
       return createResponse(true, { schools: data || [] });
     }
@@ -189,7 +189,7 @@ exports.handler = async (event) => {
 
       const { data: existSchool } = await supabase.from('schools').select('name').eq('name', school).single();
       if (!existSchool) {
-        await supabase.from('schools').insert([{ name: school, is_hidden: false }]);
+        await supabase.from('schools').insert([{ name: school, is_hidden: false, is_exam_locked: false }]);
       }
 
       const { data: newUser, error: userErr } = await supabase.from('students').insert([{
@@ -216,7 +216,7 @@ exports.handler = async (event) => {
       const schoolName = body.school ? body.school.trim() : "";
       if (!schoolName) return createResponse(false, null, "Tên trường không được để trống!");
 
-      const { error } = await supabase.from('schools').insert([{ name: schoolName, is_hidden: false }]);
+      const { error } = await supabase.from('schools').insert([{ name: schoolName, is_hidden: false, is_exam_locked: false }]);
       if (error) {
         if (error.code === '23505') return createResponse(false, null, "Trường này đã tồn tại trong hệ thống!");
         throw error;
@@ -241,30 +241,28 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Cập nhật trạng thái thành công!");
     }
 
-    // --- QUẢN LÝ TRẠNG THÁI KHÓA BÀI THI (Sử dụng bảng schools với tên đặc biệt hoặc bảng admins phụ để lưu) ---
-    if (action === "get_exam_status") {
-      // Lấy trạng thái từ trường ẩn trong bảng schools với tên đặc biệt "__EXAM_LOCK_STATUS__"
-      let { data, error } = await supabase.from('schools').select('is_hidden').eq('name', '__EXAM_LOCK_STATUS__').single();
-      let is_locked = data ? data.is_hidden : false;
-      return createResponse(true, { is_locked });
+    // --- QUẢN LÝ KHÓA BÀI THI THEO TRƯỜNG ---
+    if (action === "toggle_school_exam_lock") {
+      const { school, is_exam_locked } = body;
+      const { error } = await supabase
+        .from('schools')
+        .update({ is_exam_locked })
+        .eq('name', school);
+
+      if (error) return createResponse(false, null, "Lỗi cập nhật trạng thái khóa bài thi của trường.");
+      return createResponse(true, null, "Cập nhật thành công!");
     }
 
-    if (action === "toggle_exam_lock") {
-      const isLocked = body.is_locked;
-      
-      let { data: existing } = await supabase.from('schools').select('name').eq('name', '__EXAM_LOCK_STATUS__').single();
-      
-      let error;
-      if (existing) {
-        let res = await supabase.from('schools').update({ is_hidden: isLocked }).eq('name', '__EXAM_LOCK_STATUS__');
-        error = res.error;
-      } else {
-        let res = await supabase.from('schools').insert([{ name: '__EXAM_LOCK_STATUS__', is_hidden: isLocked }]);
-        error = res.error;
-      }
+    if (action === "get_school_exam_status") {
+      const { school } = body;
+      const { data, error } = await supabase
+        .from('schools')
+        .select('is_exam_locked')
+        .eq('name', school)
+        .single();
 
-      if (error) return createResponse(false, null, "Lỗi cập nhật trạng thái khóa bài thi.");
-      return createResponse(true, { is_locked: isLocked }, "Cập nhật thành công!");
+      if (error || !data) return createResponse(true, { is_exam_locked: false });
+      return createResponse(true, { is_exam_locked: data.is_exam_locked || false });
     }
 
     return createResponse(false, null, "Hành động không hợp lệ.");

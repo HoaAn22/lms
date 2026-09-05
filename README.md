@@ -1,6 +1,7 @@
 # netlify-lms
 
 npm run dev
+git rm -r --cached node_modules
 
 ## Cài đặt supabase
 

@@ -173,7 +173,6 @@
   <script src="/auth-guard.js"></script>
   <script src="/student.js"></script>
   <script>
-    // Hàm chuyển tab tùy chỉnh có lưu trạng thái tạm thời vào sessionStorage
     function switchStudentTab(tabId) {
       document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
       document.querySelectorAll('.student-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -187,22 +186,24 @@
       sessionStorage.setItem('student_active_tab', tabId);
     }
 
-    // Khôi phục tab trước đó khi trang được tải lại
     const savedStudentTab = sessionStorage.getItem('student_active_tab');
     if (savedStudentTab && document.getElementById(savedStudentTab)) {
       switchStudentTab(savedStudentTab);
     }
 
-    // Kiểm tra trạng thái khóa bài thi từ giáo viên
+    // Kiểm tra trạng thái khóa bài thi theo trường của học sinh đang đăng nhập
     async function checkStudentExamLockStatus() {
       try {
+        const session = getSession();
+        if (!session || !session.school) return;
+
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get_exam_status" })
+          body: JSON.stringify({ action: "get_school_exam_status", school: session.school })
         });
         const result = await res.json();
-        if (result.success && result.data.is_locked) {
+        if (result.success && result.data.is_exam_locked) {
           const quizItem = document.getElementById("quiz-item-main");
           if (quizItem) {
             quizItem.innerHTML = `
@@ -214,7 +215,7 @@
           }
         }
       } catch (err) {
-        console.error("Lỗi kiểm tra trạng thái bài thi");
+        console.error("Lỗi kiểm tra trạng thái bài thi của trường");
       }
     }
 

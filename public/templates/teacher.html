@@ -59,7 +59,6 @@
       z-index: 2;
     }
 
-    /* CSS cho Dropdown tích chọn cột tùy chỉnh và nút Xóa */
     .custom-dropdown {
       position: relative;
       flex: 1;
@@ -146,7 +145,7 @@
         <!-- TAB 1: Tạo tài khoản học sinh & Quản lý trường học -->
         <div id="tab-create-user" class="tab-panel active">
           
-          <!-- KHUNG QUẢN LÝ TRƯỜNG HỌC (Mặc định xổ ra) -->
+          <!-- KHUNG QUẢN LÝ TRƯỜNG HỌC -->
           <div class="card form-container mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
             <div class="card-header-collapse" onclick="toggleCardBody('school-card-body', 'school-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Quản lý trường</h3>
@@ -177,7 +176,7 @@
             </div>
           </div>
 
-          <!-- KHUNG TẠO TÀI KHOẢN HỌC SINH (Mặc định thu gọn) -->
+          <!-- KHUNG TẠO TÀI KHOẢN HỌC SINH -->
           <div class="card form-container">
             <div class="card-header-collapse" onclick="toggleCardBody('student-card-body', 'student-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Thêm học sinh:</h3>
@@ -314,22 +313,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: Ngân hàng đề thi (Đã bổ sung tính năng Khóa/Mở khóa bài thi) -->
-        <div id="tab-exam" class="tab-panel">
-          <div class="card">
-            <h3 style="margin-bottom: 16px;">Quản lý & Khóa bài thi</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 6px;">
-              <div>
-                <strong>Bài kiểm tra trực tuyến</strong>
-                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">Trạng thái hiện tại học sinh làm bài thi</div>
-              </div>
-              <div>
-                <button id="btn-toggle-exam-lock" class="btn btn-secondary" onclick="toggleExamLock()" style="padding: 6px 14px;">Đang tải trạng thái...</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Ngân Hàng Đề Thi</h4></div></div>
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Báo Cáo & Thống Kê</h4></div></div>
         <div id="tab-assignment" class="tab-panel"><div class="placeholder-card"><h4>Giao Bài Tập</h4></div></div>
         <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài Đặt Hệ Thống</h4></div></div>
@@ -418,7 +402,6 @@
 
     let currentSchoolsData = [];
     let cachedStudentsList = [];
-    let isExamLocked = false;
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -433,68 +416,11 @@
       sessionStorage.setItem("teacher_active_tab", tabId);
 
       if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
-      
-      // Nếu vào tab ngân hàng đề thi thì tải trạng thái khóa bài thi
-      if (tabId === 'tab-exam') {
-        loadExamStatus();
-      }
     }
 
     const savedTab = sessionStorage.getItem("teacher_active_tab");
     if (savedTab && document.getElementById(savedTab)) {
       switchTab(savedTab);
-    } else {
-      loadExamStatus();
-    }
-
-    // Tải trạng thái khóa bài thi từ server
-    async function loadExamStatus() {
-      try {
-        const res = await fetch("/.netlify/functions/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get_exam_status" })
-        });
-        const result = await res.json();
-        if (result.success) {
-          isExamLocked = result.data.is_locked;
-          updateExamLockButtonUI();
-        }
-      } catch (e) {
-        console.error("Lỗi tải trạng thái đề thi");
-      }
-    }
-
-    // Thay đổi trạng thái khóa/mở khóa bài thi
-    async function toggleExamLock() {
-      const newStatus = !isExamLocked;
-      try {
-        const res = await fetch("/.netlify/functions/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "toggle_exam_lock", is_locked: newStatus })
-        });
-        const result = await res.json();
-        if (result.success) {
-          isExamLocked = newStatus;
-          updateExamLockButtonUI();
-        } else {
-          alert(result.message);
-        }
-      } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
-      }
-    }
-
-    function updateExamLockButtonUI() {
-      const btn = document.getElementById("btn-toggle-exam-lock");
-      if (isExamLocked) {
-        btn.textContent = "🔒 Mở khóa bài thi";
-        btn.className = "btn btn-danger";
-      } else {
-        btn.textContent = "🔓 Khóa bài thi";
-        btn.className = "btn btn-success";
-      }
     }
 
     function actionPlaceholder(name) {
@@ -515,6 +441,7 @@
       currentSchoolsData.forEach(school => {
         const schoolName = school.name || school; 
         const isHidden = school.is_hidden || false;
+        const isExamLocked = school.is_exam_locked || false;
 
         const opt1 = document.createElement("option");
         opt1.value = schoolName;
@@ -532,9 +459,14 @@
           <span style="font-weight: 500; color: ${isHidden ? '#94a3b8' : '#1e293b'}">
             ${schoolName} ${isHidden ? '<span style="color:#ef4444; font-size:12px;">(Đang ẩn)</span>' : '<span style="color:#10b981; font-size:12px;">(Đang hiện)</span>'}
           </span>
-          <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
-            ${isHidden ? '👁️ Hiện trường' : '🚫 Ẩn trường'}
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
+              ${isExamLocked ? '🔒 Mở khóa bài' : '🔓 Khóa bài'}
+            </button>
+            <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
+              ${isHidden ? '👁️ Hiện trường' : '🚫 Ẩn trường'}
+            </button>
+          </div>
         `;
         schoolsManagementList.appendChild(itemDiv);
       });
@@ -571,6 +503,25 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "toggle_school", school: schoolName, is_hidden: newStatus })
+        });
+        const result = await res.json();
+        if (result.success) {
+          refreshSchools();
+        } else {
+          alert(result.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    async function toggleSchoolExamLock(schoolName, currentLockStatus) {
+      const newLockStatus = !currentLockStatus;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "toggle_school_exam_lock", school: schoolName, is_exam_locked: newLockStatus })
         });
         const result = await res.json();
         if (result.success) {
