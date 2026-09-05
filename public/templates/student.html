@@ -409,7 +409,7 @@
       </section>
     </main>
 
-    <!-- Modal Xem Chi Tiết Meme -->
+    <!-- Modal Xem Chi Tiết Meme & Tặng Thẻ -->
     <div id="view-meme-modal" class="modal-backdrop" onclick="closeMemeViewModal(event)">
       <div class="modal-card" onclick="event.stopPropagation()">
         <button class="modal-close-btn" onclick="closeMemeViewModal()">✕</button>
@@ -419,6 +419,19 @@
         </div>
         <img id="view-meme-img" class="view-meme-img" src="" alt="Meme Image">
         <h3 id="view-meme-slogan" style="margin: 6px 0 12px 0; color: #1e293b; font-size: 18px; word-break: break-word;">Slogan</h3>
+        
+        <!-- Khối chia sẻ / tặng thẻ dư khi sở hữu >= 2 thẻ -->
+        <div id="view-meme-share-box" style="display: none; margin-bottom: 12px; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+          <button type="button" id="btn-toggle-share" class="btn btn-primary btn-block" onclick="toggleShareInput()">🎁 Tặng Thẻ Dư Cho Bạn</button>
+          
+          <div id="share-input-section" style="display: none; margin-top: 10px; text-align: left;">
+            <label style="font-size: 12px; font-weight: 600; color: #475569;">Tên đăng nhập của bạn nhận:</label>
+            <input type="text" id="target-student-username" placeholder="Nhập tên tài khoản (VD: nguyenvana)" class="form-control mt-1" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            <p id="share-notice" style="font-size: 12px; margin: 6px 0 0 0; min-height: 16px;"></p>
+            <button type="button" id="btn-confirm-transfer" class="btn btn-success btn-block mt-2" onclick="confirmTransferCard()">Xác Nhận Tặng</button>
+          </div>
+        </div>
+
         <button type="button" class="btn btn-secondary btn-block" onclick="closeMemeViewModal()">Đóng</button>
       </div>
     </div>

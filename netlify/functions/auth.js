@@ -253,9 +253,7 @@ exports.handler = async (event) => {
       const currentInventoryIds = itemData.meme_id_list || [];
       
       let updatedInventoryIds = [...currentInventoryIds];
-      if (!updatedInventoryIds.includes(randomMeme.id)) {
-        updatedInventoryIds.push(randomMeme.id);
-      }
+      updatedInventoryIds.push(randomMeme.id);
 
       const { error: updateErr } = await supabase
         .from('items')
@@ -276,6 +274,104 @@ exports.handler = async (event) => {
         wonMeme: randomMeme,
         meme_id_list: updatedInventoryIds
       }, "Quay Gacha thành công!");
+    }
+
+    // --- CHIA SẺ / TẶNG THẺ MEME TRỰC TIẾP GIỮA HỌC SINH ---
+    if (action === "transfer_meme") {
+      const { sender_id, recipient_username, meme_id } = body;
+
+      if (!sender_id || !recipient_username || !meme_id) {
+        return createResponse(false, null, "Vui lòng cung cấp đầy đủ thông tin gửi tặng thẻ!");
+      }
+
+      const cleanUsername = recipient_username.trim().toLowerCase();
+
+      // 1. Kiểm tra tài khoản bạn nhận
+      const { data: recipient, error: recipErr } = await supabase
+        .from('students')
+        .select('id, full_name, username')
+        .ilike('username', cleanUsername)
+        .single();
+
+      if (recipErr || !recipient) {
+        return createResponse(false, null, `Không tìm thấy bạn học có tài khoản "${recipient_username}"!`);
+      }
+
+      if (recipient.id === sender_id) {
+        return createResponse(false, null, "Bạn không thể tự tặng thẻ cho chính mình!");
+      }
+
+      // 2. Lấy kho đồ người gửi
+      const { data: senderItems, error: senderErr } = await supabase
+        .from('items')
+        .select('meme_id_list')
+        .eq('student_id', sender_id)
+        .single();
+
+      if (senderErr || !senderItems) {
+        return createResponse(false, null, "Không tìm thấy dữ liệu kho thẻ của bạn!");
+      }
+
+      const parsedMemeId = Number(meme_id);
+      const senderList = senderItems.meme_id_list || [];
+      const occurrences = senderList.filter(id => Number(id) === parsedMemeId).length;
+
+      // Điều kiện số lượng >= 2 mới có thẻ dư để tặng
+      if (occurrences < 2) {
+        return createResponse(false, null, "Bạn cần sở hữu từ 2 thẻ trở lên mới có thể tặng thẻ dư!");
+      }
+
+      // 3. Lấy kho đồ người nhận (khởi tạo nếu chưa có)
+      let { data: recipItems } = await supabase
+        .from('items')
+        .select('meme_id_list')
+        .eq('student_id', recipient.id)
+        .single();
+
+      let recipList = [];
+      if (!recipItems) {
+        await supabase.from('items').insert([{
+          student_id: recipient.id,
+          coins: 100,
+          total_coins: 100,
+          spent_coins: 0,
+          meme_id_list: []
+        }]);
+      } else {
+        recipList = recipItems.meme_id_list || [];
+      }
+
+      // 4. Trừ 1 thẻ từ người gửi
+      const removeIndex = senderList.findIndex(id => Number(id) === parsedMemeId);
+      if (removeIndex > -1) {
+        senderList.splice(removeIndex, 1);
+      }
+
+      // 5. Thêm 1 thẻ cho người nhận
+      recipList.push(parsedMemeId);
+
+      const { error: updateSenderErr } = await supabase
+        .from('items')
+        .update({ meme_id_list: senderList })
+        .eq('student_id', sender_id);
+
+      if (updateSenderErr) {
+        return createResponse(false, null, "Lỗi cập nhật thẻ người gửi: " + updateSenderErr.message);
+      }
+
+      const { error: updateRecipErr } = await supabase
+        .from('items')
+        .update({ meme_id_list: recipList })
+        .eq('student_id', recipient.id);
+
+      if (updateRecipErr) {
+        return createResponse(false, null, "Lỗi chuyển thẻ tới người nhận: " + updateRecipErr.message);
+      }
+
+      return createResponse(true, {
+        updated_meme_id_list: senderList,
+        recipient_name: recipient.full_name || recipient.username
+      }, `Đã tặng thành công 1 thẻ cho bạn ${recipient.full_name || recipient.username}!`);
     }
 
     if (action === "get_students") {
@@ -320,7 +416,6 @@ exports.handler = async (event) => {
       return createResponse(true, { students });
     }
 
-    // --- CẬP NHẬT THÔNG TIN HỌC SINH & TĂNG/GIẢM COINS ---
     if (action === "update_student") {
       const { student_id, lastName, firstName, className, password, coin_delta } = body;
 
@@ -352,7 +447,6 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Lỗi cập nhật học sinh: " + updateStuErr.message);
       }
 
-      // Xử lý tăng / giảm Coin (delta)
       const delta = Number(coin_delta) || 0;
       if (delta !== 0) {
         const { data: itemData } = await supabase
@@ -365,7 +459,7 @@ exports.handler = async (event) => {
         let curTotal = itemData && itemData.total_coins !== undefined ? Number(itemData.total_coins) : curCoins;
 
         let newCoins = curCoins + delta;
-        if (newCoins < 0) newCoins = 0; // Không để coin âm
+        if (newCoins < 0) newCoins = 0;
 
         let newTotal = curTotal + delta;
         if (newTotal < 0) newTotal = 0;

@@ -15,8 +15,11 @@ function switchStudentTab(tabId) {
   document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
   document.querySelectorAll(".student-nav .nav-btn").forEach(b => b.classList.remove("active"));
   
-  document.getElementById(tabId).classList.add("active");
-  event.currentTarget.classList.add("active");
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) targetTab.classList.add("active");
+  if (window.event && window.event.currentTarget) {
+    window.event.currentTarget.classList.add("active");
+  }
 }
 
 let studentCoins = 100;
@@ -25,6 +28,7 @@ let studentSpentCoins = 0;
 let studentMemeIds = [];
 let studentMemesCache = [];
 let currentStudentFilter = 'ALL';
+let currentViewingMeme = null;
 
 async function loadStudentData() {
   const session = getSession();
@@ -273,7 +277,7 @@ function clearGachaHistory() {
   renderGachaHistory();
 }
 
-/* Vòng quay Gacha với hiệu ứng hoạt hình */
+/* Vòng quay Gacha */
 async function pullGacha() {
   const session = getSession();
   const cost = 30;
@@ -418,17 +422,117 @@ function renderStudentCollection() {
   });
 }
 
-/* Xem chi tiết Meme dành cho học sinh */
+/* Xem chi tiết Meme & Cơ chế Tặng Thẻ Dư */
 function openMemeViewModal(meme, count) {
   const modal = document.getElementById("view-meme-modal");
   if (!modal) return;
+
+  currentViewingMeme = meme;
 
   document.getElementById("view-meme-rarity").textContent = meme.rarity;
   document.getElementById("view-meme-count").textContent = `Sở hữu: x${count}`;
   document.getElementById("view-meme-img").src = meme.image;
   document.getElementById("view-meme-slogan").textContent = meme.slogan;
 
+  const shareBox = document.getElementById("view-meme-share-box");
+  const shareInputSection = document.getElementById("share-input-section");
+  const targetInput = document.getElementById("target-student-username");
+  const shareNotice = document.getElementById("share-notice");
+
+  // Reset form chia sẻ
+  if (shareInputSection) shareInputSection.style.display = "none";
+  if (targetInput) targetInput.value = "";
+  if (shareNotice) {
+    shareNotice.textContent = "";
+    shareNotice.style.color = "";
+  }
+
+  // Điều kiện hiển thị nút chia sẻ: số lượng >= 2
+  if (shareBox) {
+    if (count >= 2) {
+      shareBox.style.display = "block";
+    } else {
+      shareBox.style.display = "none";
+    }
+  }
+
   modal.classList.add("show");
+}
+
+function toggleShareInput() {
+  const inputSec = document.getElementById("share-input-section");
+  if (inputSec) {
+    inputSec.style.display = inputSec.style.display === "none" ? "block" : "none";
+  }
+}
+
+async function confirmTransferCard() {
+  const session = getSession();
+  if (!session || !currentViewingMeme) return;
+
+  const targetInput = document.getElementById("target-student-username");
+  const noticeEl = document.getElementById("share-notice");
+  const btnConfirm = document.getElementById("btn-confirm-transfer");
+  const targetUsername = targetInput ? targetInput.value.trim() : "";
+
+  if (!targetUsername) {
+    noticeEl.textContent = "Vui lòng nhập tên tài khoản của bạn nhận!";
+    noticeEl.style.color = "#ef4444";
+    return;
+  }
+
+  btnConfirm.disabled = true;
+  noticeEl.textContent = "Đang kiểm tra tài khoản và gửi thẻ...";
+  noticeEl.style.color = "#2563eb";
+
+  try {
+    const res = await fetch("/.netlify/functions/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "transfer_meme",
+        sender_id: session.id,
+        recipient_username: targetUsername,
+        meme_id: currentViewingMeme.id
+      })
+    });
+    const result = await res.json();
+
+    if (!result.success) {
+      noticeEl.textContent = result.message || "Không thể tặng thẻ!";
+      noticeEl.style.color = "#ef4444";
+      btnConfirm.disabled = false;
+      return;
+    }
+
+    // Cập nhật lại kho thẻ của học sinh gửi
+    studentMemeIds = (result.data.updated_meme_id_list || []).map(id => Number(id));
+    const updatedCount = studentMemeIds.filter(id => id === Number(currentViewingMeme.id)).length;
+    
+    // Cập nhật số lượng trên giao diện modal
+    document.getElementById("view-meme-count").textContent = `Sở hữu: x${updatedCount}`;
+
+    noticeEl.textContent = result.message;
+    noticeEl.style.color = "#16a34a";
+    targetInput.value = "";
+
+    // Nếu sau khi tặng số lượng thẻ còn lại < 2 thì ẩn khung chia sẻ
+    if (updatedCount < 2) {
+      setTimeout(() => {
+        const shareBox = document.getElementById("view-meme-share-box");
+        if (shareBox) shareBox.style.display = "none";
+      }, 1500);
+    }
+
+    // Cập nhật lại toàn bộ bộ sưu tập
+    renderStudentCollection();
+
+  } catch (err) {
+    noticeEl.textContent = "Lỗi kết nối máy chủ!";
+    noticeEl.style.color = "#ef4444";
+  } finally {
+    btnConfirm.disabled = false;
+  }
 }
 
 function closeMemeViewModal() {
@@ -438,7 +542,7 @@ function closeMemeViewModal() {
   }
 }
 
-// Tự động xóa lịch sử quay gacha khi học sinh nhấn nút đăng xuất
+// Xóa lịch sử quay gacha khi đăng xuất
 document.querySelectorAll(".btn-logout-sm, [onclick*='logout']").forEach(btn => {
   btn.addEventListener("click", () => {
     sessionStorage.removeItem("gacha_session_history");
