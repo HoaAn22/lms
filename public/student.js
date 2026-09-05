@@ -20,6 +20,8 @@ function switchStudentTab(tabId) {
 
 let studentCoins = 100;
 let studentMemeIds = [];
+let studentMemesCache = [];
+let currentStudentFilter = 'ALL';
 
 async function loadStudentData() {
   const session = getSession();
@@ -205,7 +207,6 @@ async function endMiniGame() {
   }
 }
 
-// --- QUAY GACHA MEME THẬT ---
 async function pullGacha() {
   const session = getSession();
   const cost = 30;
@@ -256,7 +257,6 @@ async function pullGacha() {
   }
 }
 
-// --- TẢI VÀ HIỂN THỊ BỘ SƯU TẬP MEME (Có đếm số lượng sở hữu) ---
 async function loadStudentCollection() {
   const grid = document.getElementById("collection-grid");
   if (!grid) return;
@@ -276,41 +276,70 @@ async function loadStudentCollection() {
       return;
     }
 
-    const allMemes = result.data.memes;
-    grid.innerHTML = "";
-
-    allMemes.forEach(meme => {
-      // Đếm số lần xuất hiện của meme.id trong danh sách sở hữu của học sinh
-      const count = studentMemeIds.filter(id => id === Number(meme.id)).length;
-      const isUnlocked = count > 0;
-      
-      const card = document.createElement("div");
-      card.className = `meme-card-item ${isUnlocked ? '' : 'locked'}`;
-
-      if (isUnlocked) {
-        card.innerHTML = `
-          <div>
-            <span class="rarity-tag">${meme.rarity}</span>
-            <div class="meme-img-wrapper">
-              <img src="${meme.image}" alt="Meme">
-              <span class="meme-count-badge">x${count}</span>
-            </div>
-          </div>
-          <div class="meme-slogan">${meme.slogan}</div>
-        `;
-      } else {
-        card.innerHTML = `
-          <div>
-            <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
-            <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
-          </div>
-          <div class="meme-slogan" style="color: #94a3b8; font-style: italic;">Chưa mở khóa</div>
-        `;
-      }
-      grid.appendChild(card);
-    });
+    studentMemesCache = result.data.memes;
+    renderStudentCollection();
 
   } catch (err) {
     grid.innerHTML = `<p style="color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
   }
+}
+
+function filterStudentMemes(rarity, btnElement) {
+  currentStudentFilter = rarity;
+  document.querySelectorAll("#student-filter-bar .filter-btn").forEach(b => b.classList.remove("active"));
+  if (btnElement) btnElement.classList.add("active");
+  renderStudentCollection();
+}
+
+function renderStudentCollection() {
+  const grid = document.getElementById("collection-grid");
+  if (!grid) return;
+
+  const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
+
+  let sorted = [...studentMemesCache].sort((a, b) => {
+    let rA = rarityOrder[a.rarity] || 99;
+    let rB = rarityOrder[b.rarity] || 99;
+    return rA - rB;
+  });
+
+  if (currentStudentFilter !== 'ALL') {
+    sorted = sorted.filter(m => m.rarity === currentStudentFilter);
+  }
+
+  if (sorted.length === 0) {
+    grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Không có meme nào thuộc độ hiếm này.</p>`;
+    return;
+  }
+
+  grid.innerHTML = "";
+  sorted.forEach(meme => {
+    const count = studentMemeIds.filter(id => id === Number(meme.id)).length;
+    const isUnlocked = count > 0;
+    
+    const card = document.createElement("div");
+    card.className = `meme-card-item ${isUnlocked ? '' : 'locked'}`;
+
+    if (isUnlocked) {
+      card.innerHTML = `
+        <div>
+          <span class="rarity-tag">${meme.rarity}</span>
+          <div class="meme-img-wrapper">
+            <img src="${meme.image}" alt="Meme">
+            <span class="meme-count-badge">x${count}</span>
+          </div>
+        </div>
+        <div class="meme-slogan">${meme.slogan}</div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div>
+          <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
+          <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
+        </div>
+        <div class="meme-slogan" style="color: #94a3b8; font-style: italic;">Chưa mở khóa</div>
+      `;
+    }
+    grid.appendChild(card);
+  });
 }

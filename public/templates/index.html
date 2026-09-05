@@ -212,7 +212,7 @@
 
         const result = await res.json();
 
-        // Xử lý khi tài khoản bị trùng hoặc lỗi từ server[cite: 2]
+        // Xử lý khi tài khoản bị trùng hoặc lỗi từ server
         if (!res.ok || !result.success) {
           regStatus.className = "status-msg status-error";
           regStatus.textContent = result.message || "Tài khoản này đã tồn tại trong hệ thống! Vui lòng chọn tên tài khoản khác.";

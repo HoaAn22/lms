@@ -12,7 +12,10 @@
     .data-table tr:hover { background-color: #f1f5f9; }
     .badge-coin { background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; display: inline-block; }
     .school-management-box { display: flex; flex-direction: column; gap: 8px; }
-    .school-row-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    .school-row-item { display: flex; flex-direction: column; background: #fff; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    .school-row-main { display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; }
+    .school-dropdown-actions { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; align-items: center; gap: 10px; }
+    .school-dropdown-actions.show { display: flex; }
     
     .card-header-collapse {
       display: flex;
@@ -23,13 +26,14 @@
     }
     .card-body-collapsible {
       transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-      overflow: hidden;
+      overflow: visible;
     }
     .card-body-collapsible.collapsed {
       max-height: 0 !important;
       opacity: 0;
       margin: 0 !important;
       padding: 0 !important;
+      overflow: hidden;
     }
     
     .password-wrapper {
@@ -87,38 +91,68 @@
       border-radius: 6px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       display: none;
-      z-index: 100;
-      max-height: 220px;
+      z-index: 999;
+      max-height: 145px;
       overflow-y: auto;
-      padding: 6px 0;
       margin-top: 4px;
     }
     .dropdown-list.show {
       display: block;
     }
     .dropdown-item {
-      padding: 8px 12px;
+      padding: 10px 10px 0px 10px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
       cursor: pointer;
       font-size: 14px;
-      color: #334155;
+      color: #1e293b;
       user-select: none;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    .form-group label.dropdown-item {
+      margin-bottom: 0;
+    }
+    .dropdown-item:last-child {
+      border-bottom: none;
     }
     .dropdown-item:hover {
       background: #f1f5f9;
     }
-    .dropdown-item input {
+    .dropdown-item input[type="checkbox"] {
       cursor: pointer;
+      position: relative;
+      top: -15px;
+      right: 80px;
+      margin: 0;
     }
 
-    /* CSS cho lưới bộ sưu tập admin */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
     .admin-meme-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 12px;
-      margin-top: 12px;
     }
     .admin-meme-card {
       background: #fff;
@@ -143,11 +177,11 @@
     <aside class="sidebar collapsed" id="admin-sidebar">
       <div class="sidebar-brand"><h3>MENU</h3></div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" onclick="switchTab('tab-create-user')">➕ Tạo tài khoản</button>
-        <button class="nav-item" onclick="switchTab('tab-student-list')">👥 Danh sách học sinh</button>
-        <button class="nav-item" onclick="switchTab('tab-exam')">📝 Ngân hàng đề thi</button>
+        <button class="nav-item active" onclick="switchTab('tab-school-manage')">🏫 Quản lý trường học</button>
+        <button class="nav-item" onclick="switchTab('tab-student-manage')">👥 Quản lý học sinh</button>
+        <button class="nav-item" onclick="switchTab('tab-exam')">📝 Quản lý đề thi</button>
         <button class="nav-item" onclick="switchTab('tab-grading')">📊 Bảng điểm & Thống kê</button>
-        <button class="nav-item" onclick="switchTab('tab-assignment')">📚 Giao bài tập</button>
+        <button class="nav-item" onclick="switchTab('tab-collection')">🖼️ Quản lý phần thưởng</button>
         <button class="nav-item" onclick="switchTab('tab-settings')">⚙️ Cài đặt hệ thống</button>
       </nav>
     </aside>
@@ -166,35 +200,118 @@
 
       <section class="content-body">
         
-        <!-- TAB 1: Tạo tài khoản học sinh & Quản lý trường học -->
-        <div id="tab-create-user" class="tab-panel active">
-          
+        <!-- TAB QUẢN LÝ TRƯỜNG -->
+        <div id="tab-school-manage" class="tab-panel active">
           <div class="card form-container mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-            <div class="card-header-collapse" onclick="toggleCardBody('school-card-body', 'school-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Quản lý trường</h3>
-              <span id="school-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="margin: 0; font-size: 18px; color: #1e293b;">🏫 Quản Lý Trường Học</h3>
             </div>
 
-            <div id="school-card-body" class="card-body-collapsible" style="max-height: 1000px; margin-top: 16px;">
-              <form id="create-school-form" style="margin-bottom: 16px;">
-                <div style="display: flex; gap: 12px; align-items: flex-end;">
-                  <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                    <label for="new-school-name-input">Thêm trường mới:</label>
-                    <input type="text" id="new-school-name-input" required>
-                  </div>
-                  <button type="submit" class="btn btn-primary" style="height: 41px;">Tạo trường</button>
+            <form id="create-school-form" style="margin-bottom: 16px;">
+              <div style="display: flex; gap: 12px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label for="new-school-name-input">Thêm trường mới:</label>
+                  <input type="text" id="new-school-name-input" required>
                 </div>
-              </form>
-              <p id="school-create-status" class="status-msg" style="margin-bottom: 12px;"></p>
+                <button type="submit" class="btn btn-primary" style="height: 41px;">Tạo trường</button>
+              </div>
+            </form>
+            <p id="school-create-status" class="status-msg" style="margin-bottom: 12px;"></p>
 
-              <div class="form-group" style="margin-bottom: 0;">
-                <div style="display: flex; justify-content: left; align-items: center; margin-bottom: 6px;">
-                  <span style="font-weight: 600; color: #334155;">Danh sách trường:</span>
-                  <button type="button" onclick="refreshSchools()" style="background: #ffffff; border: 1px solid #2563eb; color: #2563eb; height: 28px; padding: 0 10px; font-size: 12px; font-weight: 500; border-radius: 4px; cursor: pointer; margin-left: 10px; transition: background 0.2s;">🔄 Làm mới</button>
+            <div class="form-group" style="margin-bottom: 0;">
+              <div style="margin-bottom: 6px;">
+                <span style="font-weight: 600; color: #334155;">Danh sách trường:</span>
+              </div>
+              <div id="schools-management-list" class="school-management-box" style="max-height: 400px; overflow-y: auto;">
+                <div style="color: #64748b; font-size: 13px; padding: 4px;">Đang tải danh sách trường...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB QUẢN LÝ HỌC SINH -->
+        <div id="tab-student-manage" class="tab-panel">
+          <div class="card mb-4">
+            <div class="card-header-collapse" onclick="toggleCardBody('search-student-body', 'search-student-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Tra cứu danh sách học sinh</h3>
+              <span id="search-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+            </div>
+
+            <div id="search-student-body" class="card-body-collapsible" style="max-height: 2000px; margin-top: 16px; opacity: 1;">
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="filter-school-select">Chọn trường học:</label>
+                  <select id="filter-school-select">
+                    <option value="" disabled selected hidden>-- Chọn trường học --</option>
+                  </select>
                 </div>
-                <div id="schools-management-list" class="school-management-box" style="max-height: 180px; overflow-y: auto;">
-                  <div style="color: #64748b; font-size: 13px; padding: 4px;">Đang tải danh sách trường...</div>
+                <div class="form-group">
+                  <label for="filter-class-input">Lớp:</label>
+                  <input type="text" id="filter-class-input" style="text-transform: uppercase;">
                 </div>
+              </div>
+              
+              <div class="grid-2 mt-2">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="sort-select">Sắp xếp theo:</label>
+                  <select id="sort-select" onchange="sortAndRenderStudents()">
+                    <option value="name-az">Tên (A - Z)</option>
+                    <option value="name-za">Tên (Z - A)</option>
+                    <option value="score-desc">Điểm trung bình (Cao → Thấp)</option>
+                    <option value="score-asc">Điểm trung bình (Thấp → Cao)</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Hiển thị cột:</label>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="custom-dropdown" id="column-dropdown">
+                      <button type="button" class="dropdown-select-btn" onclick="toggleDropdownMenu(event)">
+                        <span id="dropdown-label">-- Hiển thị tất cả (Mặc định) --</span>
+                        <span>▼</span>
+                      </button>
+                      <div class="dropdown-list" id="dropdown-list-items">
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>STT</span><input type="checkbox" class="col-toggler" data-col="0" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Họ</span><input type="checkbox" class="col-toggler" data-col="1" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tên</span><input type="checkbox" class="col-toggler" data-col="2" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Họ và tên</span><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tài khoản</span><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Mật khẩu</span><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Lớp</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Điểm TB</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Coins</span><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="9" onchange="applyColumnVisibility()"></label>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="clearColumnFilter()" style="height: 41px; padding: 0 14px;" title="Xóa bộ lọc cột">Xóa</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 mb-4">
+                <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+              </div>
+
+              <div style="overflow-x: auto; padding: 0;">
+                <table class="data-table" id="student-table">
+                  <thead>
+                    <tr>
+                      <th data-col="0">STT</th>
+                      <th data-col="1">Họ</th>
+                      <th data-col="2">Tên</th>
+                      <th data-col="3">Họ và tên</th>
+                      <th data-col="4">Tài khoản</th>
+                      <th data-col="5">Mật khẩu</th>
+                      <th data-col="6">Lớp</th>
+                      <th data-col="7">Điểm TB</th>
+                      <th data-col="8">Coins</th>
+                      <th data-col="9">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="student-list-body">
+                    <tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -253,139 +370,72 @@
           </div>
         </div>
 
-        <!-- TAB 2: Danh sách học sinh -->
-        <div id="tab-student-list" class="tab-panel">
-          <div class="card mb-4">
-            <h3 style="margin-bottom: 16px;">Tra cứu danh sách học sinh</h3>
-            <div class="grid-2">
-              <div class="form-group">
-                <label for="filter-school-select">Chọn trường học:</label>
-                <select id="filter-school-select">
-                  <option value="" disabled selected hidden>-- Chọn trường học --</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="filter-class-input">Lớp:</label>
-                <input type="text" id="filter-class-input" style="text-transform: uppercase;">
-              </div>
+        <!-- TAB BỘ SƯU TẬP MEME -->
+        <div id="tab-collection" class="tab-panel">
+          <div class="card form-container mb-4">
+            <div class="card-header-collapse" onclick="toggleCardBody('meme-manage-card-body-col', 'meme-manage-toggle-icon-col')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🎁 Quản lý phần thưởng</h3>
+              <span id="meme-manage-toggle-icon-col" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
             </div>
-            
-            <div class="grid-2 mt-2">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label for="sort-select">Sắp xếp theo:</label>
-                <select id="sort-select" onchange="sortAndRenderStudents()">
-                  <option value="name-az">Tên (A - Z)</option>
-                  <option value="name-za">Tên (Z - A)</option>
-                  <option value="score-desc">Điểm trung bình (Cao → Thấp)</option>
-                  <option value="score-asc">Điểm trung bình (Thấp → Cao)</option>
-                </select>
-              </div>
 
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>Hiển thị cột:</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <div class="custom-dropdown" id="column-dropdown">
-                    <button type="button" class="dropdown-select-btn" onclick="toggleDropdownMenu(event)">
-                      <span id="dropdown-label">-- Hiển thị tất cả (Mặc định) --</span>
-                      <span>▼</span>
-                    </button>
-                    <div class="dropdown-list" id="dropdown-list-items">
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="0" onchange="applyColumnVisibility()"> STT</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="1" onchange="applyColumnVisibility()"> Họ</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="2" onchange="applyColumnVisibility()"> Tên</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"> Họ và tên</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"> Tài khoản</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"> Mật khẩu</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"> Lớp</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"> Điểm TB</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"> Coins</label>
-                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="9" onchange="applyColumnVisibility()"> Thao tác</label>
-                    </div>
-                  </div>
-                  <button type="button" class="btn btn-secondary" onclick="clearColumnFilter()" style="height: 41px; padding: 0 14px;" title="Xóa bộ lọc cột">Xóa</button>
+            <div id="meme-manage-card-body-col" class="card-body-collapsible" style="max-height: 1500px; margin-top: 16px; opacity: 1;">
+              <form id="add-meme-form-col" onsubmit="submitMemeForm(event)">
+                <div class="form-group">
+                  <label for="meme-image-file-col">Tải ảnh Meme lên:</label>
+                  <input type="file" id="meme-image-file-col" accept="image/*" required style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #fff;">
                 </div>
-              </div>
+                <div class="form-group">
+                  <label for="meme-slogan-col">Slogan Text:</label>
+                  <input type="text" id="meme-slogan-col" placeholder="VD: Lên đỉnh cao trí tuệ..." required>
+                </div>
+                <div class="form-group">
+                  <label for="meme-rarity-col">Độ hiếm:</label>
+                  <select id="meme-rarity-col" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                    <option value="" disabled selected hidden>-- Chọn độ hiếm --</option>
+                    <option value="C">C (Phổ biến)</option>
+                    <option value="B">B (Khá)</option>
+                    <option value="A">A (Hiếm)</option>
+                    <option value="S">S (Cực hiếm)</option>
+                    <option value="SS">SS (Huyền thoại)</option>
+                  </select>
+                </div>
+                <button type="submit" id="btn-submit-meme-col" class="btn btn-success mt-2">💾 Lưu Meme Vào Hệ Thống</button>
+              </form>
+              <p id="meme-status-msg-col" class="status-msg mt-2"></p>
             </div>
-
-            <div class="mt-4">
-              <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
-            </div>
           </div>
 
-          <div class="card" style="overflow-x: auto; padding: 0;">
-            <table class="data-table" id="student-table">
-              <thead>
-                <tr>
-                  <th data-col="0">STT</th>
-                  <th data-col="1">Họ</th>
-                  <th data-col="2">Tên</th>
-                  <th data-col="3">Họ và tên</th>
-                  <th data-col="4">Tài khoản</th>
-                  <th data-col="5">Mật khẩu</th>
-                  <th data-col="6">Lớp</th>
-                  <th data-col="7">Điểm TB</th>
-                  <th data-col="8">Coins</th>
-                  <th data-col="9">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="student-list-body">
-                <tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 3: Ngân hàng đề thi & Thêm phần thưởng (meme) + Bộ sưu tập admin -->
-        <div id="tab-exam" class="tab-panel">
-          <!-- 1. Thêm phần thưởng -->
-          <div class="card mb-4">
-            <h3 style="margin-bottom: 16px;">🎁 Thêm phần thưởng (Meme Gacha)</h3>
-            <form id="add-meme-form">
-              <div class="form-group">
-                <label for="meme-image-file">Tải ảnh Meme lên:</label>
-                <input type="file" id="meme-image-file" accept="image/*" required style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #fff;">
-              </div>
-              <div class="form-group">
-                <label for="meme-slogan">Slogan Text:</label>
-                <input type="text" id="meme-slogan" placeholder="VD: Lên đỉnh cao trí tuệ..." required>
-              </div>
-              <div class="form-group">
-                <label for="meme-rarity">Độ hiếm:</label>
-                <select id="meme-rarity" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
-                  <option value="" disabled selected hidden>-- Chọn độ hiếm --</option>
-                  <option value="C">C (Phổ biến)</option>
-                  <option value="B">B (Khá)</option>
-                  <option value="A">A (Hiếm)</option>
-                  <option value="S">S (Cực hiếm)</option>
-                  <option value="SS">SS (Huyền thoại)</option>
-                </select>
-              </div>
-              <button type="submit" id="btn-submit-meme" class="btn btn-success mt-2">💾 Lưu Meme Vào Hệ Thống</button>
-            </form>
-            <p id="meme-status-msg" class="status-msg mt-2"></p>
-          </div>
-
-          <!-- 2. Thẻ Bộ Sưu Tập Meme (Mặc định thu gọn) -->
-          <div class="card" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="card">
             <div class="card-header-collapse" onclick="toggleCardBody('admin-collection-body', 'admin-collection-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🖼️ Bộ Sưu Tập Meme Trong Hệ Thống</h3>
               <span id="admin-collection-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
 
             <div id="admin-collection-body" class="card-body-collapsible collapsed" style="max-height: 0; opacity: 0; margin: 0; padding: 0;">
-              <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-                <button type="button" onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Tải lại bộ sưu tập</button>
+              <div style="display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 8px;">
+                <button onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
               </div>
-              <div class="admin-meme-grid" id="admin-meme-grid-container">
-                <div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Nhấn vào mũi tên để xem danh sách meme...</div>
+              <p class="section-desc">Danh sách toàn bộ meme có trong hệ thống gacha.</p>
+              
+              <div class="filter-bar mt-2" id="admin-filter-bar">
+                <button class="filter-btn active" onclick="filterAdminMemes('ALL', this)">Tất cả</button>
+                <button class="filter-btn" onclick="filterAdminMemes('SS', this)">SS</button>
+                <button class="filter-btn" onclick="filterAdminMemes('S', this)">S</button>
+                <button class="filter-btn" onclick="filterAdminMemes('A', this)">A</button>
+                <button class="filter-btn" onclick="filterAdminMemes('B', this)">B</button>
+                <button class="filter-btn" onclick="filterAdminMemes('C', this)">C</button>
+              </div>
+
+              <div class="admin-meme-grid mt-2" id="admin-meme-grid-container">
+                <div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải danh sách...</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Báo Cáo & Thống Kê</h4></div></div>
-        <div id="tab-assignment" class="tab-panel"><div class="placeholder-card"><h4>Giao Bài Tập</h4></div></div>
-        <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài Đặt Hệ Thống</h4></div></div>
+        <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Quản lý đề thi</h4></div></div>
+        <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Bảng điểm & Thống kê</h4></div></div>
+        <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài đặt hệ thống</h4></div></div>
       </section>
 
       <footer class="site-footer">
@@ -395,7 +445,7 @@
           <div class="footer-main-info">
             <ul class="footer-info">
               <li><strong>Tác giả:</strong> Trần Hòa Ân[cite: 1]</li>
-              <li><strong>Email:</strong> antran.teacher@gmail.com[cite: 1]</li>
+              <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com[cite: 1]</li>
             </ul>
             <div class="footer-copyright">&copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.[cite: 1]</div>
           </div>
@@ -451,14 +501,10 @@
         bodyEl.style.padding = '0';
       } else {
         iconEl.textContent = '▼';
-        bodyEl.style.maxHeight = '1500px';
+        bodyEl.style.maxHeight = '2000px';
         bodyEl.style.opacity = '1';
         bodyEl.style.margin = '16px 0 0 0';
         bodyEl.style.padding = '0';
-        // Tự động tải dữ liệu khi mở card bộ sưu tập
-        if (bodyId === 'admin-collection-body') {
-          loadAdminMemeCollection();
-        }
       }
     }
 
@@ -475,13 +521,15 @@
 
     let currentSchoolsData = [];
     let cachedStudentsList = [];
+    let adminMemesCache = [];
+    let currentAdminFilter = 'ALL';
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".sidebar-nav .nav-item").forEach(b => b.classList.remove("active"));
       document.getElementById(tabId).classList.add("active");
       
-      const clickedBtn = Array.from(document.querySelectorAll(".nav-item")).find(b => 
+      const clickedBtn = Array.from(document.querySelectorAll(".sidebar-nav .nav-item")).find(b => 
         b.getAttribute("onclick") && b.getAttribute("onclick").includes(tabId)
       );
       if (clickedBtn) clickedBtn.classList.add("active");
@@ -489,6 +537,10 @@
       sessionStorage.setItem("teacher_active_tab", tabId);
 
       if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
+
+      if (tabId === 'tab-collection') {
+        loadAdminMemeCollection();
+      }
     }
 
     const savedTab = sessionStorage.getItem("teacher_active_tab");
@@ -514,6 +566,7 @@
       currentSchoolsData.forEach(school => {
         const schoolName = school.name || school; 
         const isHidden = school.is_hidden || false;
+        const idSafe = schoolName.replace(/[^a-zA-Z0-9]/g, '_');
         const isExamLocked = school.is_exam_locked || false;
 
         const opt1 = document.createElement("option");
@@ -529,34 +582,79 @@
         const itemDiv = document.createElement("div");
         itemDiv.className = "school-row-item";
         itemDiv.innerHTML = `
-          <span style="font-weight: 500; color: ${isHidden ? '#94a3b8' : '#1e293b'}">
-            ${schoolName} ${isHidden ? '<span style="color:#ef4444; font-size:12px;">(Đang ẩn)</span>' : '<span style="color:#10b981; font-size:12px;">(Đang hiện)</span>'}
-          </span>
-          <div style="display: flex; gap: 6px;">
-            <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
-              ${isExamLocked ? '🔒 Mở khóa bài' : '🔓 Khóa bài'}
-            </button>
-            <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
-              ${isHidden ? '👁️ Hiện trường' : '🚫 Ẩn trường'}
-            </button>
+          <div class="school-row-main" onclick="toggleSchoolActions('${idSafe}')">
+            <span style="font-weight: 500; color: ${isHidden ? '#94a3b8' : '#1e293b'}">
+              ${schoolName} ${isHidden ? '<span style="color:#ef4444; font-size:12px;">(Đang ẩn)</span>' : '<span style="color:#10b981; font-size:12px;">(Đang hiện)</span>'}
+            </span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="display: flex; gap: 6px;" onclick="event.stopPropagation()">
+                <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
+                  ${isExamLocked ? '🔒 Đang khóa bài thi' : '🔓 Đang mở bài thi'}
+                </button>
+                <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
+                  ${isHidden ? '👁️ Hiện' : '🚫 Ẩn'}
+                </button>
+              </div>
+              <span title="Tùy chọn xóa trường" style="font-weight: bold; cursor: pointer; padding: 0 6px; color: #64748b; font-size: 16px;">...</span>
+            </div>
+          </div>
+          <div class="school-dropdown-actions" id="actions-${idSafe}">
+            <input type="password" id="del-pwd-${idSafe}" placeholder="Nhập mật khẩu giáo viên để xóa..." style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <button type="button" onclick="verifyAndDeleteSchool('${schoolName}', '${idSafe}')" class="btn" style="background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer;">🗑️ Xác nhận xóa</button>
           </div>
         `;
         schoolsManagementList.appendChild(itemDiv);
       });
     }
 
-    async function loadSchools(forceRefresh = false) {
-      const cachedSchools = sessionStorage.getItem("cached_schools_list");
-      if (cachedSchools && !forceRefresh) {
-        renderSchoolDropdown(JSON.parse(cachedSchools));
+    function toggleSchoolActions(idSafe) {
+      const actionsEl = document.getElementById(`actions-${idSafe}`);
+      if (actionsEl) {
+        actionsEl.classList.toggle('show');
+      }
+    }
+
+    async function verifyAndDeleteSchool(schoolName, idSafe) {
+      const pwdInput = document.getElementById(`del-pwd-${idSafe}`);
+      const password = pwdInput ? pwdInput.value.trim() : "";
+
+      if (!password) {
+        alert("Vui lòng nhập mật khẩu tài khoản giáo viên để tiếp tục!");
+        return;
+      }
+
+      if (!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn trường "${schoolName}" không?`)) {
         return;
       }
 
       try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete_school",
+            school: schoolName,
+            teacher_username: user.username,
+            password: password
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message);
+          loadSchools();
+        } else {
+          alert(result.message || "Xóa trường thất bại!");
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    async function loadSchools() {
+      try {
         const res = await fetch("/.netlify/functions/auth");
         const result = await res.json();
         if (result.success && result.data.schools) {
-          sessionStorage.setItem("cached_schools_list", JSON.stringify(result.data.schools));
           renderSchoolDropdown(result.data.schools);
         }
       } catch (err) {
@@ -565,8 +663,7 @@
     }
 
     function refreshSchools() {
-      sessionStorage.removeItem("cached_schools_list");
-      loadSchools(true);
+      loadSchools();
     }
 
     async function toggleSchoolStatus(schoolName, currentHiddenStatus) {
@@ -579,7 +676,7 @@
         });
         const result = await res.json();
         if (result.success) {
-          refreshSchools();
+          loadSchools();
         } else {
           alert(result.message);
         }
@@ -598,7 +695,7 @@
         });
         const result = await res.json();
         if (result.success) {
-          refreshSchools();
+          loadSchools();
         } else {
           alert(result.message);
         }
@@ -632,29 +729,28 @@
         schoolCreateStatus.className = "status-msg status-success";
         schoolCreateStatus.textContent = `🎉 Tạo thành công trường "${schoolName}"!`;
         createSchoolForm.reset();
-        refreshSchools(); 
+        loadSchools(); 
       } catch (err) {
         schoolCreateStatus.className = "status-msg status-error";
         schoolCreateStatus.textContent = "Lỗi kết nối đến máy chủ!";
       }
     });
 
-    // --- XỬ LÝ THÊM MEME PHẦN THƯỞNG ---
-    const addMemeForm = document.getElementById("add-meme-form");
-    const memeStatusMsg = document.getElementById("meme-status-msg");
+    const addMemeFormCol = document.getElementById("add-meme-form-col");
+    const memeStatusMsgCol = document.getElementById("meme-status-msg-col");
 
-    addMemeForm.addEventListener("submit", async (e) => {
+    async function submitMemeForm(e) {
       e.preventDefault();
-      memeStatusMsg.className = "status-msg";
-      memeStatusMsg.textContent = "Đang xử lý ảnh và lưu meme...";
+      memeStatusMsgCol.className = "status-msg";
+      memeStatusMsgCol.textContent = "Đang xử lý ảnh và lưu meme...";
 
-      const fileInput = document.getElementById("meme-image-file");
-      const slogan = document.getElementById("meme-slogan").value.trim();
-      const rarity = document.getElementById("meme-rarity").value;
+      const fileInput = document.getElementById("meme-image-file-col");
+      const slogan = document.getElementById("meme-slogan-col").value.trim();
+      const rarity = document.getElementById("meme-rarity-col").value;
 
       if (!fileInput.files || fileInput.files.length === 0) {
-        memeStatusMsg.className = "status-msg status-error";
-        memeStatusMsg.textContent = "Vui lòng chọn file ảnh meme!";
+        memeStatusMsgCol.className = "status-msg status-error";
+        memeStatusMsgCol.textContent = "Vui lòng chọn file ảnh meme!";
         return;
       }
 
@@ -678,25 +774,24 @@
 
           const result = await res.json();
           if (!res.ok || !result.success) {
-            memeStatusMsg.className = "status-msg status-error";
-            memeStatusMsg.textContent = result.message || "Thêm meme thất bại!";
+            memeStatusMsgCol.className = "status-msg status-error";
+            memeStatusMsgCol.textContent = result.message || "Thêm meme thất bại!";
             return;
           }
 
-          memeStatusMsg.className = "status-msg status-success";
-          memeStatusMsg.textContent = "🎉 Thêm phần thưởng Meme thành công!";
-          addMemeForm.reset();
-          loadAdminMemeCollection(); // Tự động làm mới danh sách bộ sưu tập
+          memeStatusMsgCol.className = "status-msg status-success";
+          memeStatusMsgCol.textContent = "🎉 Thêm phần thưởng Meme thành công!";
+          addMemeFormCol.reset();
+          loadAdminMemeCollection();
         } catch (err) {
-          memeStatusMsg.className = "status-msg status-error";
-          memeStatusMsg.textContent = "Lỗi kết nối máy chủ!";
+          memeStatusMsgCol.className = "status-msg status-error";
+          memeStatusMsgCol.textContent = "Lỗi kết nối máy chủ!";
         }
       };
 
       reader.readAsDataURL(file);
-    });
+    }
 
-    // --- TẢI BỘ SƯU TẬP MEME CHO ADMIN (Hiển thị đầy đủ không khóa) ---
     async function loadAdminMemeCollection() {
       const container = document.getElementById("admin-meme-grid-container");
       container.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải danh sách meme...</div>`;
@@ -709,29 +804,57 @@
         });
         const result = await res.json();
 
-        if (!result.success || !result.data.memes || result.data.memes.length === 0) {
+        if (!result.success || !result.data.memes) {
           container.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Chưa có meme nào trong hệ thống.</p>`;
           return;
         }
 
-        const memes = result.data.memes;
-        container.innerHTML = "";
-
-        memes.forEach(meme => {
-          const card = document.createElement("div");
-          card.className = "admin-meme-card";
-          card.innerHTML = `
-            <div>
-              <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#2563eb; margin-bottom:4px;">${meme.rarity}</span>
-              <img src="${meme.image}" alt="Meme">
-            </div>
-            <div style="font-size: 12px; color: #334155; margin-top: 6px; font-weight: 500; word-break: break-word;">${meme.slogan}</div>
-          `;
-          container.appendChild(card);
-        });
+        adminMemesCache = result.data.memes;
+        renderAdminMemes();
       } catch (err) {
         container.innerHTML = `<p style="grid-column: span 3; text-align: center; color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
       }
+    }
+
+    function filterAdminMemes(rarity, btnElement) {
+      currentAdminFilter = rarity;
+      document.querySelectorAll("#admin-filter-bar .filter-btn").forEach(b => b.classList.remove("active"));
+      if (btnElement) btnElement.classList.add("active");
+      renderAdminMemes();
+    }
+
+    function renderAdminMemes() {
+      const container = document.getElementById("admin-meme-grid-container");
+      const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
+
+      let sorted = [...adminMemesCache].sort((a, b) => {
+        let rA = rarityOrder[a.rarity] || 99;
+        let rB = rarityOrder[b.rarity] || 99;
+        return rA - rB;
+      });
+
+      if (currentAdminFilter !== 'ALL') {
+        sorted = sorted.filter(m => m.rarity === currentAdminFilter);
+      }
+
+      if (sorted.length === 0) {
+        container.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Không có meme nào thuộc độ hiếm này.</p>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      sorted.forEach(meme => {
+        const card = document.createElement("div");
+        card.className = "admin-meme-card";
+        card.innerHTML = `
+          <div>
+            <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#2563eb; margin-bottom:4px;">${meme.rarity}</span>
+            <img src="${meme.image}" alt="Meme">
+          </div>
+          <div style="font-size: 12px; color: #334155; margin-top: 6px; font-weight: 500; word-break: break-word;">${meme.slogan}</div>
+        `;
+        container.appendChild(card);
+      });
     }
 
     async function fetchStudentList() {
@@ -909,7 +1032,7 @@
         createStatus.className = "status-msg status-success";
         createStatus.textContent = `Tạo thành công học sinh ${result.data.fullName}!`;
         createForm.reset();
-        refreshSchools();
+        loadSchools();
       } catch (err) {
         createStatus.className = "status-msg status-error";
         createStatus.textContent = "Lỗi kết nối khi gửi dữ liệu!";

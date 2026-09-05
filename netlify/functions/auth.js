@@ -113,7 +113,21 @@ exports.handler = async (event) => {
       });
     }
 
-    // Lấy toàn bộ danh sách meme trong hệ thống để phục vụ trang bộ sưu tập và gacha
+    if (action === "update_student_items") {
+      const { student_id, coins, meme_id_list } = body;
+      const updatePayload = {};
+      if (coins !== undefined) updatePayload.coins = coins;
+      if (meme_id_list !== undefined) updatePayload.meme_id_list = meme_id_list;
+
+      const { error } = await supabase
+        .from('items')
+        .update(updatePayload)
+        .eq('student_id', student_id);
+
+      if (error) return createResponse(false, null, "Lỗi cập nhật dữ liệu xu và meme.");
+      return createResponse(true, null, "Cập nhật thành công!");
+    }
+
     if (action === "get_all_memes") {
       let { data: memes, error } = await supabase.from('meme').select('*');
       if (error) return createResponse(false, null, "Lỗi lấy danh sách meme.");
@@ -136,7 +150,6 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Thêm phần thưởng Meme thành công!");
     }
 
-    // --- XỬ LÝ GACHA MEME THEO TỈ LỆ ---
     if (action === "pull_gacha") {
       const { student_id } = body;
       
@@ -160,14 +173,12 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Hệ thống chưa có dữ liệu meme để quay Gacha!");
       }
 
-      // Phân loại meme theo độ hiếm
       const poolSS = memesList.filter(m => m.rarity === 'SS');
       const poolS = memesList.filter(m => m.rarity === 'S');
       const poolA = memesList.filter(m => m.rarity === 'A');
       const poolB = memesList.filter(m => m.rarity === 'B');
       const poolC = memesList.filter(m => m.rarity === 'C');
 
-      // Quay random xác suất theo tỉ lệ: SS (1%), S (5%), A (10%), B (30%), C (50%)
       const roll = Math.random() * 100;
       let selectedPool = [];
       
@@ -175,7 +186,7 @@ exports.handler = async (event) => {
       else if (roll < 6 && poolS.length > 0) selectedPool = poolS;
       else if (roll < 16 && poolA.length > 0) selectedPool = poolA;
       else if (roll < 46 && poolB.length > 0) selectedPool = poolB;
-      else selectedPool = poolC.length > 0 ? poolC : memesList; // Fallback nếu thiếu nhóm
+      else selectedPool = poolC.length > 0 ? poolC : memesList;
 
       if (selectedPool.length === 0) selectedPool = memesList;
 
@@ -184,7 +195,6 @@ exports.handler = async (event) => {
       const newCoins = currentCoins - gachaCost;
       const currentInventoryIds = itemData.meme_id_list || [];
       
-      // Lưu ID meme vào danh sách (nếu chưa có thì thêm vào)
       let updatedInventoryIds = [...currentInventoryIds];
       if (!updatedInventoryIds.includes(randomMeme.id)) {
         updatedInventoryIds.push(randomMeme.id);
@@ -195,7 +205,7 @@ exports.handler = async (event) => {
         .update({ coins: newCoins, meme_id_list: updatedInventoryIds })
         .eq('student_id', student_id);
 
-      if (updateErr) return createResponse(false, null, "Lỗi lưu kết quả quay Gacha.");
+      if (updateErr) return createResponse(false, null, "Lỗi kết quả quay Gacha.");
 
       return createResponse(true, {
         coins: newCoins,
@@ -298,6 +308,32 @@ exports.handler = async (event) => {
         throw error;
       }
       return createResponse(true, null, "Tạo trường thành công!");
+    }
+
+    // --- TÍNH NĂNG XÓA TRƯỜNG KÈM XÁC THỰC MẬT KHẨU ---
+    if (action === "delete_school") {
+      const { school, teacher_username, password } = body;
+      
+      // Kiểm tra mật khẩu tài khoản giáo viên
+      const { data: adminData, error: adminErr } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('username', teacher_username)
+        .eq('password', password)
+        .single();
+
+      if (adminErr || !adminData) {
+        return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
+      }
+
+      // Xóa trường học khỏi bảng schools
+      const { error: deleteErr } = await supabase
+        .from('schools')
+        .delete()
+        .eq('name', school);
+
+      if (deleteErr) return createResponse(false, null, "Lỗi khi xóa trường học.");
+      return createResponse(true, null, `Đã xóa thành công trường "${school}"!`);
     }
 
     if (action === "save_score") {

@@ -69,6 +69,28 @@
       color: #fff;
       background: #2563eb;
     }
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
   </style>
 </head>
 <body>
@@ -219,8 +241,17 @@
             <h3>🖼️ Bộ Sưu Tập Meme Của Bạn</h3>
             <button onclick="loadStudentCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
           </div>
-          <p class="section-desc">Meme đã sở hữu sẽ hiển thị rõ hình ảnh và số lượng. Meme chưa mở khóa sẽ bị khóa.</p>
+          <p class="section-desc">Meme đã sở hữu hiển thị rõ hình ảnh và số lượng. Chọn thanh lọc bên dưới để xem theo độ hiếm.</p>
           
+          <div class="filter-bar mt-2" id="student-filter-bar">
+            <button class="filter-btn active" onclick="filterStudentMemes('ALL', this)">Tất cả</button>
+            <button class="filter-btn" onclick="filterStudentMemes('SS', this)">SS</button>
+            <button class="filter-btn" onclick="filterStudentMemes('S', this)">S</button>
+            <button class="filter-btn" onclick="filterStudentMemes('A', this)">A</button>
+            <button class="filter-btn" onclick="filterStudentMemes('B', this)">B</button>
+            <button class="filter-btn" onclick="filterStudentMemes('C', this)">C</button>
+          </div>
+
           <div class="meme-collection-grid mt-2" id="collection-grid">
             <div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải bộ sưu tập...</div>
           </div>
@@ -236,11 +267,11 @@
         <div class="footer-divider"></div>
         <div class="footer-main-info">
           <ul class="footer-info">
-            <li><strong>Tác giả:</strong> Trần Hòa Ân[cite: 1]</li>
-            <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com[cite: 1]</li>
+            <li><strong>Tác giả:</strong> Trần Hòa Ân</li>
+            <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com</li>
           </ul>
           <div class="footer-copyright">
-            &copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.[cite: 1]
+            &copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.
           </div>
         </div>
       </div>
