@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "question": "Thiết bị nào sau đây là thiết bị vào (Input Device)?",
+    "options": ["Màn hình", "Chuột", "Máy in", "Loa"],
+    "answer": 1
+  },
+  {
+    "id": 2,
+    "question": "Phím tắt dùng để sao chép văn bản trong hệ điều hành Windows là gì?",
+    "options": ["Ctrl + V", "Ctrl + X", "Ctrl + C", "Ctrl + Z"],
+    "answer": 2
+  },
+  {
+    "id": 3,
+    "question": "1 Byte bằng bao nhiêu Bit?",
+    "options": ["4 Bit", "8 Bit", "16 Bit", "32 Bit"],
+    "answer": 1
+  },
+  {
+    "id": 4,
+    "question": "Định dạng nào sau đây là định dạng tệp hình ảnh phổ biến?",
+    "options": [".mp3", ".docx", ".png", ".exe"],
+    "answer": 2
+  },
+  {
+    "id": 5,
+    "question": "Mạng máy tính toàn cầu được gọi là gì?",
+    "options": ["LAN", "WAN", "Internet", "Intranet"],
+    "answer": 2
+  }
+]

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LMS - Hệ thống quản lý học tập</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .view-section {
+      transition: opacity 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="center-wrapper">
+    <div class="card login-card">
+      
+      <!-- ================= GIAO DIỆN ĐĂNG NHẬP ================= -->
+      <div id="login-view" class="view-section">
+        <div class="login-header">
+          <h2>LMS</h2>
+          <em>Đăng nhập tài khoản để tiếp tục</em>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">Tài khoản</label>
+            <input type="text" id="username" placeholder="Nhập tài khoản" autocomplete="username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input type="password" id="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          </div>
+          <button type="submit" id="btn-login" class="btn btn-primary btn-block">Đăng Nhập</button>
+        </form>
+        <p id="error-msg" class="status-msg status-error"></p>
+        
+        <div class="text-center mt-4">
+          <a href="#" onclick="toggleView('register')" style="font-size: 14px; color: #2563eb; text-decoration: none; font-weight: 500;">
+            Chưa có tài khoản? Đăng ký ngay
+          </a>
+        </div>
+      </div>
+
+      <!-- ================= GIAO DIỆN ĐĂNG KÝ ================= -->
+      <div id="register-view" class="view-section hidden">
+        <div class="login-header">
+          <h2 style="color: #10b981;">Đăng Ký</h2>
+          <em>Tạo tài khoản học sinh mới</em>
+        </div>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="reg-school">Chọn trường học</label>
+            <select id="reg-school" required>
+              <option value="" disabled selected hidden>Đang tải danh sách trường...</option>
+            </select>
+          </div>
+          
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="reg-lastname">Họ và tên đệm</label>
+              <input type="text" id="reg-lastname" placeholder="VD: Nguyễn Văn" required oninput="formatNameInput(this)">
+            </div>
+            <div class="form-group">
+              <label for="reg-firstname">Tên</label>
+              <input type="text" id="reg-firstname" placeholder="VD: Ân" required oninput="formatNameInput(this)">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-class">Lớp học</label>
+            <input type="text" id="reg-class" placeholder="VD: 6A1" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="reg-username">Tài khoản (Tự chọn)</label>
+              <input type="text" id="reg-username" placeholder="VD: annguyen6a1" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-password">Mật khẩu</label>
+              <input type="password" id="reg-password" placeholder="Tạo mật khẩu" required>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-register" class="btn btn-success btn-block mt-2">Xác Nhận Đăng Ký</button>
+        </form>
+        <p id="reg-status-msg" class="status-msg"></p>
+        
+        <div class="text-center mt-4">
+          <a href="#" onclick="toggleView('login')" style="font-size: 14px; font-weight: 500; text-decoration: none; color: #10b981;">
+            ← Đã có tài khoản? Quay lại đăng nhập
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-signature">
+        <img src="/signature.png" alt="Chữ ký tác giả" onerror="this.style.display='none'">
+      </div>
+      <div class="footer-divider"></div>
+      <div class="footer-main-info">
+        <ul class="footer-info">
+          <li><strong>Tác giả:</strong> Trần Hòa Ân</li>
+          <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com</li>
+        </ul>
+        <div class="footer-copyright">
+          &copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/auth-guard.js"></script>
+  <script>
+    const currentSession = getSession();
+    if (currentSession) {
+      if (currentSession.role === "teacher") window.location.href = "/teacher";
+      else if (currentSession.role === "student") window.location.href = "/student";
+    }
+
+    function toggleView(viewName) {
+      const loginView = document.getElementById('login-view');
+      const registerView = document.getElementById('register-view');
+      
+      if (viewName === 'register') {
+        loginView.classList.add('hidden');
+        registerView.classList.remove('hidden');
+        loadSchoolsForRegistration(); 
+      } else {
+        registerView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+      }
+    }
+
+    function formatNameInput(input) {
+      let words = input.value.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        if (words[i].length > 0) {
+          words[i] = words[i][0].toUpperCase() + words[i].slice(1).toLowerCase();
+        }
+      }
+      input.value = words.join(" ");
+    }
+
+    async function loadSchoolsForRegistration() {
+      const select = document.getElementById('reg-school');
+      select.innerHTML = '<option value="" disabled selected hidden>Đang tải danh sách trường...</option>';
+      
+      try {
+        const res = await fetch("/.netlify/functions/auth");
+        const result = await res.json();
+        
+        if (result.success && result.data.schools) {
+          select.innerHTML = '<option value="" disabled selected hidden>-- Vui lòng chọn trường --</option>';
+          result.data.schools.forEach(school => {
+            if (!school.is_hidden) {
+              const opt = document.createElement("option");
+              opt.value = school.name;
+              opt.textContent = school.name;
+              select.appendChild(opt);
+            }
+          });
+        }
+      } catch (err) {
+        select.innerHTML = '<option value="" disabled selected hidden>Lỗi tải danh sách trường</option>';
+      }
+    }
+
+    const regForm = document.getElementById("register-form");
+    const regStatus = document.getElementById("reg-status-msg");
+    const btnRegister = document.getElementById("btn-register");
+
+    regForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      regStatus.className = "status-msg";
+      regStatus.textContent = "Đang kiểm tra thông tin đăng ký...";
+      btnRegister.disabled = true;
+
+      const school = document.getElementById("reg-school").value;
+      const lastName = document.getElementById("reg-lastname").value.trim();
+      const firstName = document.getElementById("reg-firstname").value.trim();
+      const className = document.getElementById("reg-class").value.trim();
+      const username = document.getElementById("reg-username").value.trim();
+      const password = document.getElementById("reg-password").value.trim();
+
+      if (!school) {
+        regStatus.className = "status-msg status-error";
+        regStatus.textContent = "Vui lòng chọn trường học!";
+        btnRegister.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "create_student",
+            school: school,
+            lastName: lastName,
+            firstName: firstName,
+            className: className,
+            username: username,
+            password: password
+          })
+        });
+
+        const result = await res.json();
+
+        // Xử lý khi tài khoản bị trùng hoặc lỗi từ server[cite: 2]
+        if (!res.ok || !result.success) {
+          regStatus.className = "status-msg status-error";
+          regStatus.textContent = result.message || "Tài khoản này đã tồn tại trong hệ thống! Vui lòng chọn tên tài khoản khác.";
+          btnRegister.disabled = false;
+          
+          const usernameInput = document.getElementById("reg-username");
+          usernameInput.focus();
+          usernameInput.select();
+          return;
+        }
+
+        regStatus.className = "status-msg status-success";
+        regStatus.textContent = "🎉 Đăng ký thành công! Đang tự động đăng nhập...";
+        
+        setTimeout(() => {
+          localStorage.setItem("user_session", JSON.stringify({
+            id: result.data.id,
+            username: result.data.username,
+            role: "student",
+            fullName: result.data.fullName,
+            lastName: result.data.lastName,
+            firstName: result.data.firstName,
+            className: result.data.className,
+            school: result.data.school
+          }));
+          window.location.href = "/student";
+        }, 1500);
+
+      } catch (err) {
+        regStatus.className = "status-msg status-error";
+        regStatus.textContent = "Lỗi kết nối máy chủ. Vui lòng thử lại!";
+        btnRegister.disabled = false;
+      }
+    });
+
+    const loginForm = document.getElementById("login-form");
+    const errorMsg = document.getElementById("error-msg");
+    const btnLogin = document.getElementById("btn-login");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+      btnLogin.disabled = true;
+      btnLogin.textContent = "Đang đăng nhập...";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "login", username, password })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          errorMsg.textContent = result.message || "Tên đăng nhập hoặc mật khẩu không đúng!";
+          resetLoginButton();
+          return;
+        }
+
+        const userData = result.data;
+        localStorage.setItem("user_session", JSON.stringify(userData));
+
+        if (userData.role === "teacher") {
+          window.location.href = "/teacher";
+        } else if (userData.role === "student") {
+          window.location.href = "/student";
+        }
+
+      } catch (err) {
+        errorMsg.textContent = "Không thể kết nối đến máy chủ.";
+        resetLoginButton();
+      }
+    });
+
+    function resetLoginButton() {
+      btnLogin.disabled = false;
+      btnLogin.textContent = "Đăng Nhập";
+    }
+  </script>
+</body>
+</html>

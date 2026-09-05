@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cổng Học Tập & Giải Trí Học Sinh</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/student.css">
+</head>
+<body>
+  <div class="student-app">
+    <header class="student-header">
+      <div class="brand">
+        <h2>🎒 Cổng Học Tập</h2>
+      </div>
+      <div class="user-stats">
+        <div class="stat-badge">
+          <span>🪙 Xu thưởng:</span>
+          <strong id="user-coins">0</strong>
+        </div>
+        <div class="user-profile">
+          <span id="header-student-name">Học sinh</span>
+          <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="student-nav">
+      <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
+      <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
+      <button class="nav-btn" id="btn-tab-minigame" onclick="switchStudentTab('tab-minigame')">🎮 Mini Game</button>
+      <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
+    </nav>
+
+    <main class="student-content">
+      <!-- 1. TỔNG QUAN & BẢNG ĐIỂM -->
+      <section id="tab-overview" class="tab-view active">
+        <div class="card info-banner">
+          <div class="profile-info">
+            <h3 id="stu-fullname">---</h3>
+            <p>Trường: <span id="stu-school">---</span> | Lớp: <span id="stu-class">---</span></p>
+          </div>
+          <div class="academic-summary">
+            <div class="summary-box">
+              <span>Điểm TB</span>
+              <strong id="average-score">--</strong>
+            </div>
+            <div class="summary-box">
+              <span>Xếp Loại</span>
+              <strong id="academic-rank">--</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3>📈 Bảng Tổng Kết 5 Cột Điểm</h3>
+            <button onclick="loadStudentScores()" class="btn btn-secondary btn-sm">🔄 Làm mới điểm</button>
+          </div>
+          <table class="score-table mt-2">
+            <thead>
+              <tr>
+                <th>Cột Điểm</th>
+                <th>Điểm Số</th>
+                <th>Đánh Giá</th>
+              </tr>
+            </thead>
+            <tbody id="score-table-body">
+              <tr><td colspan="3">Đang đồng bộ dữ liệu điểm...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. BÀI KIỂM TRA -->
+      <section id="tab-quizzes" class="tab-view">
+        <div class="card">
+          <h3>Danh Sách Bài Kiểm Tra</h3>
+          <p class="section-desc">Hoàn thành bài thi đạt điểm cao sẽ được cộng Xu để quay Gacha!</p>
+          
+          <div class="quiz-grid mt-2" id="quiz-container-box">
+            <div class="quiz-card-item" id="quiz-item-main">
+              <div class="quiz-badge">Trắc nghiệm</div>
+              <h4>Bài Kiểm Tra Định Kỳ 1</h4>
+              <p>Thời gian: Không giới hạn | 5 câu hỏi</p>
+              <p class="reward-hint">Thưởng: Lên tới +50 🪙</p>
+              <a href="/quiz" id="btn-do-quiz" class="btn btn-primary btn-block mt-2">Vào Làm Bài</a>
+            </div>
+
+            <div class="quiz-card-item disabled">
+              <div class="quiz-badge badge-locked">Sắp mở</div>
+              <h4>Bài Kiểm Tra Giữa Kỳ</h4>
+              <p>Thời gian: 45 phút | 40 câu hỏi</p>
+              <p class="reward-hint">Thưởng: +200 🪙</p>
+              <button class="btn btn-secondary btn-block mt-2" disabled>Chưa Mở</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. MINI GAME -->
+      <section id="tab-minigame" class="tab-view">
+        <div class="card">
+          <div class="card-header">
+            <h3>⚡ Đố Vui Nhanh: Thử Thách 30 Giây</h3>
+            <span class="game-timer" id="game-timer">30s</span>
+          </div>
+          <p class="section-desc">Mỗi câu trả lời đúng được cộng ngay <strong>10 Xu</strong>!</p>
+
+          <div id="game-intro" class="text-center py-4">
+            <p>Thử tài phản xạ với các phép tính cộng trừ nhân nhanh.</p>
+            <button onclick="startMiniGame()" class="btn btn-success mt-2">Bắt Đầu Thử Thách</button>
+          </div>
+
+          <div id="game-play" class="hidden">
+            <div class="game-question-box">
+              <h2 id="game-question">12 + 15 = ?</h2>
+            </div>
+            <div class="game-options-grid" id="game-options"></div>
+          </div>
+
+          <div id="game-over" class="hidden text-center py-4">
+            <h4>Hết Giờ!</h4>
+            <p>Số câu trả lời đúng: <strong id="game-score">0</strong></p>
+            <p>Xu nhận được: <strong id="game-coins-earned" class="text-success">+0 🪙</strong></p>
+            <button onclick="startMiniGame()" class="btn btn-primary mt-2">Chơi Lại</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. VÒNG QUAY GACHA -->
+      <section id="tab-gacha" class="tab-view">
+        <div class="card gacha-card">
+          <div class="gacha-header text-center">
+            <h3>🎰 Hòm Thẻ Bài May Mắn</h3>
+            <p>Chi phí: <strong>30 Xu / 1 Lượt Quay</strong></p>
+          </div>
+
+          <div class="gacha-stage">
+            <div id="gacha-box" class="gacha-box-animation">🎁</div>
+          </div>
+
+          <div class="text-center">
+            <button id="btn-pull-gacha" onclick="pullGacha()" class="btn btn-success btn-lg">Quay 1 Lần (30 🪙)</button>
+          </div>
+
+          <hr class="divider mt-4">
+
+          <h4>Bộ Sưu Tập Linh Thú & Vật Phẩm Đã Nhận:</h4>
+          <div class="inventory-grid mt-2" id="inventory-grid"></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-signature">
+          <img src="/signature.png" alt="Chữ ký tác giả" onerror="this.style.display='none'">
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-main-info">
+          <ul class="footer-info">
+            <li><strong>Tác giả:</strong> Trần Hòa Ân[cite: 1]</li>
+            <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com[cite: 1]</li>
+          </ul>
+          <div class="footer-copyright">
+            &copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.[cite: 1]
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/auth-guard.js"></script>
+  <script src="/student.js"></script>
+  <script>
+    // Hàm chuyển tab tùy chỉnh có lưu trạng thái tạm thời vào sessionStorage
+    function switchStudentTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
+      document.querySelectorAll('.student-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+
+      const targetBtn = document.getElementById('btn-' + tabId);
+      if (targetBtn) targetBtn.classList.add('active');
+
+      sessionStorage.setItem('student_active_tab', tabId);
+    }
+
+    // Khôi phục tab trước đó khi trang được tải lại
+    const savedStudentTab = sessionStorage.getItem('student_active_tab');
+    if (savedStudentTab && document.getElementById(savedStudentTab)) {
+      switchStudentTab(savedStudentTab);
+    }
+
+    // Kiểm tra trạng thái khóa bài thi từ giáo viên
+    async function checkStudentExamLockStatus() {
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_exam_status" })
+        });
+        const result = await res.json();
+        if (result.success && result.data.is_locked) {
+          const quizItem = document.getElementById("quiz-item-main");
+          if (quizItem) {
+            quizItem.innerHTML = `
+              <div class="quiz-badge badge-locked">Đã khóa</div>
+              <h4>Bài Kiểm Tra Định Kỳ 1</h4>
+              <p style="color: #ef4444; font-weight: bold; margin-top: 12px; font-size: 16px;">🔒 Bài thi đang khóa</p>
+            `;
+            quizItem.classList.add("disabled");
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi kiểm tra trạng thái bài thi");
+      }
+    }
+
+    checkStudentExamLockStatus();
+  </script>
+</body>
+</html>

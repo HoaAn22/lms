@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng Điều Khiển Giáo Viên</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table th, .data-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    .data-table th { background-color: #f8fafc; font-weight: 600; color: #334155; }
+    .data-table tr:hover { background-color: #f1f5f9; }
+    .badge-coin { background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; display: inline-block; }
+    .school-management-box { display: flex; flex-direction: column; gap: 8px; }
+    .school-row-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    
+    .card-header-collapse {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .card-body-collapsible {
+      transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+      overflow: hidden;
+    }
+    .card-body-collapsible.collapsed {
+      max-height: 0 !important;
+      opacity: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .password-wrapper input {
+      width: 100%;
+      padding-right: 40px !important;
+      box-sizing: border-box;
+    }
+    .toggle-password-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #64748b;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* CSS cho Dropdown tích chọn cột tùy chỉnh và nút Xóa */
+    .custom-dropdown {
+      position: relative;
+      flex: 1;
+    }
+    .dropdown-select-btn {
+      width: 100%;
+      padding: 9px 12px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 6px 0;
+      margin-top: 4px;
+    }
+    .dropdown-list.show {
+      display: block;
+    }
+    .dropdown-item {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #334155;
+      user-select: none;
+    }
+    .dropdown-item:hover {
+      background: #f1f5f9;
+    }
+    .dropdown-item input {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar collapsed" id="admin-sidebar">
+      <div class="sidebar-brand"><h3>MENU</h3></div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="switchTab('tab-create-user')">➕ Tạo tài khoản</button>
+        <button class="nav-item" onclick="switchTab('tab-student-list')">👥 Danh sách học sinh</button>
+        <button class="nav-item" onclick="switchTab('tab-exam')">📝 Ngân hàng đề thi</button>
+        <button class="nav-item" onclick="switchTab('tab-grading')">📊 Bảng điểm & Thống kê</button>
+        <button class="nav-item" onclick="switchTab('tab-assignment')">📚 Giao bài tập</button>
+        <button class="nav-item" onclick="switchTab('tab-settings')">⚙️ Cài đặt hệ thống</button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn-toggle" onclick="toggleSidebar()" title="Thu gọn menu">☰</button>
+          <div><h2 id="view-title">Trang quản lý</h2></div>
+        </div>
+        <div class="topbar-right">
+          <span class="sub-text">Giáo viên: <strong id="teacher-name"></strong></span>
+          <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
+        </div>
+      </header>
+
+      <section class="content-body">
+        
+        <!-- TAB 1: Tạo tài khoản học sinh & Quản lý trường học -->
+        <div id="tab-create-user" class="tab-panel active">
+          
+          <!-- KHUNG QUẢN LÝ TRƯỜNG HỌC (Mặc định xổ ra) -->
+          <div class="card form-container mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <div class="card-header-collapse" onclick="toggleCardBody('school-card-body', 'school-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Quản lý trường</h3>
+              <span id="school-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+            </div>
+
+            <div id="school-card-body" class="card-body-collapsible" style="max-height: 1000px; margin-top: 16px;">
+              <form id="create-school-form" style="margin-bottom: 16px;">
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                  <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="new-school-name-input">Thêm trường mới:</label>
+                    <input type="text" id="new-school-name-input" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="height: 41px;">Tạo trường</button>
+                </div>
+              </form>
+              <p id="school-create-status" class="status-msg" style="margin-bottom: 12px;"></p>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: left; align-items: center; margin-bottom: 6px;">
+                  <span style="font-weight: 600; color: #334155;">Danh sách trường:</span>
+                  <button type="button" onclick="refreshSchools()" style="background: #ffffff; border: 1px solid #2563eb; color: #2563eb; height: 28px; padding: 0 10px; font-size: 12px; font-weight: 500; border-radius: 4px; cursor: pointer; margin-left: 10px; transition: background 0.2s;">🔄 Làm mới</button>
+                </div>
+                <div id="schools-management-list" class="school-management-box" style="max-height: 180px; overflow-y: auto;">
+                  <div style="color: #64748b; font-size: 13px; padding: 4px;">Đang tải danh sách trường...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KHUNG TẠO TÀI KHOẢN HỌC SINH (Mặc định thu gọn) -->
+          <div class="card form-container">
+            <div class="card-header-collapse" onclick="toggleCardBody('student-card-body', 'student-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Thêm học sinh:</h3>
+              <span id="student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+            </div>
+            
+            <div id="student-card-body" class="card-body-collapsible collapsed" style="max-height: 0; opacity: 0; margin: 0; padding: 0;">
+              <form id="create-student-form">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="school-select">Chọn trường học:</label>
+                    <select id="school-select" required>
+                      <option value="" disabled selected hidden>-- Chọn trường học --</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="stu-class">Lớp:</label>
+                    <input type="text" id="stu-class" required style="text-transform: uppercase;">
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="stu-lastname">Họ và tên đệm:</label>
+                    <input type="text" id="stu-lastname" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="stu-firstname">Tên:</label>
+                    <input type="text" id="stu-firstname" required>
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="stu-username">Tài khoản:</label>
+                    <input type="text" id="stu-username" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="stu-password">Mật khẩu:</label>
+                    <div class="password-wrapper">
+                      <input type="password" id="stu-password" required>
+                      <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('stu-password', this)">👁️</button>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn btn-success mt-2">Tạo Tài Khoản</button>
+              </form>
+              <p id="create-status" class="status-msg"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Danh sách học sinh -->
+        <div id="tab-student-list" class="tab-panel">
+          <div class="card mb-4">
+            <h3 style="margin-bottom: 16px;">Tra cứu danh sách học sinh</h3>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="filter-school-select">Chọn trường học:</label>
+                <select id="filter-school-select">
+                  <option value="" disabled selected hidden>-- Chọn trường học --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="filter-class-input">Lớp:</label>
+                <input type="text" id="filter-class-input" style="text-transform: uppercase;">
+              </div>
+            </div>
+            
+            <div class="grid-2 mt-2">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="sort-select">Sắp xếp theo:</label>
+                <select id="sort-select" onchange="sortAndRenderStudents()">
+                  <option value="name-az">Tên (A - Z)</option>
+                  <option value="name-za">Tên (Z - A)</option>
+                  <option value="score-desc">Điểm trung bình (Cao → Thấp)</option>
+                  <option value="score-asc">Điểm trung bình (Thấp → Cao)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Hiển thị cột:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <div class="custom-dropdown" id="column-dropdown">
+                    <button type="button" class="dropdown-select-btn" onclick="toggleDropdownMenu(event)">
+                      <span id="dropdown-label">-- Hiển thị tất cả (Mặc định) --</span>
+                      <span>▼</span>
+                    </button>
+                    <div class="dropdown-list" id="dropdown-list-items">
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="0" onchange="applyColumnVisibility()"> STT</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="1" onchange="applyColumnVisibility()"> Họ</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="2" onchange="applyColumnVisibility()"> Tên</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"> Họ và tên</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"> Tài khoản</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"> Mật khẩu</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"> Lớp</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"> Điểm TB</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"> Coins</label>
+                      <label class="dropdown-item" onclick="event.stopPropagation()"><input type="checkbox" class="col-toggler" data-col="9" onchange="applyColumnVisibility()"> Thao tác</label>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-secondary" onclick="clearColumnFilter()" style="height: 41px; padding: 0 14px;" title="Xóa bộ lọc cột">Xóa</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+            </div>
+          </div>
+
+          <div class="card" style="overflow-x: auto; padding: 0;">
+            <table class="data-table" id="student-table">
+              <thead>
+                <tr>
+                  <th data-col="0">STT</th>
+                  <th data-col="1">Họ</th>
+                  <th data-col="2">Tên</th>
+                  <th data-col="3">Họ và tên</th>
+                  <th data-col="4">Tài khoản</th>
+                  <th data-col="5">Mật khẩu</th>
+                  <th data-col="6">Lớp</th>
+                  <th data-col="7">Điểm TB</th>
+                  <th data-col="8">Coins</th>
+                  <th data-col="9">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="student-list-body">
+                <tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: Ngân hàng đề thi (Đã bổ sung tính năng Khóa/Mở khóa bài thi) -->
+        <div id="tab-exam" class="tab-panel">
+          <div class="card">
+            <h3 style="margin-bottom: 16px;">Quản lý & Khóa bài thi</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <div>
+                <strong>Bài kiểm tra trực tuyến</strong>
+                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">Trạng thái hiện tại học sinh làm bài thi</div>
+              </div>
+              <div>
+                <button id="btn-toggle-exam-lock" class="btn btn-secondary" onclick="toggleExamLock()" style="padding: 6px 14px;">Đang tải trạng thái...</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Báo Cáo & Thống Kê</h4></div></div>
+        <div id="tab-assignment" class="tab-panel"><div class="placeholder-card"><h4>Giao Bài Tập</h4></div></div>
+        <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài Đặt Hệ Thống</h4></div></div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="footer-content">
+          <div class="footer-signature"><img src="/signature.png" alt="Tác giả" onerror="this.style.display='none'"></div>
+          <div class="footer-divider"></div>
+          <div class="footer-main-info">
+            <ul class="footer-info">
+              <li><strong>Tác giả:</strong> Trần Hòa Ân</li>
+              <li><strong>Email:</strong> antran.teacher@gmail.com</li>
+            </ul>
+            <div class="footer-copyright">&copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.</div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="/auth-guard.js"></script>
+  <script>
+    const user = checkAuth("teacher");
+    if (user) document.getElementById("teacher-name").textContent = user.fullName || user.username;
+
+    if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
+
+    function toggleSidebar() {
+      document.getElementById('admin-sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleDropdownMenu(e) {
+      e.stopPropagation();
+      const list = document.getElementById('dropdown-list-items');
+      list.classList.toggle('show');
+    }
+
+    window.addEventListener('click', () => {
+      const list = document.getElementById('dropdown-list-items');
+      if (list && list.classList.contains('show')) {
+        list.classList.remove('show');
+      }
+    });
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+      }
+    }
+
+    function toggleCardBody(bodyId, iconId) {
+      const bodyEl = document.getElementById(bodyId);
+      const iconEl = document.getElementById(iconId);
+      bodyEl.classList.toggle('collapsed');
+      if (bodyEl.classList.contains('collapsed')) {
+        iconEl.textContent = '▶';
+        bodyEl.style.maxHeight = '0';
+        bodyEl.style.opacity = '0';
+        bodyEl.style.margin = '0';
+        bodyEl.style.padding = '0';
+      } else {
+        iconEl.textContent = '▼';
+        bodyEl.style.maxHeight = '1000px';
+        bodyEl.style.opacity = '1';
+        bodyEl.style.margin = '16px 0 0 0';
+        bodyEl.style.padding = '0';
+      }
+    }
+
+    const schoolSelect = document.getElementById("school-select");
+    const filterSchoolSelect = document.getElementById("filter-school-select");
+    const createForm = document.getElementById("create-student-form");
+    const createStatus = document.getElementById("create-status");
+    const studentListBody = document.getElementById("student-list-body");
+    
+    const createSchoolForm = document.getElementById("create-school-form");
+    const schoolCreateStatus = document.getElementById("school-create-status");
+    const newSchoolNameInput = document.getElementById("new-school-name-input");
+    const schoolsManagementList = document.getElementById("schools-management-list");
+
+    let currentSchoolsData = [];
+    let cachedStudentsList = [];
+    let isExamLocked = false;
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      
+      const clickedBtn = Array.from(document.querySelectorAll(".nav-item")).find(b => 
+        b.getAttribute("onclick") && b.getAttribute("onclick").includes(tabId)
+      );
+      if (clickedBtn) clickedBtn.classList.add("active");
+      
+      sessionStorage.setItem("teacher_active_tab", tabId);
+
+      if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
+      
+      // Nếu vào tab ngân hàng đề thi thì tải trạng thái khóa bài thi
+      if (tabId === 'tab-exam') {
+        loadExamStatus();
+      }
+    }
+
+    const savedTab = sessionStorage.getItem("teacher_active_tab");
+    if (savedTab && document.getElementById(savedTab)) {
+      switchTab(savedTab);
+    } else {
+      loadExamStatus();
+    }
+
+    // Tải trạng thái khóa bài thi từ server
+    async function loadExamStatus() {
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_exam_status" })
+        });
+        const result = await res.json();
+        if (result.success) {
+          isExamLocked = result.data.is_locked;
+          updateExamLockButtonUI();
+        }
+      } catch (e) {
+        console.error("Lỗi tải trạng thái đề thi");
+      }
+    }
+
+    // Thay đổi trạng thái khóa/mở khóa bài thi
+    async function toggleExamLock() {
+      const newStatus = !isExamLocked;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "toggle_exam_lock", is_locked: newStatus })
+        });
+        const result = await res.json();
+        if (result.success) {
+          isExamLocked = newStatus;
+          updateExamLockButtonUI();
+        } else {
+          alert(result.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    function updateExamLockButtonUI() {
+      const btn = document.getElementById("btn-toggle-exam-lock");
+      if (isExamLocked) {
+        btn.textContent = "🔒 Mở khóa bài thi";
+        btn.className = "btn btn-danger";
+      } else {
+        btn.textContent = "🔓 Khóa bài thi";
+        btn.className = "btn btn-success";
+      }
+    }
+
+    function actionPlaceholder(name) {
+      alert(`Chức năng "${name}" đang được chuẩn bị.`);
+    }
+
+    function renderSchoolDropdown(schools) {
+      currentSchoolsData = schools || [];
+      schoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
+      filterSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
+      schoolsManagementList.innerHTML = "";
+
+      if (currentSchoolsData.length === 0) {
+        schoolsManagementList.innerHTML = '<div style="color: #64748b; font-size: 13px; padding: 4px;">Chưa có trường học nào được tạo.</div>';
+        return;
+      }
+
+      currentSchoolsData.forEach(school => {
+        const schoolName = school.name || school; 
+        const isHidden = school.is_hidden || false;
+
+        const opt1 = document.createElement("option");
+        opt1.value = schoolName;
+        opt1.textContent = schoolName + (isHidden ? " 🚫 (Đang ẩn)" : "");
+        schoolSelect.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = schoolName;
+        opt2.textContent = schoolName;
+        filterSchoolSelect.appendChild(opt2);
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "school-row-item";
+        itemDiv.innerHTML = `
+          <span style="font-weight: 500; color: ${isHidden ? '#94a3b8' : '#1e293b'}">
+            ${schoolName} ${isHidden ? '<span style="color:#ef4444; font-size:12px;">(Đang ẩn)</span>' : '<span style="color:#10b981; font-size:12px;">(Đang hiện)</span>'}
+          </span>
+          <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
+            ${isHidden ? '👁️ Hiện trường' : '🚫 Ẩn trường'}
+          </button>
+        `;
+        schoolsManagementList.appendChild(itemDiv);
+      });
+    }
+
+    async function loadSchools(forceRefresh = false) {
+      const cachedSchools = sessionStorage.getItem("cached_schools_list");
+      if (cachedSchools && !forceRefresh) {
+        renderSchoolDropdown(JSON.parse(cachedSchools));
+        return;
+      }
+
+      try {
+        const res = await fetch("/.netlify/functions/auth");
+        const result = await res.json();
+        if (result.success && result.data.schools) {
+          sessionStorage.setItem("cached_schools_list", JSON.stringify(result.data.schools));
+          renderSchoolDropdown(result.data.schools);
+        }
+      } catch (err) {
+        schoolsManagementList.innerHTML = '<div style="color: red; font-size: 13px;">Lỗi tải danh sách trường</div>';
+      }
+    }
+
+    function refreshSchools() {
+      sessionStorage.removeItem("cached_schools_list");
+      loadSchools(true);
+    }
+
+    async function toggleSchoolStatus(schoolName, currentHiddenStatus) {
+      const newStatus = !currentHiddenStatus;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "toggle_school", school: schoolName, is_hidden: newStatus })
+        });
+        const result = await res.json();
+        if (result.success) {
+          refreshSchools();
+        } else {
+          alert(result.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    createSchoolForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      schoolCreateStatus.className = "status-msg";
+      schoolCreateStatus.textContent = "Đang tạo trường...";
+
+      const schoolName = newSchoolNameInput.value.trim();
+      if (!schoolName) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "create_school", school: schoolName })
+        });
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          schoolCreateStatus.className = "status-msg status-error";
+          schoolCreateStatus.textContent = result.message || "Tạo trường thất bại!";
+          return;
+        }
+
+        schoolCreateStatus.className = "status-msg status-success";
+        schoolCreateStatus.textContent = `🎉 Tạo thành công trường "${schoolName}"!`;
+        createSchoolForm.reset();
+        refreshSchools(); 
+      } catch (err) {
+        schoolCreateStatus.className = "status-msg status-error";
+        schoolCreateStatus.textContent = "Lỗi kết nối đến máy chủ!";
+      }
+    });
+
+    async function fetchStudentList() {
+      const school = filterSchoolSelect.value;
+      const className = document.getElementById("filter-class-input").value.trim();
+
+      if (!school) {
+        alert("Vui lòng chọn trường học trước!");
+        return;
+      }
+
+      studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_students", school: school, className: className })
+        });
+        const result = await res.json();
+        
+        if (!res.ok || !result.success) {
+          studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
+          return;
+        }
+
+        cachedStudentsList = result.data.students || [];
+        sortAndRenderStudents();
+      } catch (err) {
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
+      }
+    }
+
+    function sortAndRenderStudents() {
+      if (!cachedStudentsList || cachedStudentsList.length === 0) {
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
+        return;
+      }
+
+      const sortBy = document.getElementById("sort-select").value;
+
+      let sortedList = [...cachedStudentsList];
+      sortedList.sort((a, b) => {
+        const nameA = (a.firstName || "").toLowerCase();
+        const nameB = (b.firstName || "").toLowerCase();
+
+        if (sortBy === "name-az") {
+          return nameA.localeCompare(nameB);
+        } else if (sortBy === "name-za") {
+          return nameB.localeCompare(nameA);
+        } else if (sortBy === "score-desc") {
+          const avgA = parseFloat(a.score.split(" / ")[0]) || 0;
+          const avgB = parseFloat(b.score.split(" / ")[0]) || 0;
+          return avgB - avgA;
+        } else if (sortBy === "score-asc") {
+          const avgA = parseFloat(a.score.split(" / ")[0]) || 0;
+          const avgB = parseFloat(b.score.split(" / ")[0]) || 0;
+          return avgA - avgB;
+        }
+        return 0;
+      });
+
+      studentListBody.innerHTML = "";
+      sortedList.forEach((stu, index) => {
+        const tr = document.createElement("tr");
+        const rawPassword = stu.password || "---";
+
+        tr.innerHTML = `
+          <td data-col="0">${index + 1}</td>
+          <td data-col="1">${stu.lastName || '---'}</td>
+          <td data-col="2" style="font-weight: 500;">${stu.firstName || '---'}</td>
+          <td data-col="3">${stu.fullName || '---'}</td>
+          <td data-col="4"><code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${stu.username || '---'}</code></td>
+          <td data-col="5">
+            <span id="pwd-text-${index}" style="font-family: monospace; margin-right: 6px;">••••••</span>
+            <button type="button" onclick="toggleTablePassword('${rawPassword}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
+          </td>
+          <td data-col="6">${stu.className || '---'}</td>
+          <td data-col="7" style="color: #2563eb; font-weight: bold;">${stu.score || '0'}</td>
+          <td data-col="8"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
+          <td data-col="9"><button onclick="actionPlaceholder('Sửa')" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">Sửa</button></td>
+        `;
+        studentListBody.appendChild(tr);
+      });
+
+      applyColumnVisibility();
+    }
+
+    function toggleTablePassword(realPassword, textElementId, btn) {
+      const span = document.getElementById(textElementId);
+      if (span.textContent === "••••••") {
+        span.textContent = realPassword;
+        btn.textContent = "🙈";
+      } else {
+        span.textContent = "••••••";
+        btn.textContent = "👁️";
+      }
+    }
+
+    function applyColumnVisibility() {
+      const togglers = document.querySelectorAll('.col-toggler');
+      const table = document.getElementById('student-table');
+      const labelSpan = document.getElementById('dropdown-label');
+      
+      let checkedCount = 0;
+      let totalCount = togglers.length;
+
+      togglers.forEach(chk => {
+        if (chk.checked) checkedCount++;
+      });
+
+      togglers.forEach(chk => {
+        const colIdx = chk.getAttribute('data-col');
+        const isChecked = chk.checked;
+
+        const cells = table.querySelectorAll(`[data-col="${colIdx}"]`);
+        cells.forEach(cell => {
+          cell.style.display = (checkedCount === 0 || isChecked) ? '' : 'none';
+        });
+      });
+
+      if (checkedCount === 0) {
+        labelSpan.textContent = "-- Hiển thị tất cả (Mặc định) --";
+      } else if (checkedCount === totalCount) {
+        labelSpan.textContent = "Đã chọn (Tất cả)";
+      } else {
+        labelSpan.textContent = `Đã chọn (${checkedCount}/${totalCount} cột)`;
+      }
+    }
+
+    function clearColumnFilter() {
+      const togglers = document.querySelectorAll('.col-toggler');
+      togglers.forEach(chk => {
+        chk.checked = false;
+      });
+      applyColumnVisibility();
+    }
+
+    createForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      createStatus.className = "status-msg";
+      createStatus.textContent = "Đang tạo tài khoản...";
+
+      let school = schoolSelect.value;
+      if (!school) {
+        createStatus.className = "status-msg status-error";
+        createStatus.textContent = "Vui lòng chọn tên trường!";
+        return;
+      }
+
+      const payload = {
+        action: "create_student",
+        school: school,
+        lastName: document.getElementById("stu-lastname").value.trim(),
+        firstName: document.getElementById("stu-firstname").value.trim(),
+        className: document.getElementById("stu-class").value.trim(),
+        username: document.getElementById("stu-username").value.trim(),
+        password: document.getElementById("stu-password").value.trim()
+      };
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+          createStatus.className = "status-msg status-error";
+          createStatus.textContent = result.message || "Tạo tài khoản thất bại!";
+          return;
+        }
+
+        createStatus.className = "status-msg status-success";
+        createStatus.textContent = `Tạo thành công học sinh ${result.data.fullName}!`;
+        createForm.reset();
+        refreshSchools();
+      } catch (err) {
+        createStatus.className = "status-msg status-error";
+        createStatus.textContent = "Lỗi kết nối khi gửi dữ liệu!";
+      }
+    });
+
+    loadSchools();
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Trang chủ -> nạp templates/index.html
+[[redirects]]
+  from = "/"
+  to = "/templates/index.html"
+  status = 200
+
+# Điều hướng các trang chức năng
+[[redirects]]
+  from = "/teacher"
+  to = "/templates/teacher.html"
+  status = 200
+
+[[redirects]]
+  from = "/student"
+  to = "/templates/student.html"
+  status = 200
+
+[[redirects]]
+  from = "/quiz"
+  to = "/templates/quiz.html"
+  status = 200

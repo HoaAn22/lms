@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Làm Bài Kiểm Tra Trực Tuyến</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="center-wrapper">
+    <div class="card quiz-card">
+      <div class="topbar-student">
+        <div>
+          <h2>Bài Kiểm Tra Định Kỳ</h2>
+          <span class="sub-text">Thí sinh: <strong id="quiz-student-name"></strong> | Trường: <strong id="quiz-student-school"></strong></span>
+        </div>
+        <a href="/student" class="btn btn-secondary mt-2">Về Trang Chủ</a>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Màn hình bắt đầu -->
+      <div id="quiz-intro">
+        <div class="placeholder-card mb-4">
+          <h4>Quy chế phòng thi</h4>
+          <p>Đề thi gồm <strong>5 câu trắc nghiệm</strong>. Nộp bài sẽ tự động đồng bộ kết quả lên Google Sheets và thưởng thêm Xu vào tài khoản.</p>
+        </div>
+        <button onclick="startQuiz()" class="btn btn-primary btn-block">Bắt Đầu Làm Bài</button>
+      </div>
+
+      <!-- Màn hình làm bài -->
+      <div id="quiz-screen" class="hidden">
+        <div id="quiz-container"></div>
+        <button onclick="submitQuiz()" class="btn btn-success btn-block mt-4">Nộp Bài Thi</button>
+      </div>
+
+      <!-- Màn hình kết quả điểm -->
+      <div id="quiz-result" class="hidden">
+        <div class="placeholder-card">
+          <h4>Kết Quả Bài Thi Của Bạn</h4>
+          <h1 id="score-text" class="score-display"></h1>
+          <p id="save-status" class="status-msg"></p>
+        </div>
+        <div class="grid-2 mt-4">
+          <button onclick="restartQuiz()" class="btn btn-secondary">Làm Lại</button>
+          <a href="/student" class="btn btn-primary">Quay Về Trang Học Sinh</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-signature">
+        <img src="/signature.png" alt="Chữ ký tác giả" onerror="this.style.display='none'">
+      </div>
+      <div class="footer-divider"></div>
+      <div class="footer-main-info">
+        <!-- <p class="footer-caption"></p> -->
+        <ul class="footer-info">
+          <li><strong>Tác giả:</strong> Trần Hòa Ân</li>
+          <li><strong>Email liên hệ:</strong> antran.teacher@gmail.com</li>
+        </ul>
+        <div class="footer-copyright">
+          &copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/auth-guard.js"></script>
+  <script>
+    const user = checkAuth("student");
+    if (user) {
+      document.getElementById("quiz-student-name").textContent = user.fullName || user.username;
+      document.getElementById("quiz-student-school").textContent = user.school || "";
+    }
+
+    let questionsData = [];
+
+    async function startQuiz() {
+      try {
+        const res = await fetch("/questions.json");
+        questionsData = await res.json();
+
+        renderQuestions();
+        document.getElementById("quiz-intro").classList.add("hidden");
+        document.getElementById("quiz-screen").classList.remove("hidden");
+        document.getElementById("quiz-result").classList.add("hidden");
+      } catch (err) {
+        alert("Không thể tải danh sách câu hỏi: " + err.message);
+      }
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById("quiz-container");
+      container.innerHTML = "";
+
+      questionsData.forEach((q, qIndex) => {
+        const qDiv = document.createElement("div");
+        qDiv.className = "question-item";
+
+        let optionsHtml = "";
+        q.options.forEach((opt, optIndex) => {
+          optionsHtml += `
+            <label class="option-item">
+              <input type="radio" name="question_${qIndex}" value="${optIndex}">
+              <span>${opt}</span>
+            </label>
+          `;
+        });
+
+        qDiv.innerHTML = `
+          <div class="question-text">Câu ${qIndex + 1}: ${q.question}</div>
+          <div class="options-group">${optionsHtml}</div>
+        `;
+        container.appendChild(qDiv);
+      });
+    }
+
+    async function submitQuiz() {
+      let correctCount = 0;
+      let unAnswered = false;
+
+      questionsData.forEach((q, qIndex) => {
+        const selected = document.querySelector(`input[name="question_${qIndex}"]:checked`);
+        if (!selected) {
+          unAnswered = true;
+        } else if (parseInt(selected.value) === q.answer) {
+          correctCount++;
+        }
+      });
+
+      if (unAnswered && !confirm("Bạn chưa hoàn thành hết các câu hỏi. Vẫn muốn nộp bài?")) {
+        return;
+      }
+
+      const finalScore = ((correctCount / questionsData.length) * 10).toFixed(1);
+
+      document.getElementById("quiz-screen").classList.add("hidden");
+      document.getElementById("quiz-result").classList.remove("hidden");
+      document.getElementById("score-text").textContent = `${finalScore} / 10 Điểm`;
+
+      const saveStatus = document.getElementById("save-status");
+      saveStatus.className = "status-msg";
+      saveStatus.textContent = "Đang đồng bộ kết quả lên Google Sheets...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_score",
+            school: user.school,
+            id: user.id,
+            scoreColumn: 1,
+            score: finalScore
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          saveStatus.className = "status-msg status-success";
+          saveStatus.textContent = "Điểm số đã được ghi nhận vào hệ thống!";
+
+          const earnedCoins = Math.round(parseFloat(finalScore) * 5);
+          const currentCoins = parseInt(localStorage.getItem(`coins_${user.id}`) || "50", 10);
+          localStorage.setItem(`coins_${user.id}`, currentCoins + earnedCoins);
+
+          document.getElementById("score-text").innerHTML += `<br><span style="font-size:18px; color:#d97706;">🎁 Thưởng: +${earnedCoins} 🪙</span>`;
+        } else {
+          saveStatus.className = "status-msg status-error";
+          saveStatus.textContent = "Lưu điểm thất bại: " + (result.message || "");
+        }
+      } catch (err) {
+        saveStatus.className = "status-msg status-error";
+        saveStatus.textContent = "Không thể gửi dữ liệu điểm về máy chủ.";
+      }
+    }
+
+    function restartQuiz() {
+      document.getElementById("quiz-result").classList.add("hidden");
+      document.getElementById("quiz-intro").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>

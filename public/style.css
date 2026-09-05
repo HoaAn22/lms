@@ -1,0 +1,495 @@
+/* ================= GLOBAL RESET & TYPOGRAPHY ================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+body {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= COMMON UTILITIES & CARDS ================= */
+.center-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 24px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.login-card {
+  max-width: 420px;
+}
+
+.quiz-card {
+  max-width: 800px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-header h2 {
+  color: #0f172a;
+  font-size: 24px;
+}
+
+.login-header p {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* ================= FORMS & BUTTONS ================= */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #2563eb;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+.btn-secondary:hover {
+  background-color: #cbd5e1;
+}
+
+.btn-logout {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.btn-logout:hover {
+  background-color: #dc2626;
+}
+
+.btn-logout-sm {
+  background-color: #ef4444;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-logout-sm:hover {
+  background-color: #dc2626;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.text-center { text-align: center; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.text-success { color: #10b981; }
+
+.status-msg {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-error { color: #ef4444; }
+.status-success { color: #10b981; }
+
+/* ================= TEACHER DASHBOARD ================= */
+.dashboard-layout {
+  display: flex;
+  flex: 1; 
+  width: 100%;
+  overflow-x: hidden;
+  position: relative; /* Thêm dòng này để làm gốc tọa độ cho menu thả xuống */
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #1e293b;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: margin-left 0.3s ease; /* Hiệu ứng trượt mượt mà */
+}
+
+/* Class để ẩn Sidebar */
+.sidebar.collapsed {
+  margin-left: -260px;
+}
+
+.sidebar-brand {
+  height: 80px; /* Khóa cứng chiều cao bằng Header */
+  display: flex;
+  align-items: center; /* Căn giữa chữ ADMIN theo chiều dọc */
+  padding: 0 24px;
+  border-bottom: 1px solid #334155;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  flex: 1;
+}
+
+.nav-item {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-left: 4px solid #2563eb;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  min-width: 0;
+}
+
+.topbar {
+  height: 80px; /* Chiều cao bằng chính xác sidebar-brand */
+  background-color: #ffffff;
+  padding: 0 28px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar-left, .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.btn-toggle:hover {
+  background-color: #e2e8f0;
+}
+
+.content-body {
+  padding: 28px;
+  flex: 1;
+}
+
+.tab-panel {
+  display: none;
+  width: 100%;
+  max-width: 1000px; /* Giới hạn độ rộng nội dung tránh tràn viền */
+  margin: 0 auto; /* Căn giữa màn hình */
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.placeholder-card {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  color: #64748b;
+  background: #ffffff;
+}
+
+/* ================= QUIZ & GENERAL ================= */
+.divider {
+  border: 0;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 16px 0;
+}
+
+.question-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.question-text {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.option-item:hover {
+  background: #e2e8f0;
+}
+
+.score-display {
+  font-size: 36px;
+  color: #2563eb;
+  margin: 12px 0;
+}
+
+/* ================= FOOTER CĂN TRÁI ================= */
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+  min-height: 80px; /* Độ dày bằng chính xác Header */
+  display: flex;
+  align-items: center; /* Tự động căn giữa nội dung bên trong theo chiều dọc */
+  padding: 16px 28px;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start; /* Dồn nội dung sát về bên trái */
+  gap: 20px;
+  width: 100%;
+}
+
+.footer-signature {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+}
+
+.footer-signature img {
+  max-height: 52px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.footer-divider {
+  width: 1px;
+  height: 48px;
+  background-color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.footer-main-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+}
+
+.footer-caption {
+  font-style: italic;
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+}
+
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-info li {
+  width: 100%;
+  margin-bottom: 2px;
+  white-space: normal;
+}
+
+.footer-copyright {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ================= GIAO DIỆN ĐIỆN THOẠI (DROPDOWN MENU) ================= */
+@media (max-width: 768px) {
+  /* Biến Sidebar thành Dropdown */
+  .sidebar {
+    position: absolute;
+    top: 80px; /* Bắt đầu xổ xuống từ dưới Header */
+    left: 0;
+    width: 100%;
+    margin-left: 0; /* Hủy hiệu ứng trượt ngang của máy tính */
+    z-index: 999;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    /* Hiệu ứng Dropdown mượt mà */
+    transform-origin: top;
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+  }
+  
+  .sidebar.collapsed {
+    margin-left: 0; 
+    transform: scaleY(0); /* Gập menu lên trên */
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar-brand {
+    display: none; /* Ẩn logo ADMIN dư thừa trên ĐT */
+  }
+
+  .nav-item {
+    padding: 16px 24px;
+    border-bottom: 1px solid #334155;
+    font-size: 15px; /* Chữ to hơn chút dễ bấm trên màn cảm ứng */
+  }
+
+  /* Căn chỉnh lại Header và nội dung */
+  .topbar {
+    padding: 0 16px;
+  }
+  .topbar h2 {
+    font-size: 18px; /* Thu nhỏ tiêu đề trên ĐT */
+  }
+  .content-body {
+    padding: 16px;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr; /* Các form 2 cột sẽ gộp thành 1 cột */
+  }
+
+  /* Căn chỉnh lại Footer */
+  /* .footer-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  } */
+  /* .footer-divider {
+    display: none;
+  } */
+  .footer-info {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "netlify-school-portal",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx kill-port 8888 && node server.js",
+    "start": "npx kill-port 8888 && node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.114.0",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
