@@ -246,7 +246,7 @@ function renderGachaHistory() {
 
   const history = getGachaSessionHistory();
   if (history.length === 0) {
-    container.innerHTML = `<div style="color: #94a3b8; font-size: 13px; text-align: center; padding: 12px;">Bạn chưa quay lượt nào trong phiên đăng nhập này.</div>`;
+    container.innerHTML = `<div style="color: #94a3b8; font-size: 13px; text-align: center; padding: 12px;">Lịch sử Gacha sẽ xóa khi đăng xuất</div>`;
     return;
   }
 
@@ -437,3 +437,10 @@ function closeMemeViewModal() {
     modal.classList.remove("show");
   }
 }
+
+// Tự động xóa lịch sử quay gacha khi học sinh nhấn nút đăng xuất
+document.querySelectorAll(".btn-logout-sm, [onclick*='logout']").forEach(btn => {
+  btn.addEventListener("click", () => {
+    sessionStorage.removeItem("gacha_session_history");
+  });
+});
