@@ -112,6 +112,30 @@
     .dropdown-item input {
       cursor: pointer;
     }
+
+    /* CSS cho lưới bộ sưu tập admin */
+    .admin-meme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .admin-meme-card {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .admin-meme-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -145,7 +169,6 @@
         <!-- TAB 1: Tạo tài khoản học sinh & Quản lý trường học -->
         <div id="tab-create-user" class="tab-panel active">
           
-          <!-- KHUNG QUẢN LÝ TRƯỜNG HỌC -->
           <div class="card form-container mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
             <div class="card-header-collapse" onclick="toggleCardBody('school-card-body', 'school-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Quản lý trường</h3>
@@ -176,7 +199,6 @@
             </div>
           </div>
 
-          <!-- KHUNG TẠO TÀI KHOẢN HỌC SINH -->
           <div class="card form-container">
             <div class="card-header-collapse" onclick="toggleCardBody('student-card-body', 'student-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Thêm học sinh:</h3>
@@ -313,7 +335,54 @@
           </div>
         </div>
 
-        <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Ngân Hàng Đề Thi</h4></div></div>
+        <!-- TAB 3: Ngân hàng đề thi & Thêm phần thưởng (meme) + Bộ sưu tập admin -->
+        <div id="tab-exam" class="tab-panel">
+          <!-- 1. Thêm phần thưởng -->
+          <div class="card mb-4">
+            <h3 style="margin-bottom: 16px;">🎁 Thêm phần thưởng (Meme Gacha)</h3>
+            <form id="add-meme-form">
+              <div class="form-group">
+                <label for="meme-image-file">Tải ảnh Meme lên:</label>
+                <input type="file" id="meme-image-file" accept="image/*" required style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; background: #fff;">
+              </div>
+              <div class="form-group">
+                <label for="meme-slogan">Slogan Text:</label>
+                <input type="text" id="meme-slogan" placeholder="VD: Lên đỉnh cao trí tuệ..." required>
+              </div>
+              <div class="form-group">
+                <label for="meme-rarity">Độ hiếm:</label>
+                <select id="meme-rarity" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                  <option value="" disabled selected hidden>-- Chọn độ hiếm --</option>
+                  <option value="C">C (Phổ biến)</option>
+                  <option value="B">B (Khá)</option>
+                  <option value="A">A (Hiếm)</option>
+                  <option value="S">S (Cực hiếm)</option>
+                  <option value="SS">SS (Huyền thoại)</option>
+                </select>
+              </div>
+              <button type="submit" id="btn-submit-meme" class="btn btn-success mt-2">💾 Lưu Meme Vào Hệ Thống</button>
+            </form>
+            <p id="meme-status-msg" class="status-msg mt-2"></p>
+          </div>
+
+          <!-- 2. Thẻ Bộ Sưu Tập Meme (Mặc định thu gọn) -->
+          <div class="card" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <div class="card-header-collapse" onclick="toggleCardBody('admin-collection-body', 'admin-collection-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🖼️ Bộ Sưu Tập Meme Trong Hệ Thống</h3>
+              <span id="admin-collection-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+            </div>
+
+            <div id="admin-collection-body" class="card-body-collapsible collapsed" style="max-height: 0; opacity: 0; margin: 0; padding: 0;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+                <button type="button" onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Tải lại bộ sưu tập</button>
+              </div>
+              <div class="admin-meme-grid" id="admin-meme-grid-container">
+                <div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Nhấn vào mũi tên để xem danh sách meme...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Báo Cáo & Thống Kê</h4></div></div>
         <div id="tab-assignment" class="tab-panel"><div class="placeholder-card"><h4>Giao Bài Tập</h4></div></div>
         <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài Đặt Hệ Thống</h4></div></div>
@@ -325,10 +394,10 @@
           <div class="footer-divider"></div>
           <div class="footer-main-info">
             <ul class="footer-info">
-              <li><strong>Tác giả:</strong> Trần Hòa Ân</li>
-              <li><strong>Email:</strong> antran.teacher@gmail.com</li>
+              <li><strong>Tác giả:</strong> Trần Hòa Ân[cite: 1]</li>
+              <li><strong>Email:</strong> antran.teacher@gmail.com[cite: 1]</li>
             </ul>
-            <div class="footer-copyright">&copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.</div>
+            <div class="footer-copyright">&copy; 2026 Cổng Học Tập Trực Tuyến. All rights reserved.[cite: 1]</div>
           </div>
         </div>
       </footer>
@@ -382,10 +451,14 @@
         bodyEl.style.padding = '0';
       } else {
         iconEl.textContent = '▼';
-        bodyEl.style.maxHeight = '1000px';
+        bodyEl.style.maxHeight = '1500px';
         bodyEl.style.opacity = '1';
         bodyEl.style.margin = '16px 0 0 0';
         bodyEl.style.padding = '0';
+        // Tự động tải dữ liệu khi mở card bộ sưu tập
+        if (bodyId === 'admin-collection-body') {
+          loadAdminMemeCollection();
+        }
       }
     }
 
@@ -565,6 +638,101 @@
         schoolCreateStatus.textContent = "Lỗi kết nối đến máy chủ!";
       }
     });
+
+    // --- XỬ LÝ THÊM MEME PHẦN THƯỞNG ---
+    const addMemeForm = document.getElementById("add-meme-form");
+    const memeStatusMsg = document.getElementById("meme-status-msg");
+
+    addMemeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      memeStatusMsg.className = "status-msg";
+      memeStatusMsg.textContent = "Đang xử lý ảnh và lưu meme...";
+
+      const fileInput = document.getElementById("meme-image-file");
+      const slogan = document.getElementById("meme-slogan").value.trim();
+      const rarity = document.getElementById("meme-rarity").value;
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        memeStatusMsg.className = "status-msg status-error";
+        memeStatusMsg.textContent = "Vui lòng chọn file ảnh meme!";
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(event) {
+        const base64Image = event.target.result;
+
+        try {
+          const res = await fetch("/.netlify/functions/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "add_meme",
+              image: base64Image,
+              slogan: slogan,
+              rarity: rarity
+            })
+          });
+
+          const result = await res.json();
+          if (!res.ok || !result.success) {
+            memeStatusMsg.className = "status-msg status-error";
+            memeStatusMsg.textContent = result.message || "Thêm meme thất bại!";
+            return;
+          }
+
+          memeStatusMsg.className = "status-msg status-success";
+          memeStatusMsg.textContent = "🎉 Thêm phần thưởng Meme thành công!";
+          addMemeForm.reset();
+          loadAdminMemeCollection(); // Tự động làm mới danh sách bộ sưu tập
+        } catch (err) {
+          memeStatusMsg.className = "status-msg status-error";
+          memeStatusMsg.textContent = "Lỗi kết nối máy chủ!";
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    // --- TẢI BỘ SƯU TẬP MEME CHO ADMIN (Hiển thị đầy đủ không khóa) ---
+    async function loadAdminMemeCollection() {
+      const container = document.getElementById("admin-meme-grid-container");
+      container.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải danh sách meme...</div>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_all_memes" })
+        });
+        const result = await res.json();
+
+        if (!result.success || !result.data.memes || result.data.memes.length === 0) {
+          container.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Chưa có meme nào trong hệ thống.</p>`;
+          return;
+        }
+
+        const memes = result.data.memes;
+        container.innerHTML = "";
+
+        memes.forEach(meme => {
+          const card = document.createElement("div");
+          card.className = "admin-meme-card";
+          card.innerHTML = `
+            <div>
+              <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#2563eb; margin-bottom:4px;">${meme.rarity}</span>
+              <img src="${meme.image}" alt="Meme">
+            </div>
+            <div style="font-size: 12px; color: #334155; margin-top: 6px; font-weight: 500; word-break: break-word;">${meme.slogan}</div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = `<p style="grid-column: span 3; text-align: center; color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
+      }
+    }
 
     async function fetchStudentList() {
       const school = filterSchoolSelect.value;

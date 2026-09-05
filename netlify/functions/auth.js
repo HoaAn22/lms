@@ -97,42 +97,118 @@ exports.handler = async (event) => {
 
       let { data: itemData } = await supabase
         .from('items')
-        .select('coins, items')
+        .select('coins, meme_id_list')
         .eq('student_id', body.id)
         .single();
 
       if (!itemData) {
-        await supabase.from('items').insert([{ student_id: body.id, coins: 100, items: [] }]);
-        itemData = { coins: 100, items: [] };
+        await supabase.from('items').insert([{ student_id: body.id, coins: 100, meme_id_list: [] }]);
+        itemData = { coins: 100, meme_id_list: [] };
       }
 
       return createResponse(true, {
         ...student,
         coins: itemData.coins !== undefined ? itemData.coins : 100,
-        inventory: itemData.items || []
+        meme_id_list: itemData.meme_id_list || []
       });
     }
 
-    if (action === "update_student_items") {
-      const { student_id, coins, items } = body;
-      const updatePayload = {};
-      if (coins !== undefined) updatePayload.coins = coins;
-      if (items !== undefined) updatePayload.items = items;
+    // Lấy toàn bộ danh sách meme trong hệ thống để phục vụ trang bộ sưu tập và gacha
+    if (action === "get_all_memes") {
+      let { data: memes, error } = await supabase.from('meme').select('*');
+      if (error) return createResponse(false, null, "Lỗi lấy danh sách meme.");
+      return createResponse(true, { memes: memes || [] });
+    }
 
-      const { error } = await supabase
+    if (action === "add_meme") {
+      const { image, slogan } = body;
+      let rarity = body.rarity ? body.rarity.trim().split(" ")[0] : "C";
+
+      if (!image || !slogan) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin ảnh và slogan!");
+      }
+
+      const { error } = await supabase.from('meme').insert([{
+        image, slogan, rarity
+      }]);
+
+      if (error) return createResponse(false, null, "Lỗi lưu meme vào cơ sở dữ liệu: " + error.message);
+      return createResponse(true, null, "Thêm phần thưởng Meme thành công!");
+    }
+
+    // --- XỬ LÝ GACHA MEME THEO TỈ LỆ ---
+    if (action === "pull_gacha") {
+      const { student_id } = body;
+      
+      let { data: itemData, error: itemErr } = await supabase
         .from('items')
-        .update(updatePayload)
+        .select('coins, meme_id_list')
+        .eq('student_id', student_id)
+        .single();
+
+      if (itemErr || !itemData) return createResponse(false, null, "Không tìm thấy dữ liệu ví của học sinh.");
+      
+      const currentCoins = itemData.coins !== undefined ? itemData.coins : 100;
+      const gachaCost = 30;
+
+      if (currentCoins < gachaCost) {
+        return createResponse(false, null, "Bạn không đủ 30 Xu để quay Gacha!");
+      }
+
+      let { data: memesList, error: memeErr } = await supabase.from('meme').select('*');
+      if (memeErr || !memesList || memesList.length === 0) {
+        return createResponse(false, null, "Hệ thống chưa có dữ liệu meme để quay Gacha!");
+      }
+
+      // Phân loại meme theo độ hiếm
+      const poolSS = memesList.filter(m => m.rarity === 'SS');
+      const poolS = memesList.filter(m => m.rarity === 'S');
+      const poolA = memesList.filter(m => m.rarity === 'A');
+      const poolB = memesList.filter(m => m.rarity === 'B');
+      const poolC = memesList.filter(m => m.rarity === 'C');
+
+      // Quay random xác suất theo tỉ lệ: SS (1%), S (5%), A (10%), B (30%), C (50%)
+      const roll = Math.random() * 100;
+      let selectedPool = [];
+      
+      if (roll < 1 && poolSS.length > 0) selectedPool = poolSS;
+      else if (roll < 6 && poolS.length > 0) selectedPool = poolS;
+      else if (roll < 16 && poolA.length > 0) selectedPool = poolA;
+      else if (roll < 46 && poolB.length > 0) selectedPool = poolB;
+      else selectedPool = poolC.length > 0 ? poolC : memesList; // Fallback nếu thiếu nhóm
+
+      if (selectedPool.length === 0) selectedPool = memesList;
+
+      const randomMeme = selectedPool[Math.floor(Math.random() * selectedPool.length)];
+
+      const newCoins = currentCoins - gachaCost;
+      const currentInventoryIds = itemData.meme_id_list || [];
+      
+      // Lưu ID meme vào danh sách (nếu chưa có thì thêm vào)
+      let updatedInventoryIds = [...currentInventoryIds];
+      if (!updatedInventoryIds.includes(randomMeme.id)) {
+        updatedInventoryIds.push(randomMeme.id);
+      }
+
+      const { error: updateErr } = await supabase
+        .from('items')
+        .update({ coins: newCoins, meme_id_list: updatedInventoryIds })
         .eq('student_id', student_id);
 
-      if (error) return createResponse(false, null, "Lỗi cập nhật dữ liệu xu và vật phẩm.");
-      return createResponse(true, null, "Cập nhật thành công!");
+      if (updateErr) return createResponse(false, null, "Lỗi lưu kết quả quay Gacha.");
+
+      return createResponse(true, {
+        coins: newCoins,
+        wonMeme: randomMeme,
+        meme_id_list: updatedInventoryIds
+      }, "Quay Gacha thành công!");
     }
 
     if (action === "get_students") {
       let query = supabase.from('students').select(`
         id, full_name, last_name, first_name, class_name, username, password,
         scores (score_1, score_2, score_3, score_4, score_5),
-        items (coins, items)
+        items (coins, meme_id_list)
       `).eq('school', body.school);
 
       if (body.className) query = query.eq('class_name', body.className.trim().toUpperCase());
@@ -161,7 +237,7 @@ exports.handler = async (event) => {
           username: row.username, 
           password: row.password, 
           coins: studentItems.coins !== undefined ? studentItems.coins : 100,
-          inventory: studentItems.items || [],
+          meme_id_list: studentItems.meme_id_list || [],
           score: `${avgScore} / ${totalScore}`
         };
       });
@@ -203,7 +279,7 @@ exports.handler = async (event) => {
       }
 
       await supabase.from('scores').insert([{ student_id: newUser.id }]);
-      await supabase.from('items').insert([{ student_id: newUser.id, coins: 100, items: [] }]);
+      await supabase.from('items').insert([{ student_id: newUser.id, coins: 100, meme_id_list: [] }]);
 
       return createResponse(true, {
         id: newUser.id, fullName: newUser.full_name, lastName: newUser.last_name,
@@ -241,7 +317,6 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Cập nhật trạng thái thành công!");
     }
 
-    // --- QUẢN LÝ KHÓA BÀI THI THEO TRƯỜNG ---
     if (action === "toggle_school_exam_lock") {
       const { school, is_exam_locked } = body;
       const { error } = await supabase

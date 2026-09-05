@@ -1,7 +1,12 @@
 # netlify-lms
 
 npm run dev
-git rm -r --cached node_modules
+
+*Cài đặt môi trường (local)*
+1. npm install
+2. Tạo file lưu biến môi trường `.env`
+
+
 
 ## Cài đặt supabase
 

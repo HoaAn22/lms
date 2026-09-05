@@ -6,6 +6,70 @@
   <title>Cổng Học Tập & Giải Trí Học Sinh</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/student.css">
+  <style>
+    .meme-collection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      padding: 10px 0;
+    }
+    .meme-card-item {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+    .meme-card-item.locked {
+      background: #e2e8f0;
+      opacity: 0.5;
+      filter: grayscale(100%);
+    }
+    .meme-img-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .meme-card-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+    }
+    .meme-count-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .meme-card-item .meme-slogan {
+      font-size: 13px;
+      color: #334155;
+      margin-top: 8px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+    .rarity-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      color: #fff;
+      background: #2563eb;
+    }
+  </style>
 </head>
 <body>
   <div class="student-app">
@@ -30,6 +94,7 @@
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
       <button class="nav-btn" id="btn-tab-minigame" onclick="switchStudentTab('tab-minigame')">🎮 Mini Game</button>
       <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
+      <button class="nav-btn" id="btn-tab-collection" onclick="switchStudentTab('tab-collection')">🖼️ Bộ Sưu Tập Meme</button>
     </nav>
 
     <main class="student-content">
@@ -143,14 +208,26 @@
           <div class="text-center">
             <button id="btn-pull-gacha" onclick="pullGacha()" class="btn btn-success btn-lg">Quay 1 Lần (30 🪙)</button>
           </div>
+          <p id="gacha-result-notice" class="status-msg text-center mt-2"></p>
+        </div>
+      </section>
 
-          <hr class="divider mt-4">
-
-          <h4>Bộ Sưu Tập Linh Thú & Vật Phẩm Đã Nhận:</h4>
-          <div class="inventory-grid mt-2" id="inventory-grid"></div>
+      <!-- 5. BỘ SƯU TẬP MEME -->
+      <section id="tab-collection" class="tab-view">
+        <div class="card">
+          <div class="card-header">
+            <h3>🖼️ Bộ Sưu Tập Meme Của Bạn</h3>
+            <button onclick="loadStudentCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
+          </div>
+          <p class="section-desc">Meme đã sở hữu sẽ hiển thị rõ hình ảnh và số lượng. Meme chưa mở khóa sẽ bị khóa.</p>
+          
+          <div class="meme-collection-grid mt-2" id="collection-grid">
+            <div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải bộ sưu tập...</div>
+          </div>
         </div>
       </section>
     </main>
+
     <footer class="site-footer">
       <div class="footer-content">
         <div class="footer-signature">
@@ -184,6 +261,10 @@
       if (targetBtn) targetBtn.classList.add('active');
 
       sessionStorage.setItem('student_active_tab', tabId);
+
+      if (tabId === 'tab-collection') {
+        loadStudentCollection();
+      }
     }
 
     const savedStudentTab = sessionStorage.getItem('student_active_tab');
@@ -191,7 +272,6 @@
       switchStudentTab(savedStudentTab);
     }
 
-    // Kiểm tra trạng thái khóa bài thi theo trường của học sinh đang đăng nhập
     async function checkStudentExamLockStatus() {
       try {
         const session = getSession();
@@ -215,7 +295,7 @@
           }
         }
       } catch (err) {
-        console.error("Lỗi kiểm tra trạng thái bài thi của trường");
+        console.error("Lỗi kiểm tra trạng thái bài thi");
       }
     }
 

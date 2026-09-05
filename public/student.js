@@ -19,7 +19,7 @@ function switchStudentTab(tabId) {
 }
 
 let studentCoins = 100;
-let studentInventory = [];
+let studentMemeIds = [];
 
 async function loadStudentData() {
   const session = getSession();
@@ -35,10 +35,10 @@ async function loadStudentData() {
 
     if (result.success && result.data) {
       studentCoins = result.data.coins !== undefined ? Number(result.data.coins) : 100;
-      studentInventory = result.data.inventory || [];
+      studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
       
       updateCoinsDisplay();
-      renderInventory();
+      loadStudentCollection();
     }
   } catch (err) {
     console.error("Lỗi tải thông tin học sinh:", err);
@@ -63,11 +63,11 @@ async function syncStudentDataToDB() {
         action: "update_student_items",
         student_id: session.id,
         coins: studentCoins,
-        items: studentInventory
+        meme_id_list: studentMemeIds
       })
     });
   } catch (err) {
-    console.error("Lỗi đồng bộ dữ liệu xu/vật phẩm:", err);
+    console.error("Lỗi đồng bộ dữ liệu xu/meme:", err);
   }
 }
 
@@ -205,15 +205,15 @@ async function endMiniGame() {
   }
 }
 
-const gachaPool = [
-  "🛡️ Khiên Thần Rồng", "⚔️ Kiếm Ánh Sáng", "📜 Bí Kíp Ma Thuật", 
-  "🧪 Bình Độc Dược Bí Ẩn", "💎 Viên Ngọc Rồng", "🦊 Linh Thú Cáo Chín Đuôi"
-];
-
+// --- QUAY GACHA MEME THẬT ---
 async function pullGacha() {
+  const session = getSession();
   const cost = 30;
+  const notice = document.getElementById("gacha-result-notice");
+  notice.textContent = "";
+
   if (studentCoins < cost) {
-    alert("Bạn không đủ Xu để quay! Hãy làm bài tập hoặc chơi mini-game để kiếm thêm xu.");
+    notice.textContent = "Bạn không đủ Xu để quay! Hãy làm bài tập hoặc chơi mini-game.";
     return;
   }
 
@@ -223,36 +223,94 @@ async function pullGacha() {
   btnPull.disabled = true;
   gachaBox.classList.add("shaking");
 
-  setTimeout(async () => {
+  try {
+    const res = await fetch("/.netlify/functions/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "pull_gacha", student_id: session.id })
+    });
+    const result = await res.json();
+
+    setTimeout(() => {
+      gachaBox.classList.remove("shaking");
+      btnPull.disabled = false;
+
+      if (!res.ok || !result.success) {
+        notice.textContent = result.message || "Lỗi quay Gacha!";
+        return;
+      }
+
+      studentCoins = result.data.coins;
+      studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+      updateCoinsDisplay();
+      loadStudentCollection();
+
+      const won = result.data.wonMeme;
+      notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
+    }, 1000);
+
+  } catch (err) {
     gachaBox.classList.remove("shaking");
     btnPull.disabled = false;
-
-    studentCoins -= cost;
-    updateCoinsDisplay();
-
-    const randomItem = gachaPool[Math.floor(Math.random() * gachaPool.length)];
-    studentInventory.push(randomItem);
-    
-    renderInventory();
-    await syncStudentDataToDB();
-
-    alert(`🎉 Chúc mừng bạn nhận được vật phẩm: ${randomItem}!`);
-  }, 1000);
+    notice.textContent = "Lỗi kết nối máy chủ!";
+  }
 }
 
-function renderInventory() {
-  const grid = document.getElementById("inventory-grid");
-  grid.innerHTML = "";
+// --- TẢI VÀ HIỂN THỊ BỘ SƯU TẬP MEME (Có đếm số lượng sở hữu) ---
+async function loadStudentCollection() {
+  const grid = document.getElementById("collection-grid");
+  if (!grid) return;
+  
+  grid.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải bộ sưu tập...</div>`;
 
-  if (studentInventory.length === 0) {
-    grid.innerHTML = `<p style="color: #64748b; font-size: 14px;">Kho đồ trống. Hãy dùng Xu để quay Gacha!</p>`;
-    return;
+  try {
+    const res = await fetch("/.netlify/functions/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_all_memes" })
+    });
+    const result = await res.json();
+
+    if (!result.success || !result.data.memes) {
+      grid.innerHTML = `<p style="color: #64748b; font-size: 14px;">Chưa có dữ liệu meme trong hệ thống.</p>`;
+      return;
+    }
+
+    const allMemes = result.data.memes;
+    grid.innerHTML = "";
+
+    allMemes.forEach(meme => {
+      // Đếm số lần xuất hiện của meme.id trong danh sách sở hữu của học sinh
+      const count = studentMemeIds.filter(id => id === Number(meme.id)).length;
+      const isUnlocked = count > 0;
+      
+      const card = document.createElement("div");
+      card.className = `meme-card-item ${isUnlocked ? '' : 'locked'}`;
+
+      if (isUnlocked) {
+        card.innerHTML = `
+          <div>
+            <span class="rarity-tag">${meme.rarity}</span>
+            <div class="meme-img-wrapper">
+              <img src="${meme.image}" alt="Meme">
+              <span class="meme-count-badge">x${count}</span>
+            </div>
+          </div>
+          <div class="meme-slogan">${meme.slogan}</div>
+        `;
+      } else {
+        card.innerHTML = `
+          <div>
+            <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
+            <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
+          </div>
+          <div class="meme-slogan" style="color: #94a3b8; font-style: italic;">Chưa mở khóa</div>
+        `;
+      }
+      grid.appendChild(card);
+    });
+
+  } catch (err) {
+    grid.innerHTML = `<p style="color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
   }
-
-  studentInventory.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "inventory-item-card";
-    div.innerHTML = `<span>🎁</span><strong>${item}</strong>`;
-    grid.appendChild(div);
-  });
 }
