@@ -71,14 +71,21 @@
             <input type="text" id="reg-class" placeholder="VD: 6A1" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
           </div>
 
+          <!-- Ô tài khoản trải dài 100% -->
+          <div class="form-group">
+            <label for="reg-username">Tài khoản (Tự chọn)</label>
+            <input type="text" id="reg-username" placeholder="VD: annguyen6a1" required style="width: 100%;">
+          </div>
+
+          <!-- Mật khẩu và Nhập lại mật khẩu xuống dòng -->
           <div class="grid-2">
-            <div class="form-group">
-              <label for="reg-username">Tài khoản (Tự chọn)</label>
-              <input type="text" id="reg-username" placeholder="VD: annguyen6a1" required>
-            </div>
             <div class="form-group">
               <label for="reg-password">Mật khẩu</label>
               <input type="password" id="reg-password" placeholder="Tạo mật khẩu" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-confirm-password">Nhập lại mật khẩu</label>
+              <input type="password" id="reg-confirm-password" placeholder="Nhập lại mật khẩu" required>
             </div>
           </div>
 
@@ -178,22 +185,40 @@
       e.preventDefault();
       
       regStatus.className = "status-msg";
-      regStatus.textContent = "Đang kiểm tra thông tin đăng ký...";
-      btnRegister.disabled = true;
+      regStatus.textContent = "";
 
       const school = document.getElementById("reg-school").value;
       const lastName = document.getElementById("reg-lastname").value.trim();
       const firstName = document.getElementById("reg-firstname").value.trim();
-      const className = document.getElementById("reg-class").value.trim();
+      const rawClass = document.getElementById("reg-class").value.trim().toUpperCase();
       const username = document.getElementById("reg-username").value.trim();
       const password = document.getElementById("reg-password").value.trim();
+      const confirmPassword = document.getElementById("reg-confirm-password").value.trim();
 
       if (!school) {
         regStatus.className = "status-msg status-error";
         regStatus.textContent = "Vui lòng chọn trường học!";
-        btnRegister.disabled = false;
         return;
       }
+
+      if (password !== confirmPassword) {
+        regStatus.className = "status-msg status-error";
+        regStatus.textContent = "Mật khẩu xác nhận không khớp!";
+        return;
+      }
+
+      if (password.length < 4) {
+        regStatus.className = "status-msg status-error";
+        regStatus.textContent = "Mật khẩu phải có ít nhất 4 ký tự!";
+        return;
+      }
+
+      // Trích xuất số đầu tiên làm khối lớp (VD: 6A1 -> "6", 7B2 -> "7")
+      const matchGrade = rawClass.match(/\d/);
+      const grade = matchGrade ? matchGrade[0] : "7";
+
+      btnRegister.disabled = true;
+      regStatus.textContent = "Đang kiểm tra thông tin đăng ký...";
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -204,7 +229,8 @@
             school: school,
             lastName: lastName,
             firstName: firstName,
-            className: className,
+            className: rawClass,
+            grade: grade,
             username: username,
             password: password
           })
@@ -212,7 +238,6 @@
 
         const result = await res.json();
 
-        // Xử lý khi tài khoản bị trùng hoặc lỗi từ server
         if (!res.ok || !result.success) {
           regStatus.className = "status-msg status-error";
           regStatus.textContent = result.message || "Tài khoản này đã tồn tại trong hệ thống! Vui lòng chọn tên tài khoản khác.";
@@ -236,6 +261,7 @@
             lastName: result.data.lastName,
             firstName: result.data.firstName,
             className: result.data.className,
+            grade: result.data.grade || grade,
             school: result.data.school
           }));
           window.location.href = "/student";

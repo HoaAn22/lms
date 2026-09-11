@@ -11,6 +11,10 @@
     .data-table th { background-color: #f8fafc; font-weight: 600; color: #334155; }
     .data-table tr:hover { background-color: #f1f5f9; }
     .badge-coin { background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; display: inline-block; }
+    .badge-role { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+    .badge-role.teacher { background: #dbeafe; color: #1e40af; }
+    .badge-role.student { background: #dcfce7; color: #166534; }
+
     .school-management-box { display: flex; flex-direction: column; gap: 8px; }
     .school-row-item { display: flex; flex-direction: column; background: #fff; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
     .school-row-main { display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; }
@@ -25,15 +29,11 @@
       user-select: none;
     }
     .card-body-collapsible {
-      transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+      transition: opacity 0.2s ease-out;
       overflow: visible;
     }
     .card-body-collapsible.collapsed {
-      max-height: 0 !important;
-      opacity: 0;
-      margin: 0 !important;
-      padding: 0 !important;
-      overflow: hidden;
+      display: none !important;
     }
     
     .password-wrapper {
@@ -178,6 +178,112 @@
       border-radius: 6px;
     }
 
+    /* Highlight nền vàng pastel cho cả dòng không có dấu tiếng Việt */
+    tr.row-unaccented-highlight {
+      background-color: #fef9c3 !important;
+    }
+    tr.row-unaccented-highlight td {
+      background-color: #fef9c3 !important;
+    }
+    tr.row-unaccented-highlight:hover td {
+      background-color: #fef08a !important;
+    }
+
+    /* Giới hạn độ rộng và tự động xuống hàng cho ô tài khoản */
+    .username-cell-code {
+      background: #e2e8f0;
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      max-width: 140px;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      line-height: 1.3;
+    }
+
+    /* Menu Dropdown Thao Tác Học Sinh */
+    .action-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .btn-action-main {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-action-main:hover {
+      background: #1d4ed8;
+    }
+    .action-dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: #ffffff;
+      min-width: 135px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+    }
+    .action-dropdown-menu.show {
+      display: flex;
+    }
+    .action-dropdown-item {
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #334155;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .action-dropdown-item:hover {
+      background: #f1f5f9;
+    }
+    .action-dropdown-item.danger {
+      color: #ef4444;
+    }
+    .action-dropdown-item.danger:hover {
+      background: #fee2e2;
+    }
+
+    /* Bảng danh sách tạo hàng loạt */
+    .batch-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .batch-preview-table th, .batch-preview-table td {
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    .batch-preview-table th {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -215,7 +321,7 @@
         <button class="nav-item" onclick="switchTab('tab-exam')">📝 Quản lý đề thi</button>
         <button class="nav-item" onclick="switchTab('tab-grading')">📊 Bảng điểm & Thống kê</button>
         <button class="nav-item" onclick="switchTab('tab-collection')">🖼️ Quản lý phần thưởng</button>
-        <button class="nav-item" onclick="switchTab('tab-settings')">⚙️ Cài đặt hệ thống</button>
+        <button class="nav-item" onclick="switchTab('tab-login-history')">🕒 Lịch sử đăng nhập</button>
       </nav>
     </aside>
 
@@ -233,7 +339,7 @@
 
       <section class="content-body">
         
-        <!-- TAB QUẢN LÝ TRƯỜNG -->
+        <!-- TAB 1: QUẢN LÝ TRƯỜNG -->
         <div id="tab-school-manage" class="tab-panel active">
           <div class="card form-container mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -244,7 +350,7 @@
               <div style="display: flex; gap: 12px; align-items: flex-end;">
                 <div class="form-group" style="flex: 1; margin-bottom: 0;">
                   <label for="new-school-name-input">Thêm trường mới:</label>
-                  <input type="text" id="new-school-name-input" required>
+                  <input type="text" id="new-school-name-input" required autocomplete="off">
                 </div>
                 <button type="submit" class="btn btn-primary" style="height: 41px;">Tạo trường</button>
               </div>
@@ -262,7 +368,7 @@
           </div>
         </div>
 
-        <!-- TAB QUẢN LÝ HỌC SINH -->
+        <!-- TAB 2: QUẢN LÝ HỌC SINH -->
         <div id="tab-student-manage" class="tab-panel">
           <div class="card mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('search-student-body', 'search-student-toggle-icon')">
@@ -270,7 +376,7 @@
               <span id="search-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
             </div>
 
-            <div id="search-student-body" class="card-body-collapsible" style="max-height: 2000px; margin-top: 16px; opacity: 1;">
+            <div id="search-student-body" class="card-body-collapsible" style="margin-top: 16px;">
               <div class="grid-2">
                 <div class="form-group">
                   <label for="filter-school-select">Chọn trường học:</label>
@@ -280,7 +386,7 @@
                 </div>
                 <div class="form-group">
                   <label for="filter-class-input">Lớp:</label>
-                  <input type="text" id="filter-class-input" style="text-transform: uppercase;">
+                  <input type="text" id="filter-class-input" style="text-transform: uppercase;" autocomplete="off">
                 </div>
               </div>
               
@@ -307,13 +413,11 @@
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>STT</span><input type="checkbox" class="col-toggler" data-col="0" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Họ</span><input type="checkbox" class="col-toggler" data-col="1" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tên</span><input type="checkbox" class="col-toggler" data-col="2" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Họ và tên</span><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tài khoản</span><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Mật khẩu</span><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Lớp</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Điểm TB</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Coins</span><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="9" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tài khoản</span><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Mật khẩu</span><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Lớp</span><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Coins</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
                       </div>
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="clearColumnFilter()" style="height: 41px; padding: 0 14px;" title="Xóa bộ lọc cột">Xóa</button>
@@ -332,78 +436,106 @@
                       <th data-col="0">STT</th>
                       <th data-col="1">Họ</th>
                       <th data-col="2">Tên</th>
-                      <th data-col="3">Họ và tên</th>
-                      <th data-col="4">Tài khoản</th>
-                      <th data-col="5">Mật khẩu</th>
-                      <th data-col="6">Lớp</th>
-                      <th data-col="7">Điểm TB</th>
-                      <th data-col="8">Coins</th>
-                      <th data-col="9">Thao tác</th>
+                      <th data-col="3">Tài khoản</th>
+                      <th data-col="4">Mật khẩu</th>
+                      <th data-col="5">Lớp</th>
+                      <th data-col="6">Coins</th>
+                      <th data-col="7">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="student-list-body">
-                    <tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
+                    <tr><td colspan="8" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
 
+          <!-- TẠO TÀI KHOẢN HÀNG LOẠT -->
           <div class="card form-container">
-            <div class="card-header-collapse" onclick="toggleCardBody('student-card-body', 'student-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Thêm học sinh:</h3>
-              <span id="student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+            <div class="card-header-collapse" onclick="toggleCardBody('batch-create-student-body', 'batch-student-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">⚡ Tạo tài khoản hàng loạt:</h3>
+              <span id="batch-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
             </div>
             
-            <div id="student-card-body" class="card-body-collapsible collapsed" style="max-height: 0; opacity: 0; margin: 0; padding: 0;">
-              <form id="create-student-form">
+            <div id="batch-create-student-body" class="card-body-collapsible">
+              <div style="margin-top: 16px;">
                 <div class="grid-2">
                   <div class="form-group">
-                    <label for="school-select">Chọn trường học:</label>
-                    <select id="school-select" required>
+                    <label for="batch-school-select">Chọn trường học cố định:</label>
+                    <select id="batch-school-select" required>
                       <option value="" disabled selected hidden>-- Chọn trường học --</option>
                     </select>
                   </div>
                   
                   <div class="form-group">
-                    <label for="stu-class">Lớp:</label>
-                    <input type="text" id="stu-class" required style="text-transform: uppercase;">
+                    <label for="batch-stu-class">Lớp học cố định:</label>
+                    <input type="text" id="batch-stu-class" required style="text-transform: uppercase;" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
                   </div>
                 </div>
 
-                <div class="grid-2">
-                  <div class="form-group">
-                    <label for="stu-lastname">Họ và tên đệm:</label>
-                    <input type="text" id="stu-lastname" required>
-                  </div>
-                  <div class="form-group">
-                    <label for="stu-firstname">Tên:</label>
-                    <input type="text" id="stu-firstname" required>
-                  </div>
-                </div>
-
-                <div class="grid-2">
-                  <div class="form-group">
-                    <label for="stu-username">Tài khoản:</label>
-                    <input type="text" id="stu-username" required>
-                  </div>
-                  <div class="form-group">
-                    <label for="stu-password">Mật khẩu:</label>
-                    <div class="password-wrapper">
-                      <input type="password" id="stu-password" required>
-                      <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('stu-password', this)">👁️</button>
+                <div class="form-group" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+                  <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 220px;">
+                      <label for="batch-fullname-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
+                        Họ và tên học sinh:
+                      </label>
+                      <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)">
                     </div>
+
+                    <div style="flex: 1; min-width: 140px;">
+                      <label for="batch-coin-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
+                        Thưởng Xu (+ / -):
+                      </label>
+                      <input type="text" id="batch-coin-input" placeholder="+50 hoặc -20 (Tùy chọn)" style="width: 100%; box-sizing: border-box;" autocomplete="off">
+                    </div>
+
+                    <button type="button" onclick="addStudentToBatchList()" class="btn btn-secondary" style="height: 41px; white-space: nowrap;">
+                      + Thêm
+                    </button>
+                  </div>
+
+                  <small style="color: #64748b; font-size: 12px; display: block; margin-top: 8px;">
+                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> qua ô Xu ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm và gõ tiếp. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 coin</strong>.
+                  </small>
+                </div>
+
+                <div id="batch-preview-wrapper" style="display: none; margin-top: 14px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="color: #334155;">Danh sách chờ tạo (<span id="batch-count">0</span> học sinh):</strong>
+                    <button type="button" onclick="clearBatchList()" class="btn btn-secondary btn-sm" style="font-size: 11px;">Xóa hết</button>
+                  </div>
+                  <div style="max-height: 240px; overflow-y: auto; margin-top: 8px;">
+                    <table class="batch-preview-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 40px;">STT</th>
+                          <th>Họ và tên đệm</th>
+                          <th>Tên</th>
+                          <th>Tài khoản dự kiến</th>
+                          <th>Mật khẩu</th>
+                          <th>Coins ban đầu</th>
+                          <th style="width: 50px;">Xóa</th>
+                        </tr>
+                      </thead>
+                      <tbody id="batch-preview-tbody"></tbody>
+                    </table>
+                  </div>
+
+                  <div style="margin-top: 16px; display: flex; gap: 10px;">
+                    <button type="button" id="btn-submit-batch" onclick="executeBatchCreateStudents()" class="btn btn-success" style="height: 42px; font-weight: 600;">
+                      🚀 Xác Nhận Tạo Hàng Loạt (Enter)
+                    </button>
                   </div>
                 </div>
 
-                <button type="submit" id="btn-submit" class="btn btn-success mt-2">Tạo Tài Khoản</button>
-              </form>
-              <p id="create-status" class="status-msg"></p>
+                <p id="batch-create-status" class="status-msg mt-2"></p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- TAB BỘ SƯU TẬP MEME -->
+        <!-- TAB 3: BỘ SƯU TẬP MEME -->
         <div id="tab-collection" class="tab-panel">
           <div class="card form-container mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('meme-manage-card-body-col', 'meme-manage-toggle-icon-col')">
@@ -411,7 +543,7 @@
               <span id="meme-manage-toggle-icon-col" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
             </div>
 
-            <div id="meme-manage-card-body-col" class="card-body-collapsible" style="max-height: 1500px; margin-top: 16px; opacity: 1;">
+            <div id="meme-manage-card-body-col" class="card-body-collapsible" style="margin-top: 16px;">
               <form id="add-meme-form-col" onsubmit="submitMemeForm(event)">
                 <div class="form-group">
                   <label for="meme-image-file-col">Tải ảnh Meme lên:</label>
@@ -419,7 +551,7 @@
                 </div>
                 <div class="form-group">
                   <label for="meme-slogan-col">Slogan Text:</label>
-                  <input type="text" id="meme-slogan-col" placeholder="VD: Lên đỉnh cao trí tuệ..." required>
+                  <input type="text" id="meme-slogan-col" required autocomplete="off">
                 </div>
                 <div class="form-group">
                   <label for="meme-rarity-col">Độ hiếm:</label>
@@ -444,7 +576,7 @@
               <span id="admin-collection-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
 
-            <div id="admin-collection-body" class="card-body-collapsible collapsed" style="max-height: 0; opacity: 0; margin: 0; padding: 0;">
+            <div id="admin-collection-body" class="card-body-collapsible collapsed">
               <div style="display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 8px;">
                 <button onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
               </div>
@@ -468,7 +600,41 @@
 
         <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Quản lý đề thi</h4></div></div>
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Bảng điểm & Thống kê</h4></div></div>
-        <div id="tab-settings" class="tab-panel"><div class="placeholder-card"><h4>Cài đặt hệ thống</h4></div></div>
+
+        <!-- TAB 6: LỊCH SỬ ĐĂNG NHẬP (IP & THIẾT BỊ) -->
+        <div id="tab-login-history" class="tab-panel">
+          <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <h3 style="margin:0; font-size:18px; color:#1e293b;">🕒 Nhật Ký Đăng Nhập Hệ Thống</h3>
+              <button onclick="loadLoginHistory()" class="btn btn-secondary btn-sm">🔄 Làm mới nhật ký</button>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-bottom:14px; align-items:center;">
+              <span style="font-size:13px; font-weight:600; color:#475569;">Lọc đối tượng:</span>
+              <button class="btn btn-secondary btn-sm" id="btn-log-all" onclick="filterLoginLogs('ALL')">Tất cả</button>
+              <button class="btn btn-secondary btn-sm" id="btn-log-student" onclick="filterLoginLogs('student')">Học sinh</button>
+              <button class="btn btn-secondary btn-sm" id="btn-log-teacher" onclick="filterLoginLogs('teacher')">Giáo viên</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Tài khoản</th>
+                    <th>Họ và tên</th>
+                    <th>Vai trò</th>
+                    <th>Địa chỉ IP</th>
+                    <th>Thiết bị & Trình duyệt</th>
+                  </tr>
+                </thead>
+                <tbody id="login-history-tbody">
+                  <tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Đang tải nhật ký...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Modal Chỉnh sửa / Xóa Meme -->
@@ -528,18 +694,18 @@
             <div class="grid-2">
               <div class="form-group" style="margin-bottom: 12px;">
                 <label for="edit-stu-lastname">Họ và tên đệm:</label>
-                <input type="text" id="edit-stu-lastname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+                <input type="text" id="edit-stu-lastname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;" oninput="formatNameInput(this)">
               </div>
               <div class="form-group" style="margin-bottom: 12px;">
                 <label for="edit-stu-firstname">Tên:</label>
-                <input type="text" id="edit-stu-firstname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+                <input type="text" id="edit-stu-firstname" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;" oninput="formatNameInput(this)">
               </div>
             </div>
 
             <div class="grid-2">
               <div class="form-group" style="margin-bottom: 12px;">
                 <label for="edit-stu-class">Lớp:</label>
-                <input type="text" id="edit-stu-class" required style="text-transform:uppercase; width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+                <input type="text" id="edit-stu-class" required style="text-transform:uppercase; width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;" oninput="this.value = this.value.toUpperCase()">
               </div>
               <div class="form-group" style="margin-bottom: 12px;">
                 <label for="edit-stu-password">Mật khẩu:</label>
@@ -552,7 +718,7 @@
                 <label for="edit-stu-coindelta" style="font-weight:600; color:#1e293b;">Tăng / Giảm Coin:</label>
                 <span style="font-size:12px; color:#64748b;">Hiện có: <strong id="edit-stu-current-coins" style="color:#d97706;">0</strong> 🪙</span>
               </div>
-              <input type="text" id="edit-stu-coindelta" placeholder="VD: +100 hoặc -50" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              <input type="text" id="edit-stu-coindelta" placeholder="+100 hoặc -50" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
               <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
             </div>
 
@@ -562,6 +728,38 @@
             </div>
           </form>
           <p id="edit-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Modal Xác Nhận Xóa Học Sinh (Yêu cầu Mật khẩu Admin) -->
+      <div id="delete-student-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #ef4444;">🗑️ Xóa Học Sinh</h3>
+            <button onclick="closeDeleteStudentModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="delete-student-form" onsubmit="submitDeleteStudent(event)">
+            <input type="hidden" id="delete-stu-id">
+            
+            <div style="margin-bottom: 14px; background: #fef2f2; padding: 12px; border-radius: 6px; border: 1px solid #fecaca;">
+              <p style="margin: 0; color: #991b1b; font-size: 13px;">
+                Bạn có chắc chắn muốn xóa học sinh <strong id="delete-stu-name" style="color: #7f1d1d;">---</strong> (Lớp: <span id="delete-stu-class">---</span>)?
+              </p>
+              <p style="margin: 6px 0 0 0; color: #b91c1c; font-size: 12px;">⚠️ Hành động này sẽ xóa vĩnh viễn tài khoản và bảng điểm của học sinh!</p>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="delete-admin-password" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Mật khẩu tài khoản giáo viên:</label>
+              <input type="password" id="delete-admin-password" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeDeleteStudentModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" id="btn-confirm-delete-stu" class="btn" style="background: #ef4444; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Xác Nhận Xóa</button>
+            </div>
+          </form>
+          <p id="delete-student-status" class="status-msg mt-2"></p>
         </div>
       </div>
 
@@ -583,7 +781,7 @@
 
             <div class="form-group" style="margin-bottom: 16px;">
               <label for="feedback-stu-text" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Lời phê / Nhận xét của giáo viên:</label>
-              <textarea id="feedback-stu-text" rows="4" placeholder="Nhập lời phê, nhận xét về tinh thần học tập, kết quả bài thi..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+              <textarea id="feedback-stu-text" rows="4" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -637,7 +835,17 @@
       if (list && list.classList.contains('show')) {
         list.classList.remove('show');
       }
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(m => m.classList.remove('show'));
     });
+
+    function toggleActionDropdown(event, index) {
+      event.stopPropagation();
+      const currentMenu = document.getElementById(`action-menu-${index}`);
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(m => {
+        if (m !== currentMenu) m.classList.remove('show');
+      });
+      if (currentMenu) currentMenu.classList.toggle('show');
+    }
 
     function togglePasswordVisibility(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -656,23 +864,281 @@
       bodyEl.classList.toggle('collapsed');
       if (bodyEl.classList.contains('collapsed')) {
         iconEl.textContent = '▶';
-        bodyEl.style.maxHeight = '0';
-        bodyEl.style.opacity = '0';
-        bodyEl.style.margin = '0';
-        bodyEl.style.padding = '0';
       } else {
         iconEl.textContent = '▼';
-        bodyEl.style.maxHeight = '2000px';
-        bodyEl.style.opacity = '1';
-        bodyEl.style.margin = '16px 0 0 0';
-        bodyEl.style.padding = '0';
       }
     }
 
-    const schoolSelect = document.getElementById("school-select");
+    function formatNameInput(input) {
+      const cursorPos = input.selectionStart;
+      let words = input.value.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        if (words[i].length > 0) {
+          words[i] = words[i][0].toUpperCase() + words[i].slice(1);
+        }
+      }
+      input.value = words.join(" ");
+      if (cursorPos !== null) {
+        input.setSelectionRange(cursorPos, cursorPos);
+      }
+    }
+
+    function hasVietnameseTone(text) {
+      if (!text || typeof text !== 'string') return false;
+      const vnToneRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      return vnToneRegex.test(text);
+    }
+
+    function removeVietnameseTones(str) {
+      if (!str) return "";
+      return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D');
+    }
+
+    function parseStudentFullName(rawFullName) {
+      const words = rawFullName.trim().replace(/\s+/g, ' ').split(' ');
+      if (words.length === 0 || words[0] === '') return null;
+
+      let firstName = words[words.length - 1];
+      let lastName = words.slice(0, words.length - 1).join(' ');
+
+      if (words.length === 1) {
+        firstName = words[0];
+        lastName = "";
+      }
+
+      let middleInitial = "";
+      if (words.length >= 2) {
+        const middleWord = words[words.length - 2];
+        const cleanMiddle = removeVietnameseTones(middleWord);
+        middleInitial = cleanMiddle.charAt(0).toUpperCase();
+      }
+
+      const cleanFirstName = removeVietnameseTones(firstName).toLowerCase();
+      const usernameBase = middleInitial ? `${middleInitial}${cleanFirstName}` : cleanFirstName;
+
+      return {
+        fullName: words.join(' '),
+        lastName,
+        firstName,
+        usernameBase
+      };
+    }
+
+    /* ========================================================
+       QUẢN LÝ DANH SÁCH TẠO HÀNG LOẠT (BATCH CREATE)
+       ======================================================== */
+    let batchStudentsList = [];
+
+    const batchFullnameInput = document.getElementById("batch-fullname-input");
+    const batchCoinInput = document.getElementById("batch-coin-input");
+
+    batchFullnameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (batchFullnameInput.value.trim() !== "") {
+          addStudentToBatchList();
+        }
+        executeBatchCreateStudents();
+      }
+    });
+
+    batchCoinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        addStudentToBatchList();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (batchFullnameInput.value.trim() !== "") {
+          addStudentToBatchList();
+        }
+        executeBatchCreateStudents();
+      }
+    });
+
+    function addStudentToBatchList() {
+      const nameInput = document.getElementById("batch-fullname-input");
+      const coinInput = document.getElementById("batch-coin-input");
+      const rawName = nameInput.value.trim();
+      const rawCoin = coinInput.value.trim();
+      const statusEl = document.getElementById("batch-create-status");
+      statusEl.textContent = "";
+
+      if (!rawName) return;
+
+      const parsed = parseStudentFullName(rawName);
+      if (!parsed) return;
+
+      let initialCoins = 100;
+      if (rawCoin !== "") {
+        const delta = Number(rawCoin) || 0;
+        initialCoins = Math.max(0, 100 + delta);
+      }
+
+      const base = parsed.usernameBase;
+      let calculatedUsername = base;
+      let counter = 1;
+
+      const existingUsernames = batchStudentsList.map(s => s.username);
+      while (existingUsernames.includes(calculatedUsername)) {
+        calculatedUsername = `${base}${counter}`;
+        counter++;
+      }
+
+      batchStudentsList.push({
+        fullName: parsed.fullName,
+        lastName: parsed.lastName,
+        firstName: parsed.firstName,
+        usernameBase: parsed.usernameBase,
+        username: calculatedUsername,
+        password: "123",
+        coins: initialCoins
+      });
+
+      nameInput.value = "";
+      coinInput.value = "";
+      nameInput.focus();
+      renderBatchPreviewTable();
+    }
+
+    function renderBatchPreviewTable() {
+      const tbody = document.getElementById("batch-preview-tbody");
+      const wrapper = document.getElementById("batch-preview-wrapper");
+      const countSpan = document.getElementById("batch-count");
+
+      if (batchStudentsList.length === 0) {
+        wrapper.style.display = "none";
+        tbody.innerHTML = "";
+        return;
+      }
+
+      wrapper.style.display = "block";
+      countSpan.textContent = batchStudentsList.length;
+      tbody.innerHTML = "";
+
+      batchStudentsList.forEach((stu, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${stu.lastName || '---'}</td>
+          <td><strong>${stu.firstName}</strong></td>
+          <td><code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight:600;">${stu.username}</code></td>
+          <td><span style="font-family: monospace;">123</span></td>
+          <td><span class="badge-coin">💰 ${stu.coins}</span></td>
+          <td style="text-align:center;">
+            <button type="button" onclick="removeBatchItem(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function removeBatchItem(index) {
+      batchStudentsList.splice(index, 1);
+      recalculateBatchUsernames();
+      renderBatchPreviewTable();
+    }
+
+    function recalculateBatchUsernames() {
+      const seen = {};
+      batchStudentsList.forEach(stu => {
+        const base = stu.usernameBase;
+        if (!seen[base]) {
+          seen[base] = 0;
+          stu.username = base;
+        } else {
+          seen[base]++;
+          stu.username = `${base}${seen[base]}`;
+        }
+      });
+    }
+
+    function clearBatchList() {
+      batchStudentsList = [];
+      renderBatchPreviewTable();
+      document.getElementById("batch-create-status").textContent = "";
+    }
+
+    async function executeBatchCreateStudents() {
+      const schoolSelect = document.getElementById("batch-school-select");
+      const classInput = document.getElementById("batch-stu-class");
+      const statusEl = document.getElementById("batch-create-status");
+      const btnSubmit = document.getElementById("btn-submit-batch");
+
+      const school = schoolSelect.value;
+      const rawClass = classInput.value.trim().toUpperCase();
+
+      if (!school) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Vui lòng chọn trường học cố định!";
+        schoolSelect.focus();
+        return;
+      }
+
+      if (!rawClass) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Vui lòng nhập lớp học cố định!";
+        classInput.focus();
+        return;
+      }
+
+      if (batchStudentsList.length === 0) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Danh sách học sinh đang trống! Vui lòng nhập họ tên và nhấn Tab.";
+        return;
+      }
+
+      const matchGrade = rawClass.match(/\d/);
+      const grade = matchGrade ? matchGrade[0] : "7";
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg";
+      statusEl.textContent = `Đang tạo ${batchStudentsList.length} tài khoản lên hệ thống... ⏳`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_create_students",
+            school: school,
+            className: rawClass,
+            grade: grade,
+            students: batchStudentsList
+          })
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error";
+          statusEl.textContent = result.message || "Tạo tài khoản hàng loạt thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        statusEl.className = "status-msg status-success";
+        statusEl.textContent = `🎉 ${result.message}`;
+        clearBatchList();
+        loadSchools();
+        
+        filterSchoolSelect.value = school;
+        document.getElementById("filter-class-input").value = rawClass;
+        fetchStudentList(true);
+
+      } catch (err) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
     const filterSchoolSelect = document.getElementById("filter-school-select");
-    const createForm = document.getElementById("create-student-form");
-    const createStatus = document.getElementById("create-status");
+    const batchSchoolSelect = document.getElementById("batch-school-select");
     const studentListBody = document.getElementById("student-list-body");
     
     const createSchoolForm = document.getElementById("create-school-form");
@@ -685,6 +1151,7 @@
     let adminMemesCache = [];
     let currentAdminFilter = 'ALL';
     let currentSelectedMeme = null;
+    let currentLogRole = 'ALL';
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -702,6 +1169,8 @@
 
       if (tabId === 'tab-collection') {
         loadAdminMemeCollection();
+      } else if (tabId === 'tab-login-history') {
+        loadLoginHistory();
       }
     }
 
@@ -712,8 +1181,8 @@
 
     function renderSchoolDropdown(schools) {
       currentSchoolsData = schools || [];
-      schoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
       filterSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
+      batchSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
       schoolsManagementList.innerHTML = "";
 
       if (currentSchoolsData.length === 0) {
@@ -727,15 +1196,15 @@
         const idSafe = schoolName.replace(/[^a-zA-Z0-9]/g, '_');
         const isExamLocked = school.is_exam_locked || false;
 
-        const opt1 = document.createElement("option");
-        opt1.value = schoolName;
-        opt1.textContent = schoolName + (isHidden ? " 🚫 (Đang ẩn)" : "");
-        schoolSelect.appendChild(opt1);
-
         const opt2 = document.createElement("option");
         opt2.value = schoolName;
         opt2.textContent = schoolName;
         filterSchoolSelect.appendChild(opt2);
+
+        const optBatch = document.createElement("option");
+        optBatch.value = schoolName;
+        optBatch.textContent = schoolName;
+        batchSchoolSelect.appendChild(optBatch);
 
         const itemDiv = document.createElement("div");
         itemDiv.className = "school-row-item";
@@ -1135,6 +1604,74 @@
       document.getElementById("edit-student-modal").classList.remove("show");
     }
 
+    function openDeleteStudentModal(studentId) {
+      const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+
+      document.getElementById("delete-stu-id").value = stu.id;
+      document.getElementById("delete-stu-name").textContent = stu.fullName || `${stu.lastName || ''} ${stu.firstName || ''}`.trim() || stu.username;
+      document.getElementById("delete-stu-class").textContent = stu.className || "---";
+      document.getElementById("delete-admin-password").value = "";
+
+      const statusEl = document.getElementById("delete-student-status");
+      statusEl.textContent = "";
+      statusEl.className = "status-msg mt-2";
+
+      document.getElementById("delete-student-modal").classList.add("show");
+    }
+
+    function closeDeleteStudentModal() {
+      document.getElementById("delete-student-modal").classList.remove("show");
+    }
+
+    async function submitDeleteStudent(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("delete-student-status");
+      const btnDelete = document.getElementById("btn-confirm-delete-stu");
+      const studentId = document.getElementById("delete-stu-id").value;
+      const adminPassword = document.getElementById("delete-admin-password").value.trim();
+
+      if (!adminPassword) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập mật khẩu giáo viên!";
+        return;
+      }
+
+      btnDelete.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang xác thực và xóa học sinh...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete_student",
+            student_id: studentId,
+            teacher_username: user.username,
+            password: adminPassword
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Xóa học sinh thất bại!";
+          btnDelete.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Đã xóa học sinh thành công!");
+        closeDeleteStudentModal();
+        fetchStudentList(true);
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnDelete.disabled = false;
+      }
+    }
+
     function openFeedbackModal(studentId) {
       const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
       if (!stu) return;
@@ -1301,7 +1838,7 @@
       }
 
       if (!isSilentUpdate) {
-        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
       }
 
       try {
@@ -1313,7 +1850,7 @@
         const result = await res.json();
         
         if (!res.ok || !result.success) {
-          studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
+          studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
           return;
         }
 
@@ -1321,13 +1858,13 @@
         sortAndRenderStudents();
         saveCurrentFilterState();
       } catch (err) {
-        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
       }
     }
 
     function sortAndRenderStudents() {
       if (!cachedStudentsList || cachedStudentsList.length === 0) {
-        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
         return;
       }
 
@@ -1359,23 +1896,45 @@
         const tr = document.createElement("tr");
         const rawPassword = stu.password || "---";
 
+        const lastName = (stu.lastName || '').trim();
+        const firstName = (stu.firstName || '').trim();
+
+        const hasToneInLastName = hasVietnameseTone(lastName);
+        const hasToneInFirstName = hasVietnameseTone(firstName);
+        const isBothUnaccented = (!hasToneInLastName && !hasToneInFirstName) && (lastName !== '' || firstName !== '');
+
+        if (isBothUnaccented) {
+          tr.className = "row-unaccented-highlight";
+          tr.title = "Cả họ và tên đều chưa có dấu tiếng Việt";
+        }
+
         tr.innerHTML = `
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
           <td data-col="2" style="font-weight: 500;">${stu.firstName || '---'}</td>
-          <td data-col="3">${stu.fullName || '---'}</td>
-          <td data-col="4"><code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${stu.username || '---'}</code></td>
-          <td data-col="5">
+          <td data-col="3"><code class="username-cell-code">${stu.username || '---'}</code></td>
+          <td data-col="4">
             <span id="pwd-text-${index}" style="font-family: monospace; margin-right: 6px;">••••••</span>
             <button type="button" onclick="toggleTablePassword('${rawPassword}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
           </td>
-          <td data-col="6">${stu.className || '---'}</td>
-          <td data-col="7" style="color: #2563eb; font-weight: bold;">${stu.score || '0'}</td>
-          <td data-col="8"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
-          <td data-col="9">
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <button onclick="openEditStudentModal('${stu.id}')" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer;">Sửa</button>
-              <button onclick="openFeedbackModal('${stu.id}')" class="btn btn-primary" style="padding: 4px 10px; font-size: 12px; border-radius:4px; cursor:pointer; background: #2563eb;">Đánh giá</button>
+          <td data-col="5">${stu.className || '---'}</td>
+          <td data-col="6"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
+          <td data-col="7">
+            <div class="action-dropdown-wrapper">
+              <button type="button" class="btn-action-main" onclick="toggleActionDropdown(event, ${index})">
+                Thao tác ▾
+              </button>
+              <div class="action-dropdown-menu" id="action-menu-${index}">
+                <button type="button" class="action-dropdown-item" onclick="openFeedbackModal('${stu.id}')">
+                  ✍️ Nhận xét
+                </button>
+                <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
+                  ✏️ Sửa
+                </button>
+                <button type="button" class="action-dropdown-item danger" onclick="openDeleteStudentModal('${stu.id}')">
+                  🗑️ Xóa
+                </button>
+              </div>
             </div>
           </td>
         `;
@@ -1437,51 +1996,74 @@
       applyColumnVisibility();
     }
 
-    createForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      createStatus.className = "status-msg";
-      createStatus.textContent = "Đang tạo tài khoản...";
+    /* ========================================================
+       QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (TAB 6)
+       ======================================================== */
+    let loginLogsCache = [];
 
-      let school = schoolSelect.value;
-      if (!school) {
-        createStatus.className = "status-msg status-error";
-        createStatus.textContent = "Vui lòng chọn tên trường!";
-        return;
-      }
-
-      const payload = {
-        action: "create_student",
-        school: school,
-        lastName: document.getElementById("stu-lastname").value.trim(),
-        firstName: document.getElementById("stu-firstname").value.trim(),
-        className: document.getElementById("stu-class").value.trim(),
-        username: document.getElementById("stu-username").value.trim(),
-        password: document.getElementById("stu-password").value.trim()
-      };
+    async function loadLoginHistory() {
+      const tbody = document.getElementById("login-history-tbody");
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px;">Đang tải dữ liệu nhật ký... ⏳</td></tr>`;
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ action: "get_login_history", limit: 100 })
         });
-
         const result = await res.json();
-        if (!res.ok || !result.success) {
-          createStatus.className = "status-msg status-error";
-          createStatus.textContent = result.message || "Tạo tài khoản thất bại!";
+
+        if (!result.success || !result.data.logs) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${result.message || "Không thể tải nhật ký"}</td></tr>`;
           return;
         }
 
-        createStatus.className = "status-msg status-success";
-        createStatus.textContent = `Tạo thành công học sinh ${result.data.fullName}!`;
-        createForm.reset();
-        loadSchools();
-      } catch (err) {
-        createStatus.className = "status-msg status-error";
-        createStatus.textContent = "Lỗi kết nối khi gửi dữ liệu!";
+        loginLogsCache = result.data.logs;
+        renderLoginHistory();
+
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
-    });
+    }
+
+    function filterLoginLogs(role) {
+      currentLogRole = role;
+      document.getElementById("btn-log-all").className = role === 'ALL' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      document.getElementById("btn-log-student").className = role === 'student' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      document.getElementById("btn-log-teacher").className = role === 'teacher' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      renderLoginHistory();
+    }
+
+    function renderLoginHistory() {
+      const tbody = document.getElementById("login-history-tbody");
+      let filtered = [...loginLogsCache];
+
+      if (currentLogRole !== 'ALL') {
+        filtered = filtered.filter(l => l.role === currentLogRole);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Chưa có bản ghi đăng nhập nào.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      filtered.forEach(log => {
+        const tr = document.createElement("tr");
+        const timeStr = new Date(log.login_at).toLocaleString('vi-VN');
+        const isTeacher = log.role === 'teacher';
+
+        tr.innerHTML = `
+          <td><span style="font-size:12px; color:#64748b;">${timeStr}</span></td>
+          <td><code>${log.username || '---'}</code></td>
+          <td><strong>${log.full_name || '---'}</strong></td>
+          <td><span class="badge-role ${isTeacher ? 'teacher' : 'student'}">${isTeacher ? 'Giáo viên' : 'Học sinh'}</span></td>
+          <td><code style="background:#eff6ff; color:#1d4ed8; padding:2px 6px; border-radius:4px;">${log.ip_address || '---'}</code></td>
+          <td><span style="font-size:13px; color:#334155;">💻 ${log.device_name || 'Không xác định'}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
     loadSchools().then(() => {
       restoreFilterAndStudents();

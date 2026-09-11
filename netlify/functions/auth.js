@@ -23,6 +23,37 @@ const capitalizeWords = (str) => {
     .join(' ');
 };
 
+// Hàm trích xuất IP Client trên Netlify Functions
+const getClientIp = (event) => {
+  const headers = event.headers || {};
+  return (
+    headers['x-nf-client-connection-ip'] ||
+    headers['client-ip'] ||
+    (headers['x-forwarded-for'] ? headers['x-forwarded-for'].split(',')[0].trim() : null) ||
+    '127.0.0.1'
+  );
+};
+
+// Hàm nhận diện Thiết bị và Hệ điều hành từ User-Agent
+const parseDeviceInfo = (userAgent = "") => {
+  let os = "Thiết bị khác";
+  if (/windows nt 10/i.test(userAgent)) os = "Windows 10/11";
+  else if (/windows nt 6.3/i.test(userAgent)) os = "Windows 8.1";
+  else if (/windows nt 6.1/i.test(userAgent)) os = "Windows 7";
+  else if (/macintosh|mac os x/i.test(userAgent)) os = "macOS";
+  else if (/android/i.test(userAgent)) os = "Android";
+  else if (/iphone|ipad|ipod/i.test(userAgent)) os = "iOS (iPhone/iPad)";
+  else if (/linux/i.test(userAgent)) os = "Linux";
+
+  let browser = "Trình duyệt";
+  if (/edg\//i.test(userAgent)) browser = "Edge";
+  else if (/chrome|crios/i.test(userAgent)) browser = "Chrome";
+  else if (/firefox|fxios/i.test(userAgent)) browser = "Firefox";
+  else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) browser = "Safari";
+
+  return `${os} (${browser})`;
+};
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
@@ -34,10 +65,16 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const action = body.action || "login";
 
+    /* ĐĂNG NHẬP (TỰ ĐỘNG GHI LỊCH SỬ IP & THIẾT BỊ) */
     if (action === "login") {
       const username = body.username.trim();
       const password = body.password.trim();
 
+      const ipAddress = getClientIp(event);
+      const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || '';
+      const deviceName = body.client_device_name || parseDeviceInfo(userAgent);
+
+      // 1. Kiểm tra tài khoản Giáo viên (Admin)
       let { data: adminData } = await supabase
         .from('admins')
         .select('*')
@@ -46,6 +83,16 @@ exports.handler = async (event) => {
         .single();
 
       if (adminData) {
+        // Ghi lại nhật ký đăng nhập admin
+        await supabase.from('login_history').insert([{
+          user_id: adminData.id,
+          username: adminData.username,
+          role: 'teacher',
+          full_name: adminData.full_name || 'Giáo viên',
+          ip_address: ipAddress,
+          device_name: deviceName
+        }]);
+
         return createResponse(true, {
           id: adminData.id,
           username: adminData.username,
@@ -55,6 +102,7 @@ exports.handler = async (event) => {
         });
       }
 
+      // 2. Kiểm tra tài khoản Học sinh
       let { data: studentData, error: stuErr } = await supabase
         .from('students')
         .select('*')
@@ -66,6 +114,16 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Sai tên đăng nhập hoặc mật khẩu!");
       }
 
+      // Ghi lại nhật ký đăng nhập học sinh
+      await supabase.from('login_history').insert([{
+        user_id: studentData.id,
+        username: studentData.username,
+        role: 'student',
+        full_name: studentData.full_name,
+        ip_address: ipAddress,
+        device_name: deviceName
+      }]);
+
       return createResponse(true, {
         id: studentData.id,
         username: studentData.username,
@@ -74,8 +132,28 @@ exports.handler = async (event) => {
         lastName: studentData.last_name,
         firstName: studentData.first_name,
         className: studentData.class_name,
-        school: studentData.school
+        school: studentData.school,
+        grade: studentData.grade || '7',
+        username_change_limit: studentData.username_change_limit !== undefined ? studentData.username_change_limit : 2
       });
+    }
+
+    /* LẤY NHẬT KÝ ĐĂNG NHẬP CHO ADMIN */
+    if (action === "get_login_history") {
+      const limit = body.limit || 100;
+      let query = supabase
+        .from('login_history')
+        .select('*')
+        .order('login_at', { ascending: false })
+        .limit(limit);
+
+      if (body.role && body.role !== 'ALL') {
+        query = query.eq('role', body.role);
+      }
+
+      const { data: logs, error } = await query;
+      if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
+      return createResponse(true, { logs: logs || [] });
     }
 
     if (action === "get_student_scores") {
@@ -128,11 +206,117 @@ exports.handler = async (event) => {
 
       return createResponse(true, {
         ...student,
+        grade: student.grade || '7',
+        username_change_limit: student.username_change_limit !== undefined ? student.username_change_limit : 2,
         coins: itemData.coins !== undefined ? itemData.coins : 100,
         total_coins: itemData.total_coins !== undefined ? itemData.total_coins : 100,
         spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0,
         meme_id_list: itemData.meme_id_list || []
       });
+    }
+
+    if (action === "student_change_password") {
+      const { student_id, old_password, new_password } = body;
+
+      if (!student_id || old_password === undefined || new_password === undefined || new_password === "") {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin mật khẩu!");
+      }
+
+      const { data: student, error: fetchErr } = await supabase
+        .from('students')
+        .select('password')
+        .eq('id', student_id)
+        .single();
+
+      if (fetchErr || !student) {
+        return createResponse(false, null, "Không tìm thấy thông tin tài khoản!");
+      }
+
+      if (student.password !== old_password.trim()) {
+        return createResponse(false, null, "Mật khẩu hiện tại không chính xác!");
+      }
+
+      const { error: updateErr } = await supabase
+        .from('students')
+        .update({ password: new_password.trim() })
+        .eq('id', student_id);
+
+      if (updateErr) {
+        return createResponse(false, null, "Lỗi khi cập nhật mật khẩu: " + updateErr.message);
+      }
+
+      return createResponse(true, null, "Đổi mật khẩu thành công!");
+    }
+
+    if (action === "student_change_username") {
+      const { student_id, password, new_username } = body;
+
+      if (!student_id || !password || !new_username) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin!");
+      }
+
+      const cleanUsername = new_username.trim().toLowerCase();
+
+      if (!/^[a-z0-9_.]{3,30}$/.test(cleanUsername)) {
+        return createResponse(false, null, "Tên tài khoản từ 3-30 ký tự (chữ thường, số, dấu chấm hoặc gạch dưới)!");
+      }
+
+      const { data: student, error: fetchErr } = await supabase
+        .from('students')
+        .select('password, username_change_limit, username')
+        .eq('id', student_id)
+        .single();
+
+      if (fetchErr || !student) {
+        return createResponse(false, null, "Không tìm thấy học sinh!");
+      }
+
+      if (student.password !== password.trim()) {
+        return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
+      }
+
+      const currentLimit = student.username_change_limit !== undefined ? student.username_change_limit : 2;
+      if (currentLimit <= 0) {
+        return createResponse(false, null, "Bạn đã hết số lần được phép đổi tên tài khoản (Tối đa 2 lần)!");
+      }
+
+      if (cleanUsername === (student.username || '').toLowerCase()) {
+        return createResponse(false, null, "Tên tài khoản mới trùng với tên hiện tại!");
+      }
+
+      const { data: existStudent } = await supabase
+        .from('students')
+        .select('id')
+        .eq('username', cleanUsername)
+        .single();
+
+      const { data: existAdmin } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('username', cleanUsername)
+        .single();
+
+      if (existStudent || existAdmin) {
+        return createResponse(false, null, "Tên tài khoản này đã có người sử dụng, vui lòng chọn tên khác!");
+      }
+
+      const newLimit = currentLimit - 1;
+      const { error: updateErr } = await supabase
+        .from('students')
+        .update({
+          username: cleanUsername,
+          username_change_limit: newLimit
+        })
+        .eq('id', student_id);
+
+      if (updateErr) {
+        return createResponse(false, null, "Lỗi cập nhật tên tài khoản: " + updateErr.message);
+      }
+
+      return createResponse(true, {
+        new_username: cleanUsername,
+        remaining_limit: newLimit
+      }, `Đổi tên tài khoản thành công! Bạn còn ${newLimit} lần đổi.`);
     }
 
     if (action === "update_student_items") {
@@ -382,7 +566,7 @@ exports.handler = async (event) => {
 
     if (action === "get_students") {
       let query = supabase.from('students').select(`
-        id, full_name, last_name, first_name, class_name, username, password,
+        id, full_name, last_name, first_name, class_name, username, password, grade,
         scores (score_1, score_2, score_3, score_4, score_5, feedback),
         items (coins, total_coins, spent_coins, meme_id_list)
       `).eq('school', body.school);
@@ -410,6 +594,7 @@ exports.handler = async (event) => {
           lastName: row.last_name,
           firstName: row.first_name, 
           className: row.class_name,
+          grade: row.grade || '7',
           username: row.username, 
           password: row.password, 
           feedback: s.feedback || "",
@@ -483,6 +668,108 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Cập nhật thông tin học sinh thành công!");
     }
 
+    if (action === "delete_student") {
+      const { student_id, teacher_username, password } = body;
+
+      if (!student_id || !teacher_username || !password) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin xác thực và mã học sinh!");
+      }
+
+      const { data: adminData, error: adminErr } = await supabase
+        .from('admins')
+        .select('id, username')
+        .eq('username', teacher_username)
+        .eq('password', password)
+        .single();
+
+      if (adminErr || !adminData) {
+        return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
+      }
+
+      await supabase.from('scores').delete().eq('student_id', student_id);
+      await supabase.from('items').delete().eq('student_id', student_id);
+
+      const { error: deleteStuErr } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', student_id);
+
+      if (deleteStuErr) {
+        return createResponse(false, null, "Lỗi khi xóa học sinh: " + deleteStuErr.message);
+      }
+
+      return createResponse(true, null, "Đã xóa học sinh thành công!");
+    }
+
+    /* TẠO TÀI KHOẢN HÀNG LOẠT */
+    if (action === "batch_create_students") {
+      const { school, className, grade, students } = body;
+
+      if (!school || !className || !Array.isArray(students) || students.length === 0) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin lớp, trường và danh sách học sinh!");
+      }
+
+      const { data: existSchool } = await supabase.from('schools').select('name').eq('name', school).single();
+      if (!existSchool) {
+        await supabase.from('schools').insert([{ name: school, is_hidden: false, is_exam_locked: false }]);
+      }
+
+      const { data: existingStudents } = await supabase.from('students').select('username');
+      const { data: existingAdmins } = await supabase.from('admins').select('username');
+
+      const usedUsernames = new Set([
+        ...(existingStudents || []).map(s => (s.username || '').toLowerCase()),
+        ...(existingAdmins || []).map(a => (a.username || '').toLowerCase())
+      ]);
+
+      const insertedStudents = [];
+
+      for (const stu of students) {
+        const lastName = capitalizeWords(stu.lastName || "");
+        const firstName = capitalizeWords(stu.firstName || "");
+        const fullName = `${lastName} ${firstName}`.trim();
+
+        let base = stu.usernameBase || stu.username;
+        let finalUsername = stu.username || base;
+        let counter = 1;
+
+        while (usedUsernames.has(finalUsername.toLowerCase())) {
+          finalUsername = `${base}${counter}`;
+          counter++;
+        }
+        usedUsernames.add(finalUsername.toLowerCase());
+
+        const startingCoins = stu.coins !== undefined ? Number(stu.coins) : 100;
+
+        const { data: newUser, error: userErr } = await supabase.from('students').insert([{
+          username: finalUsername,
+          password: stu.password || "123",
+          full_name: fullName,
+          last_name: lastName,
+          first_name: firstName,
+          class_name: className.trim().toUpperCase(),
+          school: school,
+          grade: grade || '7',
+          username_change_limit: 2
+        }]).select().single();
+
+        if (userErr) throw userErr;
+
+        await supabase.from('scores').insert([{ student_id: newUser.id, feedback: "" }]);
+        await supabase.from('items').insert([{
+          student_id: newUser.id,
+          coins: startingCoins,
+          total_coins: startingCoins,
+          spent_coins: 0,
+          meme_id_list: []
+        }]);
+
+        insertedStudents.push(newUser);
+      }
+
+      return createResponse(true, { count: insertedStudents.length }, `Đã tạo thành công ${insertedStudents.length} tài khoản học sinh!`);
+    }
+
     if (action === "create_student") {
       const { school } = body;
       const lastName = capitalizeWords(body.lastName);
@@ -492,6 +779,9 @@ exports.handler = async (event) => {
       const password = body.password ? body.password.trim() : "";
       const fullName = `${lastName} ${firstName}`.trim();
       
+      const matchGrade = className.match(/\d/);
+      const grade = body.grade || (matchGrade ? matchGrade[0] : '7');
+
       const { data: existAdmin } = await supabase
         .from('admins')
         .select('username')
@@ -509,7 +799,9 @@ exports.handler = async (event) => {
 
       const { data: newUser, error: userErr } = await supabase.from('students').insert([{
         username, password, full_name: fullName, 
-        last_name: lastName, first_name: firstName, class_name: className, school
+        last_name: lastName, first_name: firstName, class_name: className, school,
+        grade: grade,
+        username_change_limit: 2
       }]).select().single();
 
       if (userErr) {
@@ -529,7 +821,9 @@ exports.handler = async (event) => {
       return createResponse(true, {
         id: newUser.id, fullName: newUser.full_name, lastName: newUser.last_name,
         firstName: newUser.first_name, className: newUser.className,
-        username: newUser.username, school: newUser.school
+        username: newUser.username, school: newUser.school,
+        grade: newUser.grade || grade,
+        username_change_limit: 2
       }, `Tạo thành công học sinh ${fullName}!`);
     }
 

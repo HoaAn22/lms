@@ -5,8 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trang học sinh</title>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/student.css">
   <style>
+    /* CSS TỪ student.css */
+    .student-app { min-height: 100vh; display: flex; flex-direction: column; background: #f1f5f9; }
+    .student-header { background: #1e293b; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .user-stats { display: flex; align-items: center; gap: 16px; }
+    .stat-badge { background: #334155; padding: 6px 14px; border-radius: 20px; font-size: 14px; color: #facc15; font-weight: bold; border: 1px solid #475569; }
+    .user-profile { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .btn-logout-sm { background: #ef4444; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+    .student-nav { background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; padding: 0 24px; gap: 8px; overflow-x: auto; }
+    .nav-btn { background: none; border: none; padding: 14px 18px; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+    .nav-btn:hover { color: #2563eb; }
+    .nav-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    .student-content { padding: 24px; max-width: 1000px; width: 100%; margin: 0 auto; flex: 1; }
+    .tab-view { display: none; }
+    .tab-view.active { display: block; }
+
+    .info-banner { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; border: none; }
+    .profile-info h3 { font-size: 22px; margin-bottom: 4px; }
+    .profile-info p { opacity: 0.9; font-size: 14px; }
+    .academic-summary { display: flex; gap: 16px; }
+    .summary-box { background: rgba(255,255,255,0.15); padding: 12px 18px; border-radius: 8px; text-align: center; }
+    .summary-box span { display: block; font-size: 12px; opacity: 0.85; }
+    .summary-box strong { font-size: 20px; }
+
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .score-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .score-table th, .score-table td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    .score-table th { background: #f8fafc; color: #475569; }
+    .score-table tbody tr:last-child td { border-bottom: none; }
+
+    .quiz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .quiz-card-item { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; position: relative; }
+    .quiz-card-item.disabled { opacity: 0.65; }
+    .quiz-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #dbeafe; color: #1e40af; margin-bottom: 8px; }
+    .badge-locked { background: #e2e8f0; color: #64748b; }
+    .reward-hint { font-size: 13px; color: #d97706; font-weight: 600; margin-top: 6px; }
+
+    .game-timer { font-size: 18px; font-weight: bold; color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 12px; }
+    .game-question-box { background: #f1f5f9; padding: 24px; border-radius: 8px; text-align: center; margin: 16px 0; }
+    .game-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .game-opt-btn { padding: 14px; font-size: 16px; font-weight: 600; border: 2px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; }
+    .game-opt-btn:hover { border-color: #2563eb; background: #eff6ff; }
+
+    .gacha-stage { padding: 40px; text-align: center; }
+    .gacha-box-animation { font-size: 72px; display: inline-block; transition: transform 0.3s; }
+    .shake { animation: shake 0.5s infinite; }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      25% { transform: translate(-2px, -2px) rotate(-5deg); }
+      50% { transform: translate(2px, 0px) rotate(5deg); }
+      75% { transform: translate(-1px, 2px) rotate(-3deg); }
+      100% { transform: translate(1px, -1px) rotate(0deg); }
+    }
+
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+    .inventory-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; font-size: 12px; font-weight: 600; }
+    .inventory-item .icon { font-size: 32px; display: block; margin-bottom: 4px; }
+    .tier-legendary { border: 2px solid #f59e0b; background: #fef3c7; }
+    .tier-epic { border: 2px solid #a855f7; background: #f3e8ff; }
+    .tier-common { border: 1px solid #cbd5e1; }
+    .text-center { text-align: center; }
+    .text-success { color: #16a34a; }
+    .py-4 { padding-top: 16px; padding-bottom: 16px; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; width: auto; margin: 0; }
+    .btn-lg { padding: 12px 24px; font-size: 16px; width: auto; margin: 0; }
+
+    /* CSS RIÊNG CỦA TRANG */
     .meme-collection-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -199,7 +266,7 @@
       border-radius: 4px;
     }
 
-    /* Modal xem chi tiết Meme */
+    /* Modal xem chi tiết Meme & Đổi tên/Mật khẩu */
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -290,25 +357,25 @@
       margin-top: 16px;
     }
 
-    /* Ô điểm luôn vuông chuẩn 80x80 */
+    /* Ô điểm luôn vuông chuẩn 100x100 */
     .academic-summary {
       margin-left: 0 !important;
     }
     .academic-summary .summary-box {
-      width: 80px !important;
-      height: 80px !important;
-      min-width: 80px !important;
-      max-width: 80px !important;
-      min-height: 80px !important;
-      max-height: 80px !important;
+      width: 100px !important;
+      height: 100px !important;
+      min-width: 100px !important;
+      max-width: 100px !important;
+      min-height: 100px !important;
+      max-height: 100px !important;
       aspect-ratio: 1 / 1 !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
       align-items: center !important;
       box-sizing: border-box !important;
-      padding: 4px !important;
-      border-radius: 8px !important;
+      padding: 6px !important;
+      border-radius: 10px !important;
     }
 
     @media (max-width: 640px) {
@@ -324,9 +391,6 @@
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 14px !important;
-      }
-      .banner-vertical-divider {
-        display: none !important;
       }
       .banner-stats-group {
         flex-direction: column !important;
@@ -395,38 +459,30 @@
     </nav>
 
     <main class="student-content">
-      <!-- 1. TỔNG QUAN & BẢNG ĐIỂM -->
       <section id="tab-overview" class="tab-view active">
-        <div class="card info-banner" style="margin-bottom: 20px; padding: 16px 20px;">
+        <div class="card info-banner" style="margin-bottom: 20px; padding: 24px 24px;">
           <div class="banner-content-layout" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
-            <!-- Phần thông tin học sinh -->
             <div class="profile-info" style="min-width: 160px; flex-shrink: 0;">
-              <h3 id="stu-fullname" style="margin: 0 0 4px 0; font-size: 20px;">---</h3>
-              <p style="margin: 0; opacity: 0.95; font-size: 13px;">Trường: <span id="stu-school">---</span> | Lớp: <span id="stu-class">---</span></p>
+              <h3 id="stu-fullname" style="margin: 0 0 6px 0; font-size: 22px;">---</h3>
+              <p style="margin: 0; opacity: 0.95; font-size: 13.5px;">Trường: <span id="stu-school">---</span> | Lớp: <span id="stu-class">---</span></p>
             </div>
 
-            <!-- Đường kẻ đứng phân cách -->
-            <div class="banner-vertical-divider" style="width: 2px; height: 70px; background: rgba(255, 255, 255, 0.4); border-radius: 2px; flex-shrink: 0;"></div>
-
-            <!-- Cụm bên phải: Đẩy sát mép phải (margin-left: auto), gồm 2 ô điểm rồi đến ô Nhận xét -->
             <div class="banner-stats-group" style="display: flex; align-items: stretch; gap: 15px; margin-left: auto; max-width: calc(100% - 220px); min-width: 0;">
-              <!-- 2 ô điểm TB và Xếp Loại (Luôn vuông 80x80) -->
               <div class="academic-summary" style="display: flex; gap: 15px; margin: 0; flex-shrink: 0;">
                 <div class="summary-box">
-                  <span style="font-size: 11px;">Điểm TB</span>
-                  <strong id="average-score" style="font-size: 18px; margin-top: 2px;">--</strong>
+                  <span style="font-size: 12px;">Điểm TB</span>
+                  <strong id="average-score" style="font-size: 20px; margin-top: 4px;">--</strong>
                 </div>
                 <div class="summary-box">
-                  <span style="font-size: 11px;">Xếp Loại</span>
-                  <strong id="academic-rank" style="font-size: 18px; margin-top: 2px;">--</strong>
+                  <span style="font-size: 12px;">Xếp Loại</span>
+                  <strong id="academic-rank" style="font-size: 20px; margin-top: 4px;">--</strong>
                 </div>
               </div>
 
-              <!-- Ô Đánh Giá nằm ở mép phải ngoài cùng, chiều cao 80px bằng 2 ô điểm, nền xanh dương #eff6ff -->
-              <div class="feedback-box-item" style="background: #eff6ff; border-radius: 8px; padding: 10px; display: flex; align-items: flex-start; box-shadow: 0 2px 5px rgba(0,0,0,0.06); max-width: 480px; max-height: 80px; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+              <div class="feedback-box-item" style="background: #eff6ff; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; box-shadow: 0 2px 5px rgba(0,0,0,0.06); max-width: 400px; max-height: 100px; height: 100px; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; height: 100%;">
-                  <div style="font-size: 13px; font-weight: bold; color: #1d4ed8; line-height: 1.2; margin-bottom: 4px;">Nhận xét:</div>
-                  <div class="feedback-scroll-inner" style="font-size: 12px; line-height: 1.4; color: #334155; font-style: italic;  overflow-y: auto; word-break: break-all; overflow-wrap: anywhere; white-space: normal; padding-right: 4px;">
+                  <div style="font-size: 13px; font-weight: bold; color: #1d4ed8; line-height: 1.2; margin-bottom: 6px;">Nhận xét:</div>
+                  <div class="feedback-scroll-inner" style="font-size: 12px; line-height: 1.45; color: #334155; font-style: italic; overflow-y: auto; word-break: break-all; overflow-wrap: anywhere; white-space: normal; padding-right: 4px;">
                     <span id="stu-teacher-feedback">Chưa có nhận xét nào từ giáo viên.</span>
                   </div>
                 </div>
@@ -435,7 +491,6 @@
           </div>
         </div>
 
-        <!-- Bảng điểm kích thước chuẩn -->
         <div class="card">
           <div class="card-header">
             <h3>📈 Bảng Tổng Kết 5 Cột Điểm</h3>
@@ -456,7 +511,6 @@
         </div>
       </section>
 
-      <!-- 2. BÀI KIỂM TRA -->
       <section id="tab-quizzes" class="tab-view">
         <div class="card">
           <h3>Danh Sách Bài Kiểm Tra</h3>
@@ -482,7 +536,6 @@
         </div>
       </section>
 
-      <!-- 3. VÒNG QUAY GACHA -->
       <section id="tab-gacha" class="tab-view">
         <div class="card gacha-card gacha-card-wrapper">
           <div class="gacha-coins-panel">
@@ -520,12 +573,11 @@
         </div>
       </section>
 
-      <!-- 4. BỘ SƯU TẬP MEME -->
       <section id="tab-collection" class="tab-view">
         <div class="card">
           <div class="card-header">
             <h3>🖼️ Bộ Sưu Tập Meme Của Bạn</h3>
-            <button onclick="loadStudentCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
+            <button onclick="loadStudentCollection(true)" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
           </div>
           <p class="section-desc">Meme đã sở hữu hiển thị rõ hình ảnh và số lượng. Nhấn vào meme để phóng to và xem chi tiết!</p>
           
@@ -544,7 +596,7 @@
         </div>
       </section>
 
-      <!-- 5. THÔNG TIN TÀI KHOẢN (2 HÀNG X 2 CỘT) -->
+      <!-- 5. THÔNG TIN TÀI KHOẢN -->
       <section id="tab-account" class="tab-view">
         <div class="card">
           <div class="card-header">
@@ -553,7 +605,6 @@
           <p class="section-desc">Xem thông tin cá nhân và thiết lập tài khoản của bạn.</p>
 
           <div class="account-card-grid">
-            <!-- HÀNG TRÊN: TRƯỜNG & LỚP -->
             <div class="account-item-box">
               <label>Trường đang theo học</label>
               <p id="acc-school">---</p>
@@ -563,7 +614,6 @@
               <p id="acc-class">---</p>
             </div>
 
-            <!-- HÀNG DƯỚI: HỌ VÀ TÊN & TÊN ĐĂNG NHẬP -->
             <div class="account-item-box">
               <label>Họ và Tên</label>
               <p id="acc-fullname">---</p>
@@ -577,17 +627,69 @@
           <div class="mt-4" style="border-top: 1px dashed #cbd5e1; padding-top: 20px;">
             <h4 style="color: #475569; margin-bottom: 12px;">⚙️ Cài Đặt & Bảo Mật</h4>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-              <button class="btn btn-secondary" disabled style="cursor: not-allowed; opacity: 0.6;" title="Chức năng đang được phát triển">
-                🔑 Đổi Mật Khẩu (Sắp ra mắt)
+              <button class="btn btn-primary" onclick="openChangePasswordModal()">
+                🔑 Đổi Mật Khẩu
               </button>
-              <button class="btn btn-secondary" disabled style="cursor: not-allowed; opacity: 0.6;" title="Chức năng đang được phát triển">
-                🔔 Cài Đặt Thông Báo (Sắp ra mắt)
+              <button class="btn btn-secondary" id="btn-open-change-username" onclick="openChangeUsernameModal()">
+                ✏️ Đổi Tên Tài Khoản (<span id="username-limit-count">2</span> lần còn lại)
               </button>
             </div>
           </div>
         </div>
       </section>
     </main>
+
+    <!-- Modal Đổi Mật Khẩu (Không ràng buộc) -->
+    <div id="change-password-modal" class="modal-backdrop" onclick="closeChangePasswordModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close-btn" onclick="closeChangePasswordModal()">✕</button>
+        <h3 style="margin: 0 0 16px 0; color: #1e293b; font-size: 18px;">🔑 Đổi Mật Khẩu</h3>
+        
+        <form id="form-change-password" onsubmit="submitChangePassword(event)" style="text-align: left;">
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Mật khẩu hiện tại:</label>
+            <input type="password" id="input-old-pwd" required placeholder="Nhập mật khẩu hiện tại" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Mật khẩu mới:</label>
+            <input type="password" id="input-new-pwd" required placeholder="Nhập mật khẩu mới" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Xác nhận mật khẩu mới:</label>
+            <input type="password" id="input-confirm-pwd" required placeholder="Nhập lại mật khẩu mới" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+          </div>
+
+          <p id="change-pwd-status" style="font-size: 13px; margin: 0 0 12px 0; min-height: 18px;"></p>
+          <button type="submit" id="btn-submit-change-pwd" class="btn btn-primary btn-block" style="width: 100%;">Lưu Mật Khẩu Mới</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Đổi Tên Tài Khoản -->
+    <div id="change-username-modal" class="modal-backdrop" onclick="closeChangeUsernameModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close-btn" onclick="closeChangeUsernameModal()">✕</button>
+        <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 18px;">✏️ Đổi Tên Tài Khoản</h3>
+        <p style="font-size: 13px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; text-align: left;">
+          ⚠️ Mỗi tài khoản chỉ được phép đổi tối đa <strong>2 lần</strong>. Hiện bạn còn <strong id="modal-remaining-limit">2</strong> lần.
+        </p>
+        
+        <form id="form-change-username" onsubmit="submitChangeUsername(event)" style="text-align: left;">
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Tên tài khoản mới:</label>
+            <input type="text" id="input-new-username" required placeholder="VD: antran2012" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            <small style="color: #64748b; font-size: 11px; display: block; margin-top: 4px;">Viết liền không dấu, chữ thường, số hoặc dấu gạch dưới.</small>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Mật khẩu xác thực:</label>
+            <input type="password" id="input-verify-pwd" required placeholder="Nhập mật khẩu của bạn để xác nhận" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+          </div>
+
+          <p id="change-username-status" style="font-size: 13px; margin: 0 0 12px 0; min-height: 18px;"></p>
+          <button type="submit" id="btn-submit-change-username" class="btn btn-primary btn-block" style="width: 100%;">Xác Nhận Đổi Tên</button>
+        </form>
+      </div>
+    </div>
 
     <!-- Modal Xem Chi Tiết Meme & Tặng Thẻ -->
     <div id="view-meme-modal" class="modal-backdrop" onclick="closeMemeViewModal(event)">
@@ -635,8 +737,709 @@
   </div>
 
   <script src="/auth-guard.js"></script>
-  <script src="/student.js"></script>
   <script>
+    /* JAVASCRIPT TỪ student.js */
+    let usernameChangeLimit = 2;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const session = checkAuth("student");
+      if (!session) return;
+
+      const displayName = session.fullName || session.username;
+      const headerNameEl = document.getElementById("header-student-name-text");
+      if (headerNameEl) headerNameEl.textContent = displayName;
+
+      document.getElementById("stu-fullname").textContent = session.fullName || "---";
+      document.getElementById("stu-class").textContent = session.className || "---";
+      document.getElementById("stu-school").textContent = session.school || "---";
+
+      // Điền dữ liệu vào tab Tài Khoản
+      const accUserEl = document.getElementById("acc-username");
+      const accFullEl = document.getElementById("acc-fullname");
+      const accClassEl = document.getElementById("acc-class");
+      const accSchoolEl = document.getElementById("acc-school");
+
+      if (accUserEl) accUserEl.textContent = session.username || "---";
+      if (accFullEl) accFullEl.textContent = session.fullName || "---";
+      if (accClassEl) accClassEl.textContent = session.className || "---";
+      if (accSchoolEl) accSchoolEl.textContent = session.school || "---";
+
+      if (session.username_change_limit !== undefined) {
+        updateUsernameLimitUI(session.username_change_limit);
+      }
+
+      // Khôi phục tab trước đó
+      let savedStudentTab = sessionStorage.getItem("student_active_tab");
+      if (savedStudentTab === "tab-minigame") {
+        savedStudentTab = "tab-overview";
+      }
+
+      if (savedStudentTab && document.getElementById(savedStudentTab)) {
+        switchStudentTab(savedStudentTab);
+      }
+
+      loadStudentData();
+      renderGachaHistory();
+    });
+
+    function updateUsernameLimitUI(limit) {
+      usernameChangeLimit = Number(limit);
+      const spanCount = document.getElementById("username-limit-count");
+      const modalCount = document.getElementById("modal-remaining-limit");
+      const btnOpen = document.getElementById("btn-open-change-username");
+
+      if (spanCount) spanCount.textContent = usernameChangeLimit;
+      if (modalCount) modalCount.textContent = usernameChangeLimit;
+
+      if (btnOpen) {
+        if (usernameChangeLimit <= 0) {
+          btnOpen.disabled = true;
+          btnOpen.style.cursor = "not-allowed";
+          btnOpen.style.opacity = "0.6";
+          btnOpen.title = "Bạn đã hết số lần đổi tên tài khoản (Tối đa 2 lần).";
+        } else {
+          btnOpen.disabled = false;
+          btnOpen.style.cursor = "pointer";
+          btnOpen.style.opacity = "1";
+        }
+      }
+    }
+
+    function switchStudentTab(tabId) {
+      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll(".student-nav .nav-btn").forEach(b => b.classList.remove("active"));
+      
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add("active");
+
+      const targetBtn = document.getElementById("btn-" + tabId);
+      if (targetBtn) targetBtn.classList.add("active");
+
+      sessionStorage.setItem("student_active_tab", tabId);
+
+      if (tabId === "tab-collection") {
+        loadStudentCollection(false);
+      }
+    }
+
+    let studentCoins = 100;
+    let studentTotalCoins = 100;
+    let studentSpentCoins = 0;
+    let studentMemeIds = [];
+    let currentStudentFilter = 'ALL';
+    let currentViewingMeme = null;
+
+    /* Quản lý bộ nhớ đệm Bộ sưu tập qua sessionStorage */
+    function getStoredMemesCache() {
+      try {
+        const stored = sessionStorage.getItem("student_memes_cache");
+        return stored ? JSON.parse(stored) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredMemesCache(memes) {
+      try {
+        sessionStorage.setItem("student_memes_cache", JSON.stringify(memes));
+      } catch (e) {
+        console.warn("Không thể lưu cache meme vào sessionStorage:", e);
+      }
+    }
+
+    async function loadStudentData() {
+      const session = getSession();
+      if (!session) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_student_info", id: session.id })
+        });
+        const result = await res.json();
+
+        if (result.success && result.data) {
+          studentCoins = result.data.coins !== undefined ? Number(result.data.coins) : 100;
+          studentTotalCoins = result.data.total_coins !== undefined ? Number(result.data.total_coins) : 100;
+          studentSpentCoins = result.data.spent_coins !== undefined ? Number(result.data.spent_coins) : 0;
+          studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+          
+          if (result.data.username_change_limit !== undefined) {
+            updateUsernameLimitUI(result.data.username_change_limit);
+          }
+
+          updateCoinsDisplay();
+          loadStudentCollection(false);
+        }
+      } catch (err) {
+        console.error("Lỗi tải thông tin học sinh:", err);
+      }
+
+      loadStudentScores();
+    }
+
+    function updateCoinsDisplay() {
+      const coinsEl = document.getElementById("user-coins");
+      const spentEl = document.getElementById("user-spent-coins");
+      if (coinsEl) coinsEl.textContent = studentCoins;
+      if (spentEl) spentEl.textContent = studentSpentCoins;
+    }
+
+    async function loadStudentScores() {
+      const session = getSession();
+      const tableBody = document.getElementById("score-table-body");
+      const feedbackEl = document.getElementById("stu-teacher-feedback");
+      tableBody.innerHTML = `<tr><td colspan="3">Đang đồng bộ dữ liệu điểm...</td></tr>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_student_scores", id: session.id })
+        });
+        const result = await res.json();
+
+        if (result.success && result.data) {
+          if (feedbackEl) {
+            if (result.data.feedback && result.data.feedback.trim() !== "") {
+              feedbackEl.textContent = `"${result.data.feedback.trim()}"`;
+              feedbackEl.style.color = "#1e293b";
+              feedbackEl.style.fontWeight = "500";
+            } else {
+              feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
+              feedbackEl.style.color = "#64748b";
+              feedbackEl.style.fontWeight = "normal";
+            }
+          }
+
+          const scores = result.data.scores || [];
+          tableBody.innerHTML = "";
+          
+          let total = 0, count = 0;
+          scores.forEach((sc, idx) => {
+            const val = sc !== "" && sc !== null ? Number(sc) : null;
+            if (val !== null) {
+              total += val;
+              count++;
+            }
+            
+            let evaluation = "Chưa có điểm";
+            if (val !== null) {
+              if (val >= 8) evaluation = "Giỏi 🌟";
+              else if (val >= 6.5) evaluation = "Khá 👍";
+              else if (val >= 5) evaluation = "Trung bình 📚";
+              else evaluation = "Cần cố gắng ⚠️";
+            }
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>Cột điểm ${idx + 1}</td>
+              <td><strong>${val !== null ? val : '---'}</strong></td>
+              <td>${evaluation}</td>
+            `;
+            tableBody.appendChild(tr);
+          });
+
+          const avg = count > 0 ? (total / count).toFixed(1) : "--";
+          document.getElementById("average-score").textContent = avg;
+          
+          let rank = "--";
+          if (count > 0) {
+            if (avg >= 8) rank = "Giỏi 🌟";
+            else if (avg >= 6.5) rank = "Khá 👍";
+            else if (avg >= 5) rank = "Trung bình 📚";
+            else rank = "Cần cố gắng ⚠️";
+          }
+          document.getElementById("academic-rank").textContent = rank;
+        } else {
+          tableBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu bảng điểm.</td></tr>`;
+          if (feedbackEl) feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
+        }
+      } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+        if (feedbackEl) feedbackEl.textContent = "Không thể tải nhận xét từ giáo viên.";
+      }
+    }
+
+    /* Modal Đổi Mật Khẩu */
+    function openChangePasswordModal() {
+      const modal = document.getElementById("change-password-modal");
+      document.getElementById("form-change-password").reset();
+      const statusEl = document.getElementById("change-pwd-status");
+      statusEl.textContent = "";
+      statusEl.style.color = "";
+      modal.classList.add("show");
+    }
+
+    function closeChangePasswordModal() {
+      const modal = document.getElementById("change-password-modal");
+      modal.classList.remove("show");
+    }
+
+    async function submitChangePassword(e) {
+      e.preventDefault();
+      const session = getSession();
+      if (!session) return;
+
+      const oldPwd = document.getElementById("input-old-pwd").value;
+      const newPwd = document.getElementById("input-new-pwd").value;
+      const confirmPwd = document.getElementById("input-confirm-pwd").value;
+      const statusEl = document.getElementById("change-pwd-status");
+      const btnSubmit = document.getElementById("btn-submit-change-pwd");
+
+      if (newPwd !== confirmPwd) {
+        statusEl.textContent = "Mật khẩu xác nhận không khớp!";
+        statusEl.style.color = "#ef4444";
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      statusEl.textContent = "Đang đổi mật khẩu...";
+      statusEl.style.color = "#2563eb";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "student_change_password",
+            student_id: session.id,
+            old_password: oldPwd,
+            new_password: newPwd
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.textContent = result.message || "Đổi mật khẩu thất bại!";
+          statusEl.style.color = "#ef4444";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        statusEl.textContent = "Đổi mật khẩu thành công!";
+        statusEl.style.color = "#16a34a";
+        setTimeout(() => {
+          closeChangePasswordModal();
+          alert("Đổi mật khẩu thành công! Vui lòng ghi nhớ mật khẩu mới.");
+        }, 800);
+      } catch (err) {
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+        statusEl.style.color = "#ef4444";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
+    /* Modal Đổi Tên Tài Khoản */
+    function openChangeUsernameModal() {
+      if (usernameChangeLimit <= 0) {
+        alert("Bạn đã hết số lần được phép đổi tên tài khoản (Tối đa 2 lần).");
+        return;
+      }
+      const modal = document.getElementById("change-username-modal");
+      document.getElementById("form-change-username").reset();
+      const statusEl = document.getElementById("change-username-status");
+      statusEl.textContent = "";
+      statusEl.style.color = "";
+      document.getElementById("modal-remaining-limit").textContent = usernameChangeLimit;
+      modal.classList.add("show");
+    }
+
+    function closeChangeUsernameModal() {
+      const modal = document.getElementById("change-username-modal");
+      modal.classList.remove("show");
+    }
+
+    async function submitChangeUsername(e) {
+      e.preventDefault();
+      const session = getSession();
+      if (!session) return;
+
+      const newUsername = document.getElementById("input-new-username").value.trim().toLowerCase();
+      const verifyPwd = document.getElementById("input-verify-pwd").value;
+      const statusEl = document.getElementById("change-username-status");
+      const btnSubmit = document.getElementById("btn-submit-change-username");
+
+      btnSubmit.disabled = true;
+      statusEl.textContent = "Đang kiểm tra và cập nhật tên tài khoản...";
+      statusEl.style.color = "#2563eb";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "student_change_username",
+            student_id: session.id,
+            new_username: newUsername,
+            password: verifyPwd
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.textContent = result.message || "Đổi tên tài khoản thất bại!";
+          statusEl.style.color = "#ef4444";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        // Cập nhật session storage và giao diện
+        session.username = result.data.new_username;
+        session.username_change_limit = result.data.remaining_limit;
+        sessionStorage.setItem("user_session", JSON.stringify(session));
+
+        const accUserEl = document.getElementById("acc-username");
+        if (accUserEl) accUserEl.textContent = result.data.new_username;
+
+        updateUsernameLimitUI(result.data.remaining_limit);
+
+        statusEl.textContent = result.message;
+        statusEl.style.color = "#16a34a";
+        setTimeout(() => {
+          closeChangeUsernameModal();
+          alert(`Đổi tên tài khoản thành công! Tên đăng nhập mới của bạn là: ${result.data.new_username}`);
+        }, 800);
+      } catch (err) {
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+        statusEl.style.color = "#ef4444";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
+    /* Lịch sử quay Gacha */
+    function getGachaSessionHistory() {
+      try {
+        return JSON.parse(sessionStorage.getItem("gacha_session_history") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function addGachaHistoryItem(meme) {
+      const history = getGachaSessionHistory();
+      const timeNow = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      history.unshift({
+        rarity: meme.rarity,
+        slogan: meme.slogan,
+        image: meme.image,
+        time: timeNow
+      });
+      sessionStorage.setItem("gacha_session_history", JSON.stringify(history));
+      renderGachaHistory();
+    }
+
+    function renderGachaHistory() {
+      const container = document.getElementById("gacha-history-list");
+      if (!container) return;
+
+      const history = getGachaSessionHistory();
+      if (history.length === 0) {
+        container.innerHTML = `<div style="color: #94a3b8; font-size: 13px; text-align: center; padding: 12px;">Lịch sử Gacha sẽ xóa khi đăng xuất</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      history.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "gacha-history-item";
+        div.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${item.image}" alt="Meme">
+            <div>
+              <span class="rarity-tag" style="padding: 1px 6px; font-size: 10px; margin-bottom: 2px;">${item.rarity}</span>
+              <div style="font-weight: 500; color: #1e293b; max-width: 220px; word-break: break-word;">${item.slogan}</div>
+            </div>
+          </div>
+          <span style="font-size: 11px; color: #94a3b8;">${item.time}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function clearGachaHistory() {
+      sessionStorage.removeItem("gacha_session_history");
+      renderGachaHistory();
+    }
+
+    /* Vòng quay Gacha */
+    async function pullGacha() {
+      const session = getSession();
+      const cost = 30;
+      const notice = document.getElementById("gacha-result-notice");
+      notice.textContent = "";
+
+      if (studentCoins < cost) {
+        notice.textContent = "Bạn không đủ Xu để quay! Hãy làm bài kiểm tra để nhận thêm Xu.";
+        return;
+      }
+
+      const btnPull = document.getElementById("btn-pull-gacha");
+      const gachaBox = document.getElementById("gacha-box");
+      
+      btnPull.disabled = true;
+      gachaBox.classList.add("shaking");
+      notice.textContent = "✨ Đang mở hộp quà bí ẩn... ⏳";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "pull_gacha", student_id: session.id })
+        });
+        const result = await res.json();
+
+        setTimeout(() => {
+          gachaBox.classList.remove("shaking");
+          btnPull.disabled = false;
+
+          if (!res.ok || !result.success) {
+            notice.textContent = result.message || "Lỗi quay Gacha!";
+            return;
+          }
+
+          studentCoins = Number(result.data.coins);
+          studentSpentCoins = Number(result.data.spent_coins !== undefined ? result.data.spent_coins : studentSpentCoins + cost);
+          studentTotalCoins = Number(result.data.total_coins !== undefined ? result.data.total_coins : studentTotalCoins);
+          studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+          
+          updateCoinsDisplay();
+          renderStudentCollection();
+
+          const won = result.data.wonMeme;
+          notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
+
+          addGachaHistoryItem(won);
+        }, 1200);
+
+      } catch (err) {
+        gachaBox.classList.remove("shaking");
+        btnPull.disabled = false;
+        notice.textContent = "Lỗi kết nối máy chủ!";
+      }
+    }
+
+    /* Tải Bộ sưu tập */
+    async function loadStudentCollection(forceRefresh = false) {
+      const grid = document.getElementById("collection-grid");
+      if (!grid) return;
+      
+      const cached = getStoredMemesCache();
+      if (!forceRefresh && cached && Array.isArray(cached) && cached.length > 0) {
+        renderStudentCollection();
+        return;
+      }
+
+      grid.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải bộ sưu tập...</div>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_all_memes" })
+        });
+        const result = await res.json();
+
+        if (!result.success || !result.data.memes) {
+          grid.innerHTML = `<p style="color: #64748b; font-size: 14px;">Chưa có dữ liệu meme trong hệ thống.</p>`;
+          return;
+        }
+
+        setStoredMemesCache(result.data.memes);
+        renderStudentCollection();
+
+      } catch (err) {
+        grid.innerHTML = `<p style="color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
+      }
+    }
+
+    function filterStudentMemes(rarity, btnElement) {
+      currentStudentFilter = rarity;
+      document.querySelectorAll("#student-filter-bar .filter-btn").forEach(b => b.classList.remove("active"));
+      if (btnElement) btnElement.classList.add("active");
+      renderStudentCollection();
+    }
+
+    function renderStudentCollection() {
+      const grid = document.getElementById("collection-grid");
+      if (!grid) return;
+
+      const cachedMemes = getStoredMemesCache() || [];
+      const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
+
+      let sorted = [...cachedMemes].sort((a, b) => {
+        let rA = rarityOrder[a.rarity] || 99;
+        let rB = rarityOrder[b.rarity] || 99;
+        return rA - rB;
+      });
+
+      if (currentStudentFilter !== 'ALL') {
+        sorted = sorted.filter(m => m.rarity === currentStudentFilter);
+      }
+
+      if (sorted.length === 0) {
+        grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Không có meme nào thuộc độ hiếm này.</p>`;
+        return;
+      }
+
+      grid.innerHTML = "";
+      sorted.forEach(meme => {
+        const count = studentMemeIds.filter(id => id === Number(meme.id)).length;
+        const isUnlocked = count > 0;
+        
+        const card = document.createElement("div");
+        card.className = `meme-card-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+        if (isUnlocked) {
+          card.onclick = () => openMemeViewModal(meme, count);
+          card.innerHTML = `
+            <div>
+              <span class="rarity-tag">${meme.rarity}</span>
+              <div class="meme-img-wrapper">
+                <img src="${meme.image}" alt="Meme">
+                <span class="meme-count-badge">x${count}</span>
+              </div>
+            </div>
+            <div class="meme-slogan">${meme.slogan}</div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div>
+              <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
+              <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
+            </div>
+            <div class="meme-slogan" style="color: #94a3b8; font-style: italic;">Chưa mở khóa</div>
+          `;
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    /* Xem chi tiết Meme & Tặng Thẻ Dư */
+    function openMemeViewModal(meme, count) {
+      const modal = document.getElementById("view-meme-modal");
+      if (!modal) return;
+
+      currentViewingMeme = meme;
+
+      document.getElementById("view-meme-rarity").textContent = meme.rarity;
+      document.getElementById("view-meme-count").textContent = `Sở hữu: x${count}`;
+      document.getElementById("view-meme-img").src = meme.image;
+      document.getElementById("view-meme-slogan").textContent = meme.slogan;
+
+      const shareBox = document.getElementById("view-meme-share-box");
+      const shareInputSection = document.getElementById("share-input-section");
+      const targetInput = document.getElementById("target-student-username");
+      const shareNotice = document.getElementById("share-notice");
+
+      if (shareInputSection) shareInputSection.style.display = "none";
+      if (targetInput) targetInput.value = "";
+      if (shareNotice) {
+        shareNotice.textContent = "";
+        shareNotice.style.color = "";
+      }
+
+      if (shareBox) {
+        if (count >= 2) {
+          shareBox.style.display = "block";
+        } else {
+          shareBox.style.display = "none";
+        }
+      }
+
+      modal.classList.add("show");
+    }
+
+    function toggleShareInput() {
+      const inputSec = document.getElementById("share-input-section");
+      if (inputSec) {
+        inputSec.style.display = inputSec.style.display === "none" ? "block" : "none";
+      }
+    }
+
+    async function confirmTransferCard() {
+      const session = getSession();
+      if (!session || !currentViewingMeme) return;
+
+      const targetInput = document.getElementById("target-student-username");
+      const noticeEl = document.getElementById("share-notice");
+      const btnConfirm = document.getElementById("btn-confirm-transfer");
+      const targetUsername = targetInput ? targetInput.value.trim() : "";
+
+      if (!targetUsername) {
+        noticeEl.textContent = "Vui lòng nhập tên tài khoản của bạn nhận!";
+        noticeEl.style.color = "#ef4444";
+        return;
+      }
+
+      btnConfirm.disabled = true;
+      noticeEl.textContent = "Đang kiểm tra tài khoản và gửi thẻ...";
+      noticeEl.style.color = "#2563eb";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "transfer_meme",
+            sender_id: session.id,
+            recipient_username: targetUsername,
+            meme_id: currentViewingMeme.id
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          noticeEl.textContent = result.message || "Không thể tặng thẻ!";
+          noticeEl.style.color = "#ef4444";
+          btnConfirm.disabled = false;
+          return;
+        }
+
+        studentMemeIds = (result.data.updated_meme_id_list || []).map(id => Number(id));
+        const updatedCount = studentMemeIds.filter(id => id === Number(currentViewingMeme.id)).length;
+        
+        document.getElementById("view-meme-count").textContent = `Sở hữu: x${updatedCount}`;
+
+        noticeEl.textContent = result.message;
+        noticeEl.style.color = "#16a34a";
+        targetInput.value = "";
+
+        if (updatedCount < 2) {
+          setTimeout(() => {
+            const shareBox = document.getElementById("view-meme-share-box");
+            if (shareBox) shareBox.style.display = "none";
+          }, 1500);
+        }
+
+        renderStudentCollection();
+
+      } catch (err) {
+        noticeEl.textContent = "Lỗi kết nối máy chủ!";
+        noticeEl.style.color = "#ef4444";
+      } finally {
+        btnConfirm.disabled = false;
+      }
+    }
+
+    function closeMemeViewModal() {
+      const modal = document.getElementById("view-meme-modal");
+      if (modal) {
+        modal.classList.remove("show");
+      }
+    }
+
+    document.querySelectorAll(".btn-logout-sm, [onclick*='logout']").forEach(btn => {
+      btn.addEventListener("click", () => {
+        sessionStorage.removeItem("gacha_session_history");
+        sessionStorage.removeItem("student_memes_cache");
+      });
+    });
+
+    /* Kiểm tra trạng thái bài thi */
     async function checkStudentExamLockStatus() {
       try {
         const session = getSession();
