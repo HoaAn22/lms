@@ -14,6 +14,21 @@
     .user-profile { display: flex; align-items: center; gap: 10px; font-size: 14px; }
     .btn-logout-sm { background: #ef4444; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
+    /* NÚT MENU GÓC TRÁI (ẨN TRÊN DESKTOP, HIỆN TRÊN MOBILE) */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.2s;
+    }
+    .mobile-menu-btn:active {
+      transform: scale(0.9);
+    }
+
     .student-nav { background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; padding: 0 24px; gap: 8px; overflow-x: auto; }
     .nav-btn { background: none; border: none; padding: 14px 18px; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
     .nav-btn:hover { color: #2563eb; }
@@ -357,7 +372,11 @@
       margin-top: 16px;
     }
 
-    /* Ô điểm luôn vuông chuẩn 100x100 */
+    .mobile-nav-overlay {
+      display: none;
+    }
+
+    /* Ô điểm luôn vuông chuẩn 100x100 trên desktop */
     .academic-summary {
       margin-left: 0 !important;
     }
@@ -378,7 +397,17 @@
       border-radius: 10px !important;
     }
 
-    @media (max-width: 640px) {
+    /* BREAKPOINT: MOBILE */
+    @media (max-width: 760px) {
+      h2 {
+          display: none;
+      }
+      .mobile-menu-btn {
+        display: block; /* Hiện nút bấm menu trên mobile */
+        padding: 5px 10px;
+        border: 1px solid #fff;
+        border-radius: 5px;
+      }
       .account-card-grid {
         grid-template-columns: 1fr;
       }
@@ -387,19 +416,113 @@
         align-items: center;
         margin-bottom: 12px;
       }
+
+      /* ẨN Menu Nav mặc định, thay bằng popup */
+      .student-nav {
+        display: none; /* Ẩn thẻ nav mặc định trên mobile */
+      }
+      .student-nav.show-menu {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 360px;
+        background: #ffffff;
+        z-index: 10001;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        border: none;
+      }
+      .student-nav .nav-btn {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 10px;
+        font-size: 13px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        white-space: normal;
+        text-align: center;
+      }
+      .student-nav .nav-btn.active {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+      }
+
+      /* Overlay che nền đi khi menu mở */
+      .mobile-nav-overlay.show {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(2px);
+        z-index: 10000;
+      }
+
+      /* Banner Info và Box Điểm kéo giãn */
       .banner-content-layout {
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 14px !important;
+        text-align: center !important;
+        gap: 0 !important;
+      }
+      .profile-info {
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+        margin-bottom: 16px;
+        width: 100%;
       }
       .banner-stats-group {
-        flex-direction: column !important;
-        align-items: stretch !important;
-      }
-      .banner-stats-group .feedback-box-item {
         max-width: 100% !important;
+        justify-content: center !important;
+        margin: 0 !important; 
+        width: 100%;
+      }
+      .academic-summary {
+        justify-content: space-between !important;
+        width: 100%;
+        gap: 14px !important;
+      }
+      .academic-summary .summary-box {
+        flex: 1 !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 85px !important;
+        min-height: 85px !important;
+        max-height: 85px !important;
+        aspect-ratio: auto !important;
+      }
+      
+      .mobile-feedback-wrapper {
+        display: block !important;
+        margin-top: 16px;
+      }
+      .desktop-feedback-wrapper {
+        display: none !important;
       }
     }
+    
+    @media (min-width: 761px) {
+      .mobile-feedback-wrapper {
+        display: none !important;
+      }
+      .desktop-feedback-wrapper {
+        display: flex !important;
+      }
+    }
+
     .account-item-box {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -437,8 +560,9 @@
 <body>
   <div class="student-app">
     <header class="student-header">
-      <div class="brand">
-        <h2>Trang học sinh</h2>
+      <div class="brand" style="display: flex; align-items: center; gap: 12px;">
+        <button id="mobile-menu-btn" class="mobile-menu-btn">☰</button>
+        <h2 style="margin-left: 15px;">Trang học sinh</h2>
       </div>
       <div class="user-stats">
         <div class="user-profile">
@@ -450,7 +574,11 @@
       </div>
     </header>
 
-    <nav class="student-nav">
+    <!-- Lớp phủ (Chỉ hiện trên Mobile khi mở menu) -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay"></div>
+
+    <!-- Menu Điều hướng (Trở thành dạng Popup trên Mobile) -->
+    <nav class="student-nav" id="main-student-nav">
       <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
       <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
@@ -479,11 +607,12 @@
                 </div>
               </div>
 
-              <div class="feedback-box-item" style="background: #eff6ff; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; box-shadow: 0 2px 5px rgba(0,0,0,0.06); max-width: 400px; max-height: 100px; height: 100px; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+              <!-- Desktop Feedback Box -->
+              <div class="feedback-box-item desktop-feedback-wrapper" style="background: #eff6ff; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; box-shadow: 0 2px 5px rgba(0,0,0,0.06); max-width: 400px; max-height: 100px; height: 100px; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; height: 100%;">
                   <div style="font-size: 13px; font-weight: bold; color: #1d4ed8; line-height: 1.2; margin-bottom: 6px;">Nhận xét:</div>
                   <div class="feedback-scroll-inner" style="font-size: 12px; line-height: 1.45; color: #334155; font-style: italic; overflow-y: auto; word-break: break-all; overflow-wrap: anywhere; white-space: normal; padding-right: 4px;">
-                    <span id="stu-teacher-feedback">Chưa có nhận xét nào từ giáo viên.</span>
+                    <span class="stu-teacher-feedback">Chưa có nhận xét nào từ giáo viên.</span>
                   </div>
                 </div>
               </div>
@@ -491,7 +620,15 @@
           </div>
         </div>
 
-        <div class="card">
+        <!-- Mobile Feedback Box (Nằm dưới banner trên mobile) -->
+        <div class="mobile-feedback-wrapper">
+          <div style="background: #eff6ff; border-radius: 10px; padding: 16px; border: 1px solid #bfdbfe;">
+             <div style="font-size: 14px; font-weight: bold; color: #1d4ed8; margin-bottom: 8px;">Nhận xét của giáo viên:</div>
+             <div class="stu-teacher-feedback" style="font-size: 14px; line-height: 1.5; color: #334155; font-style: italic;">Chưa có nhận xét nào từ giáo viên.</div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
           <div class="card-header">
             <h3>📈 Bảng Tổng Kết 5 Cột Điểm</h3>
             <button onclick="loadStudentScores()" class="btn btn-secondary btn-sm">🔄 Làm mới điểm</button>
@@ -577,7 +714,6 @@
         <div class="card">
           <div class="card-header">
             <h3>🖼️ Bộ Sưu Tập Meme Của Bạn</h3>
-            <button onclick="loadStudentCollection(true)" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
           </div>
           <p class="section-desc">Meme đã sở hữu hiển thị rõ hình ảnh và số lượng. Nhấn vào meme để phóng to và xem chi tiết!</p>
           
@@ -596,7 +732,7 @@
         </div>
       </section>
 
-      <!-- 5. THÔNG TIN TÀI KHOẢN -->
+      <!-- THÔNG TIN TÀI KHOẢN -->
       <section id="tab-account" class="tab-view">
         <div class="card">
           <div class="card-header">
@@ -639,7 +775,7 @@
       </section>
     </main>
 
-    <!-- Modal Đổi Mật Khẩu (Không ràng buộc) -->
+    <!-- Modal Đổi Mật Khẩu -->
     <div id="change-password-modal" class="modal-backdrop" onclick="closeChangePasswordModal(event)">
       <div class="modal-card" onclick="event.stopPropagation()">
         <button class="modal-close-btn" onclick="closeChangePasswordModal()">✕</button>
@@ -738,8 +874,35 @@
 
   <script src="/auth-guard.js"></script>
   <script>
-    /* JAVASCRIPT TỪ student.js */
+    /* BẬT / TẮT MENU BẢNG CHỌN TRÊN MOBILE */
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const overlay = document.getElementById('mobile-nav-overlay');
+    const navMenu = document.getElementById('main-student-nav');
+
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('show-menu');
+        overlay.classList.toggle('show');
+      });
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        navMenu.classList.remove('show-menu');
+        overlay.classList.remove('show');
+      });
+    }
+
+    /* ======================================================== */
+    /* QUẢN LÝ DỮ LIỆU & TAB TRANG HỌC SINH TỐI ƯU              */
     let usernameChangeLimit = 2;
+    let studentCoins = 100;
+    let studentTotalCoins = 100;
+    let studentSpentCoins = 0;
+    let studentMemeIds = [];
+    let currentStudentFilter = 'ALL';
+    let currentViewingMeme = null;
+    let currentMemesList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       const session = checkAuth("student");
@@ -753,7 +916,6 @@
       document.getElementById("stu-class").textContent = session.className || "---";
       document.getElementById("stu-school").textContent = session.school || "---";
 
-      // Điền dữ liệu vào tab Tài Khoản
       const accUserEl = document.getElementById("acc-username");
       const accFullEl = document.getElementById("acc-fullname");
       const accClassEl = document.getElementById("acc-class");
@@ -768,17 +930,12 @@
         updateUsernameLimitUI(session.username_change_limit);
       }
 
-      // Khôi phục tab trước đó
       let savedStudentTab = sessionStorage.getItem("student_active_tab");
-      if (savedStudentTab === "tab-minigame") {
-        savedStudentTab = "tab-overview";
-      }
-
-      if (savedStudentTab && document.getElementById(savedStudentTab)) {
-        switchStudentTab(savedStudentTab);
-      }
+      if (savedStudentTab === "tab-minigame") savedStudentTab = "tab-overview";
+      if (savedStudentTab && document.getElementById(savedStudentTab)) switchStudentTab(savedStudentTab);
 
       loadStudentData();
+      loadStudentCollection();
       renderGachaHistory();
     });
 
@@ -817,33 +974,14 @@
 
       sessionStorage.setItem("student_active_tab", tabId);
 
-      if (tabId === "tab-collection") {
-        loadStudentCollection(false);
+      // Đóng menu trên Mobile sau khi chọn xong
+      if (window.innerWidth <= 760) {
+        navMenu.classList.remove('show-menu');
+        overlay.classList.remove('show');
       }
-    }
 
-    let studentCoins = 100;
-    let studentTotalCoins = 100;
-    let studentSpentCoins = 0;
-    let studentMemeIds = [];
-    let currentStudentFilter = 'ALL';
-    let currentViewingMeme = null;
-
-    /* Quản lý bộ nhớ đệm Bộ sưu tập qua sessionStorage */
-    function getStoredMemesCache() {
-      try {
-        const stored = sessionStorage.getItem("student_memes_cache");
-        return stored ? JSON.parse(stored) : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function setStoredMemesCache(memes) {
-      try {
-        sessionStorage.setItem("student_memes_cache", JSON.stringify(memes));
-      } catch (e) {
-        console.warn("Không thể lưu cache meme vào sessionStorage:", e);
+      if (tabId === "tab-collection" && currentMemesList.length > 0) {
+        renderStudentCollection();
       }
     }
 
@@ -863,14 +1001,19 @@
           studentCoins = result.data.coins !== undefined ? Number(result.data.coins) : 100;
           studentTotalCoins = result.data.total_coins !== undefined ? Number(result.data.total_coins) : 100;
           studentSpentCoins = result.data.spent_coins !== undefined ? Number(result.data.spent_coins) : 0;
-          studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+          
+          studentMemeIds = Array.isArray(result.data.meme_id_list) 
+            ? result.data.meme_id_list.map(Number) 
+            : [];
           
           if (result.data.username_change_limit !== undefined) {
             updateUsernameLimitUI(result.data.username_change_limit);
           }
 
           updateCoinsDisplay();
-          loadStudentCollection(false);
+          if (currentMemesList.length > 0) {
+            renderStudentCollection();
+          }
         }
       } catch (err) {
         console.error("Lỗi tải thông tin học sinh:", err);
@@ -889,7 +1032,8 @@
     async function loadStudentScores() {
       const session = getSession();
       const tableBody = document.getElementById("score-table-body");
-      const feedbackEl = document.getElementById("stu-teacher-feedback");
+      const feedbackEls = document.querySelectorAll(".stu-teacher-feedback");
+      
       tableBody.innerHTML = `<tr><td colspan="3">Đang đồng bộ dữ liệu điểm...</td></tr>`;
 
       try {
@@ -901,7 +1045,7 @@
         const result = await res.json();
 
         if (result.success && result.data) {
-          if (feedbackEl) {
+          feedbackEls.forEach(feedbackEl => {
             if (result.data.feedback && result.data.feedback.trim() !== "") {
               feedbackEl.textContent = `"${result.data.feedback.trim()}"`;
               feedbackEl.style.color = "#1e293b";
@@ -911,7 +1055,7 @@
               feedbackEl.style.color = "#64748b";
               feedbackEl.style.fontWeight = "normal";
             }
-          }
+          });
 
           const scores = result.data.scores || [];
           tableBody.innerHTML = "";
@@ -954,15 +1098,18 @@
           document.getElementById("academic-rank").textContent = rank;
         } else {
           tableBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu bảng điểm.</td></tr>`;
-          if (feedbackEl) feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
+          feedbackEls.forEach(feedbackEl => {
+             feedbackEl.textContent = "Chưa có nhận xét nào từ giáo viên.";
+          });
         }
       } catch (err) {
         tableBody.innerHTML = `<tr><td colspan="3" style="color:red;">Lỗi kết nối máy chủ!</td></tr>`;
-        if (feedbackEl) feedbackEl.textContent = "Không thể tải nhận xét từ giáo viên.";
+        feedbackEls.forEach(feedbackEl => {
+           feedbackEl.textContent = "Không thể tải nhận xét từ giáo viên.";
+        });
       }
     }
 
-    /* Modal Đổi Mật Khẩu */
     function openChangePasswordModal() {
       const modal = document.getElementById("change-password-modal");
       document.getElementById("form-change-password").reset();
@@ -1032,7 +1179,6 @@
       }
     }
 
-    /* Modal Đổi Tên Tài Khoản */
     function openChangeUsernameModal() {
       if (usernameChangeLimit <= 0) {
         alert("Bạn đã hết số lần được phép đổi tên tài khoản (Tối đa 2 lần).");
@@ -1086,7 +1232,6 @@
           return;
         }
 
-        // Cập nhật session storage và giao diện
         session.username = result.data.new_username;
         session.username_change_limit = result.data.remaining_limit;
         sessionStorage.setItem("user_session", JSON.stringify(session));
@@ -1110,7 +1255,6 @@
       }
     }
 
-    /* Lịch sử quay Gacha */
     function getGachaSessionHistory() {
       try {
         return JSON.parse(sessionStorage.getItem("gacha_session_history") || "[]");
@@ -1165,7 +1309,6 @@
       renderGachaHistory();
     }
 
-    /* Vòng quay Gacha */
     async function pullGacha() {
       const session = getSession();
       const cost = 30;
@@ -1204,10 +1347,18 @@
           studentCoins = Number(result.data.coins);
           studentSpentCoins = Number(result.data.spent_coins !== undefined ? result.data.spent_coins : studentSpentCoins + cost);
           studentTotalCoins = Number(result.data.total_coins !== undefined ? result.data.total_coins : studentTotalCoins);
-          studentMemeIds = (result.data.meme_id_list || []).map(id => Number(id));
+          
+          studentMemeIds = Array.isArray(result.data.meme_id_list) 
+            ? result.data.meme_id_list.map(Number) 
+            : [];
           
           updateCoinsDisplay();
-          renderStudentCollection();
+          
+          if (currentMemesList.length === 0) {
+             loadStudentCollection();
+          } else {
+             renderStudentCollection();
+          }
 
           const won = result.data.wonMeme;
           notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
@@ -1222,16 +1373,9 @@
       }
     }
 
-    /* Tải Bộ sưu tập */
-    async function loadStudentCollection(forceRefresh = false) {
+    async function loadStudentCollection() {
       const grid = document.getElementById("collection-grid");
       if (!grid) return;
-      
-      const cached = getStoredMemesCache();
-      if (!forceRefresh && cached && Array.isArray(cached) && cached.length > 0) {
-        renderStudentCollection();
-        return;
-      }
 
       grid.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">Đang tải bộ sưu tập...</div>`;
 
@@ -1243,16 +1387,16 @@
         });
         const result = await res.json();
 
-        if (!result.success || !result.data.memes) {
-          grid.innerHTML = `<p style="color: #64748b; font-size: 14px;">Chưa có dữ liệu meme trong hệ thống.</p>`;
+        if (!result.success || !result.data || !result.data.memes) {
+          grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Chưa có dữ liệu meme trong hệ thống.</p>`;
           return;
         }
 
-        setStoredMemesCache(result.data.memes);
+        currentMemesList = result.data.memes;
         renderStudentCollection();
 
       } catch (err) {
-        grid.innerHTML = `<p style="color: red; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
+        grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #ef4444; font-size: 14px;">Lỗi tải bộ sưu tập từ máy chủ.</p>`;
       }
     }
 
@@ -1267,7 +1411,7 @@
       const grid = document.getElementById("collection-grid");
       if (!grid) return;
 
-      const cachedMemes = getStoredMemesCache() || [];
+      const cachedMemes = currentMemesList || [];
       const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
 
       let sorted = [...cachedMemes].sort((a, b) => {
@@ -1281,13 +1425,18 @@
       }
 
       if (sorted.length === 0) {
-        grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Không có meme nào thuộc độ hiếm này.</p>`;
+        if (currentStudentFilter === 'ALL') {
+             grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Hệ thống chưa có meme nào. Vui lòng đợi giáo viên thêm phần thưởng nhé!</p>`;
+        } else {
+             grid.innerHTML = `<p style="grid-column: span 3; text-align: center; color: #64748b; font-size: 14px;">Không có meme nào thuộc độ hiếm này.</p>`;
+        }
         return;
       }
 
       grid.innerHTML = "";
       sorted.forEach(meme => {
-        const count = studentMemeIds.filter(id => id === Number(meme.id)).length;
+        const idToCheck = Number(meme.id || meme._id);
+        const count = studentMemeIds.filter(id => id === idToCheck).length;
         const isUnlocked = count > 0;
         
         const card = document.createElement("div");
@@ -1318,7 +1467,6 @@
       });
     }
 
-    /* Xem chi tiết Meme & Tặng Thẻ Dư */
     function openMemeViewModal(meme, count) {
       const modal = document.getElementById("view-meme-modal");
       if (!modal) return;
@@ -1380,6 +1528,7 @@
       noticeEl.style.color = "#2563eb";
 
       try {
+        const memeIdValue = currentViewingMeme.id || currentViewingMeme._id;
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1387,7 +1536,7 @@
             action: "transfer_meme",
             sender_id: session.id,
             recipient_username: targetUsername,
-            meme_id: currentViewingMeme.id
+            meme_id: memeIdValue
           })
         });
         const result = await res.json();
@@ -1399,8 +1548,11 @@
           return;
         }
 
-        studentMemeIds = (result.data.updated_meme_id_list || []).map(id => Number(id));
-        const updatedCount = studentMemeIds.filter(id => id === Number(currentViewingMeme.id)).length;
+        studentMemeIds = Array.isArray(result.data.updated_meme_id_list) 
+          ? result.data.updated_meme_id_list.map(Number) 
+          : [];
+          
+        const updatedCount = studentMemeIds.filter(id => id === Number(memeIdValue)).length;
         
         document.getElementById("view-meme-count").textContent = `Sở hữu: x${updatedCount}`;
 
@@ -1439,7 +1591,6 @@
       });
     });
 
-    /* Kiểm tra trạng thái bài thi */
     async function checkStudentExamLockStatus() {
       try {
         const session = getSession();

@@ -54,6 +54,23 @@ const parseDeviceInfo = (userAgent = "") => {
   return `${os} (${browser})`;
 };
 
+// Bộ phân tích mảng Meme an toàn (Phòng tránh lỗi mảng Supabase biến thành chuỗi String)
+const parseMemeIds = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data.map(Number);
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data).map(Number);
+    } catch (e) {
+      return data.replace(/[{}[\]"']/g, '').split(',')
+                 .map(s => s.trim())
+                 .filter(Boolean)
+                 .map(Number);
+    }
+  }
+  return [];
+};
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
@@ -65,7 +82,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const action = body.action || "login";
 
-    /* ĐĂNG NHẬP (TỰ ĐỘNG GHI LỊCH SỬ IP & THIẾT BỊ) */
+    /* ĐĂNG NHẬP VÀ KIỂM TRA IP/TÀI KHOẢN BỊ KHÓA */
     if (action === "login") {
       const username = body.username.trim();
       const password = body.password.trim();
@@ -73,6 +90,32 @@ exports.handler = async (event) => {
       const ipAddress = getClientIp(event);
       const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || '';
       const deviceName = body.client_device_name || parseDeviceInfo(userAgent);
+
+      // 0.1 Kiểm tra IP có nằm trong danh sách cấm (Banned IP) không
+      const { data: isBanned } = await supabase
+        .from('banned_ips')
+        .select('ip_address, reason')
+        .eq('ip_address', ipAddress)
+        .single();
+
+      if (isBanned) {
+        return createResponse(
+          false,null,`${isBanned.reason}`
+        );
+      }
+
+      // 0.2 Kiểm tra Tài khoản có nằm trong danh sách cấm (Banned Account) không
+      const { data: isAccountBanned } = await supabase
+        .from('banned_accounts')
+        .select('username, reason')
+        .eq('username', username)
+        .single();
+
+      if (isAccountBanned) {
+        return createResponse(
+          false,null,`${isAccountBanned.reason}`
+        );
+      }
 
       // 1. Kiểm tra tài khoản Giáo viên (Admin)
       let { data: adminData } = await supabase
@@ -83,7 +126,6 @@ exports.handler = async (event) => {
         .single();
 
       if (adminData) {
-        // Ghi lại nhật ký đăng nhập admin
         await supabase.from('login_history').insert([{
           user_id: adminData.id,
           username: adminData.username,
@@ -138,7 +180,7 @@ exports.handler = async (event) => {
       });
     }
 
-    /* LẤY NHẬT KÝ ĐĂNG NHẬP CHO ADMIN */
+    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP */
     if (action === "get_login_history") {
       const limit = body.limit || 100;
       let query = supabase
@@ -154,6 +196,129 @@ exports.handler = async (event) => {
       const { data: logs, error } = await query;
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
       return createResponse(true, { logs: logs || [] });
+    }
+    /* XÓA NHẬT KÝ CHI TIẾT */
+    if (action === "clear_login_history") {
+      const { role } = body;
+      let query = supabase.from('login_history').delete();
+      
+      if (role && role !== 'ALL') {
+        query = query.eq('role', role);
+      } else {
+        // Xóa tất cả các bản ghi có id khác rỗng
+        query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+      }
+
+      const { error } = await query;
+      if (error) return createResponse(false, null, "Lỗi khi xóa nhật ký: " + error.message);
+      return createResponse(true, null, "Đã xóa dữ liệu nhật ký thành công!");
+    }
+
+    /* XÓA IP RA KHỎI HỆ THỐNG (Xóa lịch sử của IP đó) */
+    if (action === "delete_ip_logs") {
+      const { ip_address } = body;
+      if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP cần xóa.");
+
+      // Xóa các bản ghi đăng nhập liên quan đến IP này
+      const { error } = await supabase
+        .from('login_history')
+        .delete()
+        .eq('ip_address', ip_address);
+
+      if (error) return createResponse(false, null, "Lỗi khi xóa dữ liệu IP: " + error.message);
+      return createResponse(true, null, `Đã xóa hoàn toàn dữ liệu của IP ${ip_address}. Khi máy này đăng nhập lại, hệ thống sẽ ghi nhận lại từ đầu.`);
+    }
+
+    /* QUẢN LÝ IP & THIẾT BỊ (Gộp nhóm theo IP) */
+    if (action === "get_ip_management") {
+      const { data: logs, error: logErr } = await supabase
+        .from('login_history')
+        .select('*')
+        .order('login_at', { ascending: false });
+
+      if (logErr) return createResponse(false, null, "Lỗi khi lấy dữ liệu IP.");
+
+      const { data: bannedData } = await supabase.from('banned_ips').select('ip_address, reason');
+      const bannedIpsMap = {};
+      (bannedData || []).forEach(b => {
+        bannedIpsMap[b.ip_address] = b.reason;
+      });
+
+      const ipMap = {};
+      (logs || []).forEach(log => {
+        if (!ipMap[log.ip_address]) {
+          ipMap[log.ip_address] = {
+            ip_address: log.ip_address,
+            accounts: new Set(),
+            devices: new Set(),
+            last_login: log.login_at,
+            is_banned: !!bannedIpsMap[log.ip_address],
+            ban_reason: bannedIpsMap[log.ip_address] || ""
+          };
+        }
+        ipMap[log.ip_address].accounts.add(`${log.username} (${log.role === 'teacher' ? 'GV' : 'HS'})`);
+        ipMap[log.ip_address].devices.add(log.device_name || "Không xác định");
+      });
+
+      const ipList = Object.values(ipMap).map(item => ({
+        ...item,
+        accounts: Array.from(item.accounts),
+        devices: Array.from(item.devices)
+      }));
+
+      return createResponse(true, { ip_list: ipList });
+    }
+
+    /* KHÓA VÀ MỞ KHÓA TÀI KHOẢN (BAN ACCOUNT) */
+    if (action === "ban_account") {
+      const { username, reason } = body;
+      if (!username) return createResponse(false, null, "Thiếu tên tài khoản.");
+
+      const { error } = await supabase.from('banned_accounts').insert([{ 
+        username, 
+        reason: reason || "Vi phạm quy chế"
+      }]);
+
+      if (error) {
+        if (error.code === '23505') return createResponse(false, null, "Tài khoản này đã bị khóa từ trước!");
+        return createResponse(false, null, "Lỗi khi khóa tài khoản.");
+      }
+      return createResponse(true, null, `Đã khóa tài khoản ${username}!`);
+    }
+
+    if (action === "unban_account") {
+      const { username } = body;
+      if (!username) return createResponse(false, null, "Thiếu tên tài khoản.");
+
+      const { error } = await supabase.from('banned_accounts').delete().eq('username', username);
+      if (error) return createResponse(false, null, "Lỗi mở khóa tài khoản.");
+      return createResponse(true, null, `Đã mở khóa truy cập cho tài khoản ${username}.`);
+    }
+
+    /* KHÓA VÀ MỞ KHÓA IP (BAN IP) */
+    if (action === "ban_ip") {
+      const { ip_address, reason } = body;
+      if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP.");
+
+      const { error } = await supabase.from('banned_ips').insert([{ 
+        ip_address, 
+        reason: reason || "Vi phạm quy chế"
+      }]);
+
+      if (error) {
+        if (error.code === '23505') return createResponse(false, null, "IP này đã bị khóa từ trước!");
+        return createResponse(false, null, "Lỗi khi khóa IP.");
+      }
+      return createResponse(true, null, `Đã khóa vĩnh viễn IP ${ip_address}!`);
+    }
+
+    if (action === "unban_ip") {
+      const { ip_address } = body;
+      if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP.");
+
+      const { error } = await supabase.from('banned_ips').delete().eq('ip_address', ip_address);
+      if (error) return createResponse(false, null, "Lỗi mở khóa IP.");
+      return createResponse(true, null, `Đã mở khóa truy cập cho IP ${ip_address}.`);
     }
 
     if (action === "get_student_scores") {
@@ -211,7 +376,7 @@ exports.handler = async (event) => {
         coins: itemData.coins !== undefined ? itemData.coins : 100,
         total_coins: itemData.total_coins !== undefined ? itemData.total_coins : 100,
         spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0,
-        meme_id_list: itemData.meme_id_list || []
+        meme_id_list: parseMemeIds(itemData.meme_id_list)
       });
     }
 
@@ -325,7 +490,7 @@ exports.handler = async (event) => {
       if (coins !== undefined) updatePayload.coins = coins;
       if (total_coins !== undefined) updatePayload.total_coins = total_coins;
       if (spent_coins !== undefined) updatePayload.spent_coins = spent_coins;
-      if (meme_id_list !== undefined) updatePayload.meme_id_list = meme_id_list;
+      if (meme_id_list !== undefined) updatePayload.meme_id_list = parseMemeIds(meme_id_list);
 
       const { error } = await supabase
         .from('items')
@@ -448,7 +613,9 @@ exports.handler = async (event) => {
 
       const newCoins = currentCoins - gachaCost;
       const newSpent = currentSpent + gachaCost;
-      const currentInventoryIds = itemData.meme_id_list || [];
+      
+      // Parse list kỹ càng để tránh lỗi vỡ mảng chuỗi
+      const currentInventoryIds = parseMemeIds(itemData.meme_id_list);
       
       let updatedInventoryIds = [...currentInventoryIds];
       updatedInventoryIds.push(randomMeme.id);
@@ -508,8 +675,8 @@ exports.handler = async (event) => {
       }
 
       const parsedMemeId = Number(meme_id);
-      const senderList = senderItems.meme_id_list || [];
-      const occurrences = senderList.filter(id => Number(id) === parsedMemeId).length;
+      const senderList = parseMemeIds(senderItems.meme_id_list);
+      const occurrences = senderList.filter(id => id === parsedMemeId).length;
 
       if (occurrences < 2) {
         return createResponse(false, null, "Bạn cần sở hữu từ 2 thẻ trở lên mới có thể tặng thẻ dư!");
@@ -531,10 +698,10 @@ exports.handler = async (event) => {
           meme_id_list: []
         }]);
       } else {
-        recipList = recipItems.meme_id_list || [];
+        recipList = parseMemeIds(recipItems.meme_id_list);
       }
 
-      const removeIndex = senderList.findIndex(id => Number(id) === parsedMemeId);
+      const removeIndex = senderList.findIndex(id => id === parsedMemeId);
       if (removeIndex > -1) {
         senderList.splice(removeIndex, 1);
       }
@@ -576,6 +743,10 @@ exports.handler = async (event) => {
       const { data, error } = await query;
       if (error) throw error;
 
+      // Lấy danh sách tài khoản bị khóa để đánh dấu
+      const { data: bannedAccounts } = await supabase.from('banned_accounts').select('username');
+      const bannedSet = new Set((bannedAccounts || []).map(b => b.username));
+
       const students = data.map(row => {
         let totalScore = 0, countScore = 0;
         const s = row.scores || {};
@@ -601,8 +772,9 @@ exports.handler = async (event) => {
           coins: studentItems.coins !== undefined ? studentItems.coins : 100,
           total_coins: studentItems.total_coins !== undefined ? studentItems.total_coins : 100,
           spent_coins: studentItems.spent_coins !== undefined ? studentItems.spent_coins : 0,
-          meme_id_list: studentItems.meme_id_list || [],
-          score: `${avgScore} / ${totalScore}`
+          meme_id_list: parseMemeIds(studentItems.meme_id_list),
+          score: `${avgScore} / ${totalScore}`,
+          is_banned: bannedSet.has(row.username)
         };
       });
       return createResponse(true, { students });
@@ -666,6 +838,30 @@ exports.handler = async (event) => {
       }
 
       return createResponse(true, null, "Cập nhật thông tin học sinh thành công!");
+    }
+
+    if (action === "batch_update_class") {
+      const { student_ids, new_class } = body;
+
+      if (!student_ids || !Array.isArray(student_ids) || student_ids.length === 0) {
+        return createResponse(false, null, "Vui lòng chọn ít nhất một học sinh để chuyển lớp!");
+      }
+      if (!new_class || new_class.trim() === "") {
+        return createResponse(false, null, "Vui lòng nhập tên lớp mới!");
+      }
+
+      const formattedNewClass = new_class.trim().toUpperCase();
+
+      const { error: updateErr } = await supabase
+        .from('students')
+        .update({ class_name: formattedNewClass })
+        .in('id', student_ids);
+
+      if (updateErr) {
+        return createResponse(false, null, "Lỗi khi chuyển lớp: " + updateErr.message);
+      }
+
+      return createResponse(true, null, `Đã chuyển thành công ${student_ids.length} học sinh sang lớp ${formattedNewClass}!`);
     }
 
     if (action === "delete_student") {

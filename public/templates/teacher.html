@@ -178,7 +178,6 @@
       border-radius: 6px;
     }
 
-    /* Highlight nền vàng pastel cho cả dòng không có dấu tiếng Việt */
     tr.row-unaccented-highlight {
       background-color: #fef9c3 !important;
     }
@@ -189,7 +188,6 @@
       background-color: #fef08a !important;
     }
 
-    /* Giới hạn độ rộng và tự động xuống hàng cho ô tài khoản */
     .username-cell-code {
       background: #e2e8f0;
       padding: 3px 6px;
@@ -202,7 +200,6 @@
       line-height: 1.3;
     }
 
-    /* Menu Dropdown Thao Tác Học Sinh */
     .action-dropdown-wrapper {
       position: relative;
       display: inline-block;
@@ -230,7 +227,7 @@
       right: 0;
       top: calc(100% + 4px);
       background: #ffffff;
-      min-width: 135px;
+      min-width: 155px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
@@ -267,7 +264,6 @@
       background: #fee2e2;
     }
 
-    /* Bảng danh sách tạo hàng loạt */
     .batch-preview-table {
       width: 100%;
       border-collapse: collapse;
@@ -309,13 +305,138 @@
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       position: relative;
     }
+
+    .ip-list-badge {
+      display: inline-block; 
+      background: #e2e8f0; 
+      color: #334155; 
+      padding: 2px 6px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      margin-bottom: 3px;
+      margin-right: 3px;
+    }
+    .ban-status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ban-status.active { background: #dcfce7; color: #166534; }
+    .ban-status.banned { background: #fee2e2; color: #991b1b; }
+
+    /* CSS ĐIỀU HƯỚNG TRÊN MOBILE CHO GIÁO VIÊN */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: #1e293b;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.2s;
+    }
+    .mobile-menu-btn:active {
+      transform: scale(0.9);
+    }
+    .mobile-nav-overlay {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none !important; /* Ẩn sidebar truyền thống trên mobile */
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+      }
+      .btn-toggle {
+        display: none !important; /* Ẩn nút gập sidebar cũ */
+      }
+      .mobile-menu-btn {
+        display: block; /* Hiện nút hamburger mới */
+        margin-right: 12px;
+      }
+
+      /* Popup Menu Mobile (Áp dụng class show-menu bằng ID để đảm bảo độ ưu tiên cao nhất) */
+      #admin-sidebar.show-menu {
+        display: block !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90% !important;
+        max-width: 360px !important;
+        background: #ffffff !important;
+        z-index: 10001 !important;
+        padding: 20px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2) !important;
+        height: auto !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin: 0 !important;
+      }
+      #admin-sidebar.show-menu .sidebar-brand {
+        display: none !important; /* Ẩn chữ MENU */
+      }
+      #admin-sidebar.show-menu .sidebar-nav {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #admin-sidebar.show-menu .sidebar-nav .nav-item {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 16px 10px !important;
+        font-size: 13px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        white-space: normal !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin-bottom: 0 !important; /* Khử style cũ */
+        box-sizing: border-box !important;
+        color: #64748b !important;
+      }
+      #admin-sidebar.show-menu .sidebar-nav .nav-item.active {
+        background: #eff6ff !important;
+        border-color: #3b82f6 !important;
+        color: #1d4ed8 !important;
+      }
+
+      /* Overlay che nền */
+      .mobile-nav-overlay.show {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(2px);
+        z-index: 10000;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="dashboard-layout">
-    <aside class="sidebar collapsed" id="admin-sidebar">
+    
+    <!-- Lớp phủ (Chỉ hiện trên Mobile khi mở menu) -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay"></div>
+
+    <aside class="sidebar" id="admin-sidebar">
       <div class="sidebar-brand"><h3>MENU</h3></div>
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" id="main-teacher-nav">
         <button class="nav-item active" onclick="switchTab('tab-school-manage')">🏫 Quản lý trường học</button>
         <button class="nav-item" onclick="switchTab('tab-student-manage')">👥 Quản lý học sinh</button>
         <button class="nav-item" onclick="switchTab('tab-exam')">📝 Quản lý đề thi</button>
@@ -327,9 +448,10 @@
 
     <main class="main-content">
       <header class="topbar">
-        <div class="topbar-left">
+        <div class="topbar-left" style="display: flex; align-items: center;">
+          <button id="mobile-menu-btn" class="mobile-menu-btn">☰</button>
           <button class="btn-toggle" onclick="toggleSidebar()" title="Thu gọn menu">☰</button>
-          <div><h2 id="view-title">Trang quản lý</h2></div>
+          <div><h2 id="view-title" style="margin: 0;">Trang quản lý</h2></div>
         </div>
         <div class="topbar-right">
           <span class="sub-text">Giáo viên: <strong id="teacher-name"></strong></span>
@@ -396,8 +518,8 @@
                   <select id="sort-select" onchange="sortAndRenderStudents()">
                     <option value="name-az">Tên (A - Z)</option>
                     <option value="name-za">Tên (Z - A)</option>
-                    <option value="score-desc">Điểm trung bình (Cao → Thấp)</option>
-                    <option value="score-asc">Điểm trung bình (Thấp → Cao)</option>
+                    <option value="total-coins-desc">Tổng xu (Cao → Thấp)</option>
+                    <option value="total-coins-asc">Tổng xu (Thấp → Cao)</option>
                   </select>
                 </div>
 
@@ -416,8 +538,9 @@
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tài khoản</span><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Mật khẩu</span><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Lớp</span><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Coins</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Xu</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tổng xu</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"></label>
                       </div>
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="clearColumnFilter()" style="height: 41px; padding: 0 14px;" title="Xóa bộ lọc cột">Xóa</button>
@@ -439,12 +562,13 @@
                       <th data-col="3">Tài khoản</th>
                       <th data-col="4">Mật khẩu</th>
                       <th data-col="5">Lớp</th>
-                      <th data-col="6">Coins</th>
-                      <th data-col="7">Thao tác</th>
+                      <th data-col="6">Xu</th>
+                      <th data-col="7">Tổng xu</th>
+                      <th data-col="8">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="student-list-body">
-                    <tr><td colspan="8" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
+                    <tr><td colspan="9" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -455,10 +579,10 @@
           <div class="card form-container">
             <div class="card-header-collapse" onclick="toggleCardBody('batch-create-student-body', 'batch-student-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">⚡ Tạo tài khoản hàng loạt:</h3>
-              <span id="batch-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+              <span id="batch-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
             
-            <div id="batch-create-student-body" class="card-body-collapsible">
+            <div id="batch-create-student-body" class="card-body-collapsible collapsed">
               <div style="margin-top: 16px;">
                 <div class="grid-2">
                   <div class="form-group">
@@ -496,7 +620,7 @@
                   </div>
 
                   <small style="color: #64748b; font-size: 12px; display: block; margin-top: 8px;">
-                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> qua ô Xu ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm và gõ tiếp. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 coin</strong>.
+                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> qua ô Xu ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm và gõ tiếp. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 xu</strong>.
                   </small>
                 </div>
 
@@ -514,7 +638,7 @@
                           <th>Tên</th>
                           <th>Tài khoản dự kiến</th>
                           <th>Mật khẩu</th>
-                          <th>Coins ban đầu</th>
+                          <th>Xu ban đầu</th>
                           <th style="width: 50px;">Xóa</th>
                         </tr>
                       </thead>
@@ -533,6 +657,68 @@
               </div>
             </div>
           </div>
+
+          <!-- CHUYỂN LỚP HÀNG LOẠT -->
+          <div class="card form-container mt-4">
+            <div class="card-header-collapse" onclick="toggleCardBody('batch-transfer-body', 'batch-transfer-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🔄 Chuyển Lớp Hàng Loạt</h3>
+              <span id="batch-transfer-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+            </div>
+            
+            <div id="batch-transfer-body" class="card-body-collapsible collapsed" style="margin-top: 16px;">
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="transfer-school-select">Chọn trường học:</label>
+                  <select id="transfer-school-select">
+                    <option value="" disabled selected hidden>-- Chọn trường học --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="transfer-old-class">Lớp hiện tại (VD: 7B9):</label>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" id="transfer-old-class" style="text-transform: uppercase; flex:1;" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+                    <button type="button" class="btn btn-secondary" onclick="fetchStudentsForTransfer()">Tìm kiếm</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Khu vực hiển thị danh sách học sinh để chuyển -->
+              <div id="transfer-preview-wrapper" style="display: none; margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <strong style="color: #334155;">Danh sách học sinh (<span id="transfer-count">0</span>):</strong>
+                  <label style="font-size:13px; font-weight:600; cursor:pointer;">
+                    <input type="checkbox" id="transfer-select-all" checked onchange="toggleSelectAllTransfer(this)"> Chọn tất cả
+                  </label>
+                </div>
+                
+                <div style="max-height: 200px; overflow-y: auto; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                  <table class="batch-preview-table" style="margin-top:0;">
+                    <thead>
+                      <tr>
+                        <th style="width: 40px; text-align:center;">Chọn</th>
+                        <th>Họ và tên</th>
+                        <th>Tài khoản</th>
+                        <th>Lớp hiện tại</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transfer-preview-tbody"></tbody>
+                  </table>
+                </div>
+
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                  <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="transfer-new-class" style="color: #1e293b; font-weight: bold;">Nhập tên Lớp Mới (VD: 8B9):</label>
+                    <input type="text" id="transfer-new-class" style="text-transform: uppercase;" autocomplete="off" oninput="this.value = this.value.toUpperCase()" placeholder="Tên lớp mới">
+                  </div>
+                  <button type="button" id="btn-submit-transfer" onclick="executeBatchTransfer()" class="btn btn-primary" style="height: 41px;">
+                    🚀 Xác Nhận Chuyển Lớp
+                  </button>
+                </div>
+                <p id="transfer-status" class="status-msg mt-2"></p>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- TAB 3: BỘ SƯU TẬP MEME -->
@@ -601,38 +787,106 @@
         <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Quản lý đề thi</h4></div></div>
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Bảng điểm & Thống kê</h4></div></div>
 
-        <!-- TAB 6: LỊCH SỬ ĐĂNG NHẬP (IP & THIẾT BỊ) -->
+        <!-- TAB 6: LỊCH SỬ ĐĂNG NHẬP VÀ QUẢN LÝ IP -->
         <div id="tab-login-history" class="tab-panel">
-          <div class="card">
-            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-              <h3 style="margin:0; font-size:18px; color:#1e293b;">🕒 Nhật Ký Đăng Nhập Hệ Thống</h3>
-              <button onclick="loadLoginHistory()" class="btn btn-secondary btn-sm">🔄 Làm mới nhật ký</button>
-            </div>
-            
-            <div style="display:flex; gap:10px; margin-bottom:14px; align-items:center;">
-              <span style="font-size:13px; font-weight:600; color:#475569;">Lọc đối tượng:</span>
-              <button class="btn btn-secondary btn-sm" id="btn-log-all" onclick="filterLoginLogs('ALL')">Tất cả</button>
-              <button class="btn btn-secondary btn-sm" id="btn-log-student" onclick="filterLoginLogs('student')">Học sinh</button>
-              <button class="btn btn-secondary btn-sm" id="btn-log-teacher" onclick="filterLoginLogs('teacher')">Giáo viên</button>
+          <div class="card" style="margin-bottom: 16px;">
+            <div style="display:flex; gap:10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 14px;">
+              <button class="btn btn-primary" id="btn-view-logs" onclick="switchLoginView('logs')">📋 Nhật ký chi tiết</button>
+              <button class="btn btn-secondary" id="btn-view-ips" onclick="switchLoginView('ips')">🛡️ Quản lý IP & Chặn Máy</button>
             </div>
 
-            <div style="overflow-x: auto;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Thời gian</th>
-                    <th>Tài khoản</th>
-                    <th>Họ và tên</th>
-                    <th>Vai trò</th>
-                    <th>Địa chỉ IP</th>
-                    <th>Thiết bị & Trình duyệt</th>
-                  </tr>
-                </thead>
-                <tbody id="login-history-tbody">
-                  <tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Đang tải nhật ký...</td></tr>
-                </tbody>
-              </table>
+            <!-- CHẾ ĐỘ XEM 1: Nhật ký lịch sử đăng nhập chi tiết -->
+            <div id="view-login-logs">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <h3 style="margin:0; font-size:16px; color:#1e293b;">Nhật Ký Các Phiên Đăng Nhập Gần Nhất</h3>
+                <div style="display:flex; gap:8px;">
+                  <button onclick="clearAllLoginLogs()" class="btn btn-sm" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">🗑️ Xóa nhật ký</button>
+                  <button onclick="loadLoginHistory()" class="btn btn-secondary btn-sm">🔄 Làm mới nhật ký</button>
+                </div>
+              </div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <span style="font-size:13px; font-weight:600; color:#475569;">Lọc:</span>
+                  <button class="btn btn-primary btn-sm" id="btn-log-all" onclick="filterLoginLogs('ALL')">Tất cả</button>
+                  <button class="btn btn-secondary btn-sm" id="btn-log-student" onclick="filterLoginLogs('student')">Học sinh</button>
+                  <button class="btn btn-secondary btn-sm" id="btn-log-teacher" onclick="filterLoginLogs('teacher')">Giáo viên</button>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569;">
+                  <span>Hiển thị:</span>
+                  <select id="log-page-size" onchange="changeLogPageSize(this.value)" style="padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">Tất cả</option>
+                  </select>
+                  <span>dòng/trang</span>
+                </div>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Thời gian</th>
+                      <th>Tài khoản</th>
+                      <th>Họ và tên</th>
+                      <th>Vai trò</th>
+                      <th>Địa chỉ IP</th>
+                      <th>Thiết bị & Trình duyệt</th>
+                    </tr>
+                  </thead>
+                  <tbody id="login-history-tbody">
+                    <tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Đang tải nhật ký...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Thanh phân trang (Pagination) -->
+              <div id="log-pagination-wrapper" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:10px; border-top:1px solid #e2e8f0; font-size:13px;">
+                <span id="log-pagination-info" style="color:#64748b;">Hiển thị 0 - 0 của 0 mục</span>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-secondary btn-sm" id="btn-page-prev" onclick="prevLogPage()">« Trước</button>
+                  <span id="log-page-current" style="padding:4px 10px; font-weight:bold; color:#1e293b;">1</span>
+                  <button class="btn btn-secondary btn-sm" id="btn-page-next" onclick="nextLogPage()">Sau »</button>
+                </div>
+              </div>
             </div>
+
+            <!-- CHẾ ĐỘ XEM 2: Quản lý IP (Bao gồm Đánh dấu sao, Khóa và Xóa IP) -->
+            <div id="view-ip-management" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <div>
+                  <h3 style="margin:0; font-size:16px; color:#1e293b;">Danh Sách ID IP & Cấm (Ban) Thiết Bị</h3>
+                  <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">
+                    ⭐ Đánh dấu sao cho IP máy chủ hoặc máy giáo viên để bảo vệ, tránh xóa hoặc cấm nhầm.
+                  </p>
+                </div>
+                <button onclick="loadIpManagement()" class="btn btn-secondary btn-sm">🔄 Tải lại dữ liệu</button>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align:center;">Ưu tiên</th>
+                      <th>Địa chỉ IP</th>
+                      <th>Danh sách Tài Khoản từng truy cập</th>
+                      <th>Danh sách Thiết Bị</th>
+                      <th>Lần cuối ghi nhận</th>
+                      <th>Trạng thái IP</th>
+                      <th style="width: 170px;">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ip-management-tbody">
+                    <tr><td colspan="7" style="text-align:center; padding:24px; color:#64748b;">Đang thống kê dữ liệu...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -715,10 +969,10 @@
 
             <div class="form-group" style="margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
-                <label for="edit-stu-coindelta" style="font-weight:600; color:#1e293b;">Tăng / Giảm Coin:</label>
+                <label for="edit-stu-coindelta" style="font-weight:600; color:#1e293b;">Tăng / Giảm Xu:</label>
                 <span style="font-size:12px; color:#64748b;">Hiện có: <strong id="edit-stu-current-coins" style="color:#d97706;">0</strong> 🪙</span>
               </div>
-              <input type="text" id="edit-stu-coindelta" placeholder="+100 hoặc -50" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
+              <input type="number" id="edit-stu-coindelta" placeholder="VD: 100 (để cộng) hoặc -50 (để trừ)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
               <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
             </div>
 
@@ -731,7 +985,7 @@
         </div>
       </div>
 
-      <!-- Modal Xác Nhận Xóa Học Sinh (Yêu cầu Mật khẩu Admin) -->
+      <!-- Modal Xác Nhận Xóa Học Sinh -->
       <div id="delete-student-modal" class="modal-backdrop">
         <div class="modal-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -815,6 +1069,26 @@
 
   <script src="/auth-guard.js"></script>
   <script>
+    /* BẬT / TẮT MENU BẢNG CHỌN TRÊN MOBILE */
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const overlay = document.getElementById('mobile-nav-overlay');
+    const adminSidebar = document.getElementById('admin-sidebar'); // Thay target là admin-sidebar
+
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', () => {
+        adminSidebar.classList.remove('collapsed'); // Khắc phục triệt để lỗi xung đột khi F5
+        adminSidebar.classList.toggle('show-menu');
+        overlay.classList.toggle('show');
+      });
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        adminSidebar.classList.remove('show-menu');
+        overlay.classList.remove('show');
+      });
+    }
+
     const user = checkAuth("teacher");
     if (user) document.getElementById("teacher-name").textContent = user.fullName || user.username;
 
@@ -885,7 +1159,7 @@
 
     function hasVietnameseTone(text) {
       if (!text || typeof text !== 'string') return false;
-      const vnToneRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      const vnToneRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúúụủũưừứựửữỳýỵỷỹđĐ]/i;
       return vnToneRegex.test(text);
     }
 
@@ -1151,7 +1425,6 @@
     let adminMemesCache = [];
     let currentAdminFilter = 'ALL';
     let currentSelectedMeme = null;
-    let currentLogRole = 'ALL';
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -1165,12 +1438,19 @@
       
       sessionStorage.setItem("teacher_active_tab", tabId);
 
-      if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
+      // Đóng menu trên Mobile sau khi chọn xong
+      if (window.innerWidth <= 768) {
+        const sidebarObj = document.getElementById('admin-sidebar');
+        if (sidebarObj) sidebarObj.classList.remove('show-menu');
+        const overlayObj = document.getElementById('mobile-nav-overlay');
+        if (overlayObj) overlayObj.classList.remove('show');
+      }
 
       if (tabId === 'tab-collection') {
         loadAdminMemeCollection();
       } else if (tabId === 'tab-login-history') {
         loadLoginHistory();
+        loadIpManagement();
       }
     }
 
@@ -1183,6 +1463,10 @@
       currentSchoolsData = schools || [];
       filterSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
       batchSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
+      
+      const transferSchoolSelect = document.getElementById("transfer-school-select");
+      if (transferSchoolSelect) transferSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
+      
       schoolsManagementList.innerHTML = "";
 
       if (currentSchoolsData.length === 0) {
@@ -1205,6 +1489,13 @@
         optBatch.value = schoolName;
         optBatch.textContent = schoolName;
         batchSchoolSelect.appendChild(optBatch);
+        
+        if (transferSchoolSelect) {
+          const optTransfer = document.createElement("option");
+          optTransfer.value = schoolName;
+          optTransfer.textContent = schoolName;
+          transferSchoolSelect.appendChild(optTransfer);
+        }
 
         const itemDiv = document.createElement("div");
         itemDiv.className = "school-row-item";
@@ -1581,6 +1872,40 @@
       }
     }
 
+    /* QUẢN LÝ KHÓA/MỞ KHÓA TÀI KHOẢN HỌC SINH */
+    async function banStudent(username) {
+      const reason = prompt(`Nhập lý do khóa tài khoản ${username}:`, "Vi phạm nội quy");
+      if (reason === null) return;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "ban_account", username: username, reason: reason })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) fetchStudentList(true);
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    async function unbanStudent(username) {
+      if (!confirm(`Bạn có chắc chắn muốn mở khóa cho tài khoản ${username}?`)) return;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unban_account", username: username })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) fetchStudentList(true);
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
     function openEditStudentModal(studentId) {
       const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
       if (!stu) return;
@@ -1666,7 +1991,7 @@
         fetchStudentList(true);
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
-        statusEl.textContent = "Lỗi kết nối máy chủ!";
+        statusEl.textContent = "Lỗi kết máy chủ!";
       } finally {
         btnDelete.disabled = false;
       }
@@ -1744,7 +2069,16 @@
       const password = document.getElementById("edit-stu-password").value.trim();
       
       const rawDelta = document.getElementById("edit-stu-coindelta").value.trim();
-      const coinDelta = Number(rawDelta) || 0;
+      
+      let coinDelta = 0;
+      if (rawDelta !== "") {
+        coinDelta = parseInt(rawDelta, 10);
+        if (isNaN(coinDelta)) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = "Vui lòng nhập một số hợp lệ để cộng hoặc trừ xu!";
+          return;
+        }
+      }
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -1838,7 +2172,7 @@
       }
 
       if (!isSilentUpdate) {
-        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
       }
 
       try {
@@ -1850,7 +2184,7 @@
         const result = await res.json();
         
         if (!res.ok || !result.success) {
-          studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
+          studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
           return;
         }
 
@@ -1858,13 +2192,13 @@
         sortAndRenderStudents();
         saveCurrentFilterState();
       } catch (err) {
-        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
       }
     }
 
     function sortAndRenderStudents() {
       if (!cachedStudentsList || cachedStudentsList.length === 0) {
-        studentListBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
         return;
       }
 
@@ -1879,14 +2213,14 @@
           return nameA.localeCompare(nameB);
         } else if (sortBy === "name-za") {
           return nameB.localeCompare(nameA);
-        } else if (sortBy === "score-desc") {
-          const avgA = parseFloat(a.score.split(" / ")[0]) || 0;
-          const avgB = parseFloat(b.score.split(" / ")[0]) || 0;
-          return avgB - avgA;
-        } else if (sortBy === "score-asc") {
-          const avgA = parseFloat(a.score.split(" / ")[0]) || 0;
-          const avgB = parseFloat(b.score.split(" / ")[0]) || 0;
-          return avgA - avgB;
+        } else if (sortBy === "total-coins-desc") {
+          const coinA = Number(a.total_coins) || 0;
+          const coinB = Number(b.total_coins) || 0;
+          return coinB - coinA;
+        } else if (sortBy === "total-coins-asc") {
+          const coinA = Number(a.total_coins) || 0;
+          const coinB = Number(b.total_coins) || 0;
+          return coinA - coinB;
         }
         return 0;
       });
@@ -1912,14 +2246,18 @@
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
           <td data-col="2" style="font-weight: 500;">${stu.firstName || '---'}</td>
-          <td data-col="3"><code class="username-cell-code">${stu.username || '---'}</code></td>
+          <td data-col="3">
+            <code class="username-cell-code">${stu.username || '---'}</code>
+            ${stu.is_banned ? '<span style="color:#ef4444; font-size:11px; font-weight:bold; display:block;">🔒 Bị khóa</span>' : ''}
+          </td>
           <td data-col="4">
             <span id="pwd-text-${index}" style="font-family: monospace; margin-right: 6px;">••••••</span>
             <button type="button" onclick="toggleTablePassword('${rawPassword}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
           </td>
           <td data-col="5">${stu.className || '---'}</td>
-          <td data-col="6"><span class="badge-coin">💰 ${stu.coins || '0'}</span></td>
-          <td data-col="7">
+          <td data-col="6"><span class="badge-coin">💰 ${stu.coins !== undefined ? stu.coins : '0'}</span></td>
+          <td data-col="7"><span class="badge-coin" style="background:#e0e7ff; color:#3730a3;">💎 ${stu.total_coins !== undefined ? stu.total_coins : '0'}</span></td>
+          <td data-col="8">
             <div class="action-dropdown-wrapper">
               <button type="button" class="btn-action-main" onclick="toggleActionDropdown(event, ${index})">
                 Thao tác ▾
@@ -1931,6 +2269,10 @@
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
                 </button>
+                ${stu.is_banned
+                  ? `<button type="button" class="action-dropdown-item" style="color:#16a34a;" onclick="unbanStudent('${stu.username}')">🔓 Mở khóa tài khoản</button>`
+                  : `<button type="button" class="action-dropdown-item danger" onclick="banStudent('${stu.username}')">🔒 Khóa tài khoản</button>`
+                }
                 <button type="button" class="action-dropdown-item danger" onclick="openDeleteStudentModal('${stu.id}')">
                   🗑️ Xóa
                 </button>
@@ -1997,10 +2339,188 @@
     }
 
     /* ========================================================
-       QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (TAB 6)
+       CHUYỂN LỚP HÀNG LOẠT
+       ======================================================== */
+    let transferStudentsList = [];
+
+    async function fetchStudentsForTransfer() {
+      const school = document.getElementById("transfer-school-select").value;
+      const oldClass = document.getElementById("transfer-old-class").value.trim();
+      const wrapper = document.getElementById("transfer-preview-wrapper");
+      const tbody = document.getElementById("transfer-preview-tbody");
+      const statusEl = document.getElementById("transfer-status");
+      
+      statusEl.textContent = "";
+
+      if (!school) {
+        alert("Vui lòng chọn trường học!");
+        return;
+      }
+      if (!oldClass) {
+        alert("Vui lòng nhập tên lớp hiện tại cần tìm!");
+        return;
+      }
+
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải danh sách học sinh... ⏳</td></tr>`;
+      wrapper.style.display = "block";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_students", school: school, className: oldClass })
+        });
+        const result = await res.json();
+        
+        if (!result.success || !result.data.students || result.data.students.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444;">Không tìm thấy học sinh nào thuộc lớp ${oldClass}</td></tr>`;
+          transferStudentsList = [];
+          document.getElementById("transfer-count").textContent = 0;
+          return;
+        }
+
+        transferStudentsList = result.data.students;
+        document.getElementById("transfer-count").textContent = transferStudentsList.length;
+        renderTransferTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
+      }
+    }
+
+    function renderTransferTable() {
+      const tbody = document.getElementById("transfer-preview-tbody");
+      tbody.innerHTML = "";
+      document.getElementById("transfer-select-all").checked = true;
+
+      transferStudentsList.forEach((stu) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align:center;"><input type="checkbox" class="transfer-checkbox" value="${stu.id}" checked></td>
+          <td>${stu.lastName || ''} <strong>${stu.firstName || ''}</strong></td>
+          <td><code>${stu.username}</code></td>
+          <td>${stu.className}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleSelectAllTransfer(checkbox) {
+      const checkboxes = document.querySelectorAll('.transfer-checkbox');
+      checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    }
+
+    async function executeBatchTransfer() {
+      const newClass = document.getElementById("transfer-new-class").value.trim();
+      const statusEl = document.getElementById("transfer-status");
+      const btnSubmit = document.getElementById("btn-submit-transfer");
+
+      if (!newClass) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Vui lòng nhập tên lớp mới để chuyển đổi!";
+        return;
+      }
+
+      const checkboxes = document.querySelectorAll('.transfer-checkbox:checked');
+      const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+      if (selectedIds.length === 0) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Vui lòng đánh dấu chọn ít nhất 1 học sinh để chuyển lớp!";
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg";
+      statusEl.textContent = `Đang tiến hành chuyển ${selectedIds.length} học sinh sang lớp ${newClass}... ⏳`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_update_class",
+            student_ids: selectedIds,
+            new_class: newClass
+          })
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error";
+          statusEl.textContent = result.message || "Chuyển lớp thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        statusEl.className = "status-msg status-success";
+        statusEl.textContent = `🎉 ${result.message}`;
+        
+        transferStudentsList = [];
+        document.getElementById("transfer-preview-tbody").innerHTML = "";
+        document.getElementById("transfer-new-class").value = "";
+        document.getElementById("transfer-count").textContent = "0";
+        document.getElementById("transfer-old-class").value = newClass;
+        
+        document.getElementById("filter-class-input").value = newClass;
+        fetchStudentList(true);
+
+      } catch (err) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
+    /* ========================================================
+       QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP VÀ IP & THIẾT BỊ (TAB 6)
        ======================================================== */
     let loginLogsCache = [];
+    let currentLogRole = 'ALL';
+    let currentLogPage = 1;
+    let currentLogPageSize = 20;
 
+    // Quản lý IP được đánh dấu sao (Starred/Trusted IPs) qua LocalStorage
+    function getStarredIps() {
+      try {
+        return JSON.parse(localStorage.getItem("trusted_starred_ips") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function toggleStarIp(ip) {
+      let list = getStarredIps();
+      if (list.includes(ip)) {
+        list = list.filter(item => item !== ip);
+      } else {
+        list.push(ip);
+      }
+      localStorage.setItem("trusted_starred_ips", JSON.stringify(list));
+      loadIpManagement();
+    }
+
+    function switchLoginView(view) {
+      const logsView = document.getElementById("view-login-logs");
+      const ipsView = document.getElementById("view-ip-management");
+      const btnLogs = document.getElementById("btn-view-logs");
+      const btnIps = document.getElementById("btn-view-ips");
+
+      if (view === 'logs') {
+        logsView.style.display = "block";
+        ipsView.style.display = "none";
+        btnLogs.className = "btn btn-primary";
+        btnIps.className = "btn btn-secondary";
+      } else {
+        logsView.style.display = "none";
+        ipsView.style.display = "block";
+        btnLogs.className = "btn btn-secondary";
+        btnIps.className = "btn btn-primary";
+      }
+    }
+
+    /* 1. LẤY VÀ PHÂN TRANG NHẬT KÝ */
     async function loadLoginHistory() {
       const tbody = document.getElementById("login-history-tbody");
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px;">Đang tải dữ liệu nhật ký... ⏳</td></tr>`;
@@ -2009,7 +2529,7 @@
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get_login_history", limit: 100 })
+          body: JSON.stringify({ action: "get_login_history", limit: 1000 })
         });
         const result = await res.json();
 
@@ -2019,8 +2539,8 @@
         }
 
         loginLogsCache = result.data.logs;
+        currentLogPage = 1;
         renderLoginHistory();
-
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
@@ -2028,10 +2548,36 @@
 
     function filterLoginLogs(role) {
       currentLogRole = role;
+      currentLogPage = 1;
       document.getElementById("btn-log-all").className = role === 'ALL' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
       document.getElementById("btn-log-student").className = role === 'student' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
       document.getElementById("btn-log-teacher").className = role === 'teacher' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
       renderLoginHistory();
+    }
+
+    function changeLogPageSize(size) {
+      currentLogPageSize = size === 'all' ? 'all' : parseInt(size, 10);
+      currentLogPage = 1;
+      renderLoginHistory();
+    }
+
+    function prevLogPage() {
+      if (currentLogPage > 1) {
+        currentLogPage--;
+        renderLoginHistory();
+      }
+    }
+
+    function nextLogPage() {
+      let filtered = loginLogsCache;
+      if (currentLogRole !== 'ALL') {
+        filtered = filtered.filter(l => l.role === currentLogRole);
+      }
+      const maxPages = currentLogPageSize === 'all' ? 1 : Math.ceil(filtered.length / currentLogPageSize);
+      if (currentLogPage < maxPages) {
+        currentLogPage++;
+        renderLoginHistory();
+      }
     }
 
     function renderLoginHistory() {
@@ -2042,13 +2588,42 @@
         filtered = filtered.filter(l => l.role === currentLogRole);
       }
 
-      if (filtered.length === 0) {
+      const totalItems = filtered.length;
+      if (totalItems === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Chưa có bản ghi đăng nhập nào.</td></tr>`;
+        document.getElementById("log-pagination-info").textContent = "Hiển thị 0 - 0 của 0 mục";
+        document.getElementById("btn-page-prev").disabled = true;
+        document.getElementById("btn-page-next").disabled = true;
         return;
       }
 
+      // Cắt trang
+      let pagedData = [];
+      let startIdx = 0;
+      let endIdx = totalItems;
+
+      if (currentLogPageSize !== 'all') {
+        const totalPages = Math.ceil(totalItems / currentLogPageSize);
+        if (currentLogPage > totalPages) currentLogPage = totalPages;
+
+        startIdx = (currentLogPage - 1) * currentLogPageSize;
+        endIdx = Math.min(startIdx + currentLogPageSize, totalItems);
+        pagedData = filtered.slice(startIdx, endIdx);
+
+        document.getElementById("log-pagination-info").textContent = `Hiển thị ${startIdx + 1} - ${endIdx} của ${totalItems} mục`;
+        document.getElementById("log-page-current").textContent = `${currentLogPage} / ${totalPages}`;
+        document.getElementById("btn-page-prev").disabled = currentLogPage <= 1;
+        document.getElementById("btn-page-next").disabled = currentLogPage >= totalPages;
+      } else {
+        pagedData = filtered;
+        document.getElementById("log-pagination-info").textContent = `Hiển thị tất cả (${totalItems} mục)`;
+        document.getElementById("log-page-current").textContent = "1 / 1";
+        document.getElementById("btn-page-prev").disabled = true;
+        document.getElementById("btn-page-next").disabled = true;
+      }
+
       tbody.innerHTML = "";
-      filtered.forEach(log => {
+      pagedData.forEach(log => {
         const tr = document.createElement("tr");
         const timeStr = new Date(log.login_at).toLocaleString('vi-VN');
         const isTeacher = log.role === 'teacher';
@@ -2063,6 +2638,171 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    async function clearAllLoginLogs() {
+      const roleText = currentLogRole === 'ALL' ? 'toàn bộ' : (currentLogRole === 'teacher' ? 'giáo viên' : 'học sinh');
+      if (!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn nhật ký đăng nhập (${roleText})?`)) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "clear_login_history", role: currentLogRole })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) loadLoginHistory();
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ khi xóa nhật ký!");
+      }
+    }
+
+    /* 2. QUẢN LÝ IP, ĐÁNH DẤU SAO VÀ XÓA IP */
+    async function loadIpManagement() {
+      const tbody = document.getElementById("ip-management-tbody");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px;">Đang thống kê dữ liệu nhóm IP... ⏳</td></tr>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_ip_management" })
+        });
+        const result = await res.json();
+
+        if (!result.success || !result.data.ip_list) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">${result.message || "Không thể tải quản lý IP"}</td></tr>`;
+          return;
+        }
+
+        const ipList = result.data.ip_list;
+        if (ipList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:#64748b;">Chưa có dữ liệu IP nào.</td></tr>`;
+          return;
+        }
+
+        const starredList = getStarredIps();
+
+        // Đưa các IP có đánh dấu sao lên đầu
+        ipList.sort((a, b) => {
+          const isStarA = starredList.includes(a.ip_address) ? 1 : 0;
+          const isStarB = starredList.includes(b.ip_address) ? 1 : 0;
+          return isStarB - isStarA;
+        });
+
+        tbody.innerHTML = "";
+        ipList.forEach(item => {
+          const tr = document.createElement("tr");
+          const timeStr = new Date(item.last_login).toLocaleString('vi-VN');
+          const isStarred = starredList.includes(item.ip_address);
+          
+          let accountsHtml = item.accounts.map(acc => `<span class="ip-list-badge">${acc}</span>`).join('');
+          let devicesHtml = item.devices.map(dev => `<span class="ip-list-badge" style="background:#f1f5f9;">${dev}</span>`).join('');
+          
+          let statusHtml = item.is_banned 
+            ? `<span class="ban-status banned">Bị Khóa</span>` 
+            : `<span class="ban-status active">Đang Mở</span>`;
+            
+          let banBtn = item.is_banned
+            ? `<button class="btn btn-secondary btn-sm" onclick="unbanIp('${item.ip_address}')">Mở Khóa</button>`
+            : `<button class="btn btn-sm" style="background:#ef4444; color:#fff;" onclick="banIp('${item.ip_address}')">Khóa IP</button>`;
+
+          let deleteBtn = `<button class="btn btn-secondary btn-sm" title="Xóa toàn bộ bản ghi IP này" style="color:#ef4444;" onclick="deleteIpRecord('${item.ip_address}')">Xóa</button>`;
+
+          tr.innerHTML = `
+            <td style="text-align:center;">
+              <button onclick="toggleStarIp('${item.ip_address}')" title="${isStarred ? 'Hủy đánh dấu tin cậy' : 'Đánh dấu sao IP máy chủ / máy giáo viên'}" style="background:none; border:none; cursor:pointer; font-size:18px;">
+                ${isStarred ? '⭐' : '☆'}
+              </button>
+            </td>
+            <td>
+              <code style="background:${isStarred ? '#fef08a' : '#eff6ff'}; color:${isStarred ? '#854d0e' : '#1d4ed8'}; padding:3px 6px; border-radius:4px; font-weight:bold;">${item.ip_address}</code>
+              ${isStarred ? '<span style="font-size:11px; color:#d97706; display:block; font-weight:600;">(Máy chủ / GV)</span>' : ''}
+            </td>
+            <td style="max-width:200px;">${accountsHtml}</td>
+            <td style="max-width:200px;">${devicesHtml}</td>
+            <td><span style="font-size:12px; color:#64748b;">${timeStr}</span></td>
+            <td>${statusHtml}</td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                ${banBtn}
+                ${deleteBtn}
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+      }
+    }
+
+    async function banIp(ipAddress) {
+      const reason = prompt(`Nhập lý do khóa (Cấm vĩnh viễn) IP ${ipAddress}:`, "Vi phạm quy chế hệ thống");
+      if (reason === null) return; // Hủy bỏ
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "ban_ip", ip_address: ipAddress, reason: reason })
+        });
+        const result = await res.json();
+        
+        alert(result.message);
+        if (result.success) loadIpManagement();
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ khi thực hiện Ban IP!");
+      }
+    }
+
+    async function unbanIp(ipAddress) {
+      if (!confirm(`Bạn có chắc muốn bỏ cấm cho IP ${ipAddress} không?`)) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unban_ip", ip_address: ipAddress })
+        });
+        const result = await res.json();
+        
+        alert(result.message);
+        if (result.success) loadIpManagement();
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ khi Unban IP!");
+      }
+    }
+
+    async function deleteIpRecord(ipAddress) {
+      const starredList = getStarredIps();
+      if (starredList.includes(ipAddress)) {
+        if (!confirm(`⚠️ CẢNH BÁO: IP ${ipAddress} đang được đánh dấu sao là MÁY CHỦ hoặc GIÁO VIÊN!\nBạn có thực sự muốn xóa IP này khỏi danh sách không?`)) {
+          return;
+        }
+      } else {
+        if (!confirm(`Bạn có chắc chắn muốn xóa IP ${ipAddress} ra khỏi hệ thống?\n(Khi thiết bị thuộc dải IP này đăng nhập lại sau này, hệ thống sẽ ghi nhận lại từ đầu)`)) {
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete_ip_logs", ip_address: ipAddress })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          loadIpManagement();
+          loadLoginHistory();
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ khi xóa IP!");
+      }
     }
 
     loadSchools().then(() => {
