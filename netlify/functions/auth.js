@@ -178,7 +178,7 @@ exports.handler = async (event) => {
       });
     }
 
-    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (JOIN VỚI BẢNG STUDENTS ĐỂ LẤY CLASS_NAME) */
+    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (JOIN VỚI BẢNG STUDENTS ĐỂ LẤY CLASS_NAME + DỰ PHÒNG CHO LOG CŨ) */
     if (action === "get_login_history") {
       const limit = body.limit || 1000;
       let query = supabase
@@ -208,10 +208,36 @@ exports.handler = async (event) => {
       const { data: logs, error } = await query;
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
 
-      const formattedLogs = (logs || []).map(log => ({
-        ...log,
-        class_name: log.students ? log.students.class_name : ""
-      }));
+      // Cơ chế dự phòng cho các bản ghi đăng nhập trước đó chưa có student_id
+      let enrichedLogs = logs || [];
+      const missingUsernames = enrichedLogs
+        .filter(l => l.role === 'student' && (!l.students || !l.students.class_name) && l.username)
+        .map(l => l.username);
+
+      let fallbackClassMap = {};
+      if (missingUsernames.length > 0) {
+        const { data: fallbackStudents } = await supabase
+          .from('students')
+          .select('username, class_name')
+          .in('username', [...new Set(missingUsernames)]);
+
+        (fallbackStudents || []).forEach(s => {
+          fallbackClassMap[s.username] = s.class_name;
+        });
+      }
+
+      const formattedLogs = enrichedLogs.map(log => {
+        let cls = "";
+        if (log.students && log.students.class_name) {
+          cls = log.students.class_name;
+        } else if (fallbackClassMap[log.username]) {
+          cls = fallbackClassMap[log.username];
+        }
+        return {
+          ...log,
+          class_name: cls
+        };
+      });
 
       return createResponse(true, { logs: formattedLogs });
     }
