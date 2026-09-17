@@ -100,7 +100,7 @@ exports.handler = async (event) => {
 
       if (isBanned) {
         return createResponse(
-          false,null,`${isBanned.reason}`
+          false, null, `${isBanned.reason}`
         );
       }
 
@@ -113,7 +113,7 @@ exports.handler = async (event) => {
 
       if (isAccountBanned) {
         return createResponse(
-          false,null,`${isAccountBanned.reason}`
+          false, null, `${isAccountBanned.reason}`
         );
       }
 
@@ -197,6 +197,7 @@ exports.handler = async (event) => {
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
       return createResponse(true, { logs: logs || [] });
     }
+
     /* XÓA NHẬT KÝ CHI TIẾT */
     if (action === "clear_login_history") {
       const { role } = body;
@@ -205,7 +206,6 @@ exports.handler = async (event) => {
       if (role && role !== 'ALL') {
         query = query.eq('role', role);
       } else {
-        // Xóa tất cả các bản ghi có id khác rỗng
         query = query.neq('id', '00000000-0000-0000-0000-000000000000');
       }
 
@@ -219,7 +219,6 @@ exports.handler = async (event) => {
       const { ip_address } = body;
       if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP cần xóa.");
 
-      // Xóa các bản ghi đăng nhập liên quan đến IP này
       const { error } = await supabase
         .from('login_history')
         .delete()
@@ -354,7 +353,7 @@ exports.handler = async (event) => {
 
       let { data: itemData } = await supabase
         .from('items')
-        .select('coins, total_coins, spent_coins, meme_id_list')
+        .select('coins, total_coins, spent_coins, meme_id_list, pending_coins')
         .eq('student_id', body.id)
         .single();
 
@@ -364,9 +363,10 @@ exports.handler = async (event) => {
           coins: 100,
           total_coins: 100,
           spent_coins: 0,
+          pending_coins: 0,
           meme_id_list: []
         }]);
-        itemData = { coins: 100, total_coins: 100, spent_coins: 0, meme_id_list: [] };
+        itemData = { coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, meme_id_list: [] };
       }
 
       return createResponse(true, {
@@ -376,8 +376,142 @@ exports.handler = async (event) => {
         coins: itemData.coins !== undefined ? itemData.coins : 100,
         total_coins: itemData.total_coins !== undefined ? itemData.total_coins : 100,
         spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0,
+        pending_coins: itemData.pending_coins !== undefined ? itemData.pending_coins : 0,
         meme_id_list: parseMemeIds(itemData.meme_id_list)
       });
+    }
+
+    /* HỌC SINH YÊU CẦU NHẬN XU PHÁT BIỂU */
+    if (action === "request_reward_coins") {
+      const { student_id, requested_coins } = body;
+      const coinsNum = parseInt(requested_coins, 10);
+
+      if (!student_id || isNaN(coinsNum) || coinsNum <= 0) {
+        return createResponse(false, null, "Số xu yêu cầu không hợp lệ!");
+      }
+
+      const { data: itemData } = await supabase
+        .from('items')
+        .select('pending_coins')
+        .eq('student_id', student_id)
+        .single();
+
+      const curPending = itemData && itemData.pending_coins !== undefined ? Number(itemData.pending_coins) : 0;
+      const newPending = curPending + coinsNum;
+
+      const { error } = await supabase
+        .from('items')
+        .update({ pending_coins: newPending })
+        .eq('student_id', student_id);
+
+      if (error) {
+        return createResponse(false, null, "Lỗi khi gửi yêu cầu nhận xu: " + error.message);
+      }
+
+      return createResponse(true, { pending_coins: newPending }, `Đã gửi yêu cầu cộng ${coinsNum} xu đến giáo viên!`);
+    }
+
+    /* GIÁO VIÊN: LẤY DANH SÁCH HỌC SINH CHỜ DUYỆT THƯỞNG XU */
+    if (action === "get_pending_rewards") {
+      const { data, error } = await supabase
+        .from('items')
+        .select(`
+          pending_coins,
+          student_id,
+          students (id, full_name, username, class_name, school)
+        `)
+        .gt('pending_coins', 0);
+
+      if (error) {
+        return createResponse(false, null, "Lỗi lấy danh sách duyệt thưởng: " + error.message);
+      }
+
+      const requests = (data || []).map(row => ({
+        student_id: row.student_id,
+        pending_coins: row.pending_coins,
+        full_name: row.students ? row.students.full_name : "",
+        username: row.students ? row.students.username : "",
+        class_name: row.students ? row.students.class_name : "",
+        school: row.students ? row.students.school : ""
+      }));
+
+      return createResponse(true, { requests });
+    }
+
+    /* GIÁO VIÊN: DUYỆT TỪNG NGƯỜI */
+    if (action === "approve_reward") {
+      const { student_id } = body;
+      if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
+
+      const { data: itemData, error: itemErr } = await supabase
+        .from('items')
+        .select('coins, total_coins, pending_coins')
+        .eq('student_id', student_id)
+        .single();
+
+      if (itemErr || !itemData) {
+        return createResponse(false, null, "Không tìm thấy dữ liệu xu của học sinh!");
+      }
+
+      const pending = Number(itemData.pending_coins) || 0;
+      if (pending <= 0) {
+        return createResponse(false, null, "Học sinh không có xu nào chờ duyệt!");
+      }
+
+      const curCoins = Number(itemData.coins) || 0;
+      const curTotal = Number(itemData.total_coins) || 0;
+
+      const { error: updateErr } = await supabase
+        .from('items')
+        .update({
+          coins: curCoins + pending,
+          total_coins: curTotal + pending,
+          pending_coins: 0
+        })
+        .eq('student_id', student_id);
+
+      if (updateErr) {
+        return createResponse(false, null, "Lỗi khi duyệt cộng xu: " + updateErr.message);
+      }
+
+      return createResponse(true, null, `Đã duyệt và cộng thành công ${pending} xu cho học sinh!`);
+    }
+
+    /* GIÁO VIÊN: DUYỆT TẤT CẢ */
+    if (action === "approve_all_rewards") {
+      const { student_ids } = body;
+      let query = supabase.from('items').select('student_id, coins, total_coins, pending_coins').gt('pending_coins', 0);
+
+      if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
+        query = query.in('student_id', student_ids);
+      }
+
+      const { data: itemsList, error: fetchErr } = await query;
+      if (fetchErr) {
+        return createResponse(false, null, "Lỗi khi truy vấn danh sách chờ: " + fetchErr.message);
+      }
+
+      if (!itemsList || itemsList.length === 0) {
+        return createResponse(false, null, "Không có yêu cầu nào cần duyệt!");
+      }
+
+      const updatePromises = itemsList.map(item => {
+        const pending = Number(item.pending_coins) || 0;
+        const curCoins = Number(item.coins) || 0;
+        const curTotal = Number(item.total_coins) || 0;
+
+        return supabase
+          .from('items')
+          .update({
+            coins: curCoins + pending,
+            total_coins: curTotal + pending,
+            pending_coins: 0
+          })
+          .eq('student_id', item.student_id);
+      });
+
+      await Promise.all(updatePromises);
+      return createResponse(true, null, `Đã duyệt tất cả yêu cầu nhận xu cho ${itemsList.length} học sinh thành công!`);
     }
 
     if (action === "student_change_password") {
@@ -614,7 +748,6 @@ exports.handler = async (event) => {
       const newCoins = currentCoins - gachaCost;
       const newSpent = currentSpent + gachaCost;
       
-      // Parse list kỹ càng để tránh lỗi vỡ mảng chuỗi
       const currentInventoryIds = parseMemeIds(itemData.meme_id_list);
       
       let updatedInventoryIds = [...currentInventoryIds];
@@ -743,7 +876,6 @@ exports.handler = async (event) => {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Lấy danh sách tài khoản bị khóa để đánh dấu
       const { data: bannedAccounts } = await supabase.from('banned_accounts').select('username');
       const bannedSet = new Set((bannedAccounts || []).map(b => b.username));
 
@@ -840,6 +972,55 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Cập nhật thông tin học sinh thành công!");
     }
 
+    /* CẬP NHẬT XU HÀNG LOẠT (CẢ LỚP) */
+    if (action === "batch_update_coins") {
+      const { student_ids, coin_delta } = body;
+      
+      if (!student_ids || !Array.isArray(student_ids) || student_ids.length === 0) {
+        return createResponse(false, null, "Không có học sinh nào để cập nhật xu!");
+      }
+      
+      const delta = Number(coin_delta);
+      if (isNaN(delta) || delta === 0) {
+        return createResponse(false, null, "Số lượng xu không hợp lệ!");
+      }
+
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from('items')
+        .select('student_id, coins, total_coins')
+        .in('student_id', student_ids);
+
+      if (itemsErr) {
+        return createResponse(false, null, "Lỗi khi truy xuất dữ liệu xu: " + itemsErr.message);
+      }
+
+      const itemMap = {};
+      (itemsData || []).forEach(it => {
+        itemMap[it.student_id] = it;
+      });
+
+      const updatePromises = student_ids.map(sid => {
+        const it = itemMap[sid];
+        let curCoins = it && it.coins !== undefined ? Number(it.coins) : 100;
+        let curTotal = it && it.total_coins !== undefined ? Number(it.total_coins) : curCoins;
+
+        let newCoins = curCoins + delta;
+        if (newCoins < 0) newCoins = 0;
+        
+        let newTotal = curTotal + delta;
+        if (newTotal < 0) newTotal = 0;
+
+        return supabase
+          .from('items')
+          .update({ coins: newCoins, total_coins: newTotal })
+          .eq('student_id', sid);
+      });
+
+      await Promise.all(updatePromises);
+
+      return createResponse(true, null, `Đã cập nhật xu cho ${student_ids.length} học sinh thành công!`);
+    }
+
     if (action === "batch_update_class") {
       const { student_ids, new_class } = body;
 
@@ -905,7 +1086,6 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin xác thực và chọn học sinh cần xóa!");
       }
 
-      // Xác thực mật khẩu giáo viên
       const { data: adminData, error: adminErr } = await supabase
         .from('admins')
         .select('id, username')
@@ -917,11 +1097,9 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
       }
 
-      // Xóa các dữ liệu liên kết trước (Bảng điểm, Vật phẩm)
       await supabase.from('scores').delete().in('student_id', student_ids);
       await supabase.from('items').delete().in('student_id', student_ids);
 
-      // Xóa học sinh
       const { error: deleteStuErr } = await supabase
         .from('students')
         .delete()
@@ -994,6 +1172,7 @@ exports.handler = async (event) => {
           coins: startingCoins,
           total_coins: startingCoins,
           spent_coins: 0,
+          pending_coins: 0,
           meme_id_list: []
         }]);
 
@@ -1048,6 +1227,7 @@ exports.handler = async (event) => {
         coins: 100,
         total_coins: 100,
         spent_coins: 0,
+        pending_coins: 0,
         meme_id_list: []
       }]);
 

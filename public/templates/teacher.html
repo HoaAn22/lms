@@ -345,21 +345,20 @@
 
     @media (max-width: 768px) {
       .sidebar {
-        display: none !important; /* Ẩn sidebar truyền thống trên mobile */
+        display: none !important;
       }
       .main-content {
         margin-left: 0 !important;
         width: 100% !important;
       }
       .btn-toggle {
-        display: none !important; /* Ẩn nút gập sidebar cũ */
+        display: none !important;
       }
       .mobile-menu-btn {
-        display: block; /* Hiện nút hamburger mới */
+        display: block;
         margin-right: 12px;
       }
 
-      /* Popup Menu Mobile (Áp dụng class show-menu bằng ID để đảm bảo độ ưu tiên cao nhất) */
       #admin-sidebar.show-menu {
         display: block !important;
         position: fixed !important;
@@ -379,7 +378,7 @@
         margin: 0 !important;
       }
       #admin-sidebar.show-menu .sidebar-brand {
-        display: none !important; /* Ẩn chữ MENU */
+        display: none !important;
       }
       #admin-sidebar.show-menu .sidebar-nav {
         display: grid !important;
@@ -403,7 +402,7 @@
         white-space: normal !important;
         text-align: center !important;
         width: 100% !important;
-        margin-bottom: 0 !important; /* Khử style cũ */
+        margin-bottom: 0 !important;
         box-sizing: border-box !important;
         color: #64748b !important;
       }
@@ -413,7 +412,6 @@
         color: #1d4ed8 !important;
       }
 
-      /* Overlay che nền */
       .mobile-nav-overlay.show {
         display: block;
         position: fixed;
@@ -492,6 +490,46 @@
 
         <!-- TAB 2: QUẢN LÝ HỌC SINH -->
         <div id="tab-student-manage" class="tab-panel">
+          
+          <!-- THẺ DUYỆT THƯỞNG -->
+          <div class="card form-container mb-4">
+            <div class="card-header-collapse" onclick="toggleCardBody('reward-approval-body', 'reward-approval-toggle-icon')">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🎖️ Duyệt thưởng</h3>
+                <span id="approval-badge-count" style="display: none; background: #ef4444; color: #fff; border-radius: 10px; font-size: 11px; font-weight: bold; padding: 2px 7px;">0</span>
+              </div>
+              <span id="reward-approval-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+            </div>
+
+            <div id="reward-approval-body" class="card-body-collapsible collapsed" style="margin-top: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="fetchPendingRewardRequests()">🔄 Làm mới</button>
+                  <button type="button" id="btn-approve-all-rewards" class="btn btn-primary btn-sm" onclick="approveAllRewards()" style="background: #16a34a; border-color: #16a34a; display: none;">✅ Duyệt tất cả</button>
+                </div>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="data-table" id="pending-rewards-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px;">STT</th>
+                      <th>Họ và tên</th>
+                      <th>Tài khoản</th>
+                      <th>Lớp</th>
+                      <th>Xu chờ duyệt</th>
+                      <th style="width: 140px;">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pending-rewards-tbody">
+                    <tr><td colspan="6" style="text-align: center; padding: 18px; color: #64748b;">Không có yêu cầu nào đang chờ duyệt.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div class="card mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('search-student-body', 'search-student-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Tra cứu danh sách học sinh</h3>
@@ -551,7 +589,8 @@
               <div class="mt-4 mb-4" style="display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
                 <div style="display: flex; gap: 8px;">
-                  <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">🗑️ Xóa nhanh</button>
+                  <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ xu cả lớp</button>
+                  <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
                   <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
                 </div>
               </div>
@@ -1052,6 +1091,36 @@
         </div>
       </div>
 
+      <!-- Modal Cộng/Trừ Xu Cả Lớp -->
+      <div id="batch-coin-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">💰 Cộng / Trừ Xu Cả Lớp</h3>
+            <button onclick="closeBatchCoinModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="batch-coin-form" onsubmit="submitBatchCoin(event)">
+            <div style="margin-bottom: 14px; background: #fef9c3; padding: 12px; border-radius: 6px; border: 1px solid #fef08a;">
+              <p style="margin: 0; color: #854d0e; font-size: 13px;">
+                Thao tác này sẽ áp dụng cho <strong id="batch-coin-count" style="color: #a16207; font-size: 15px;">0</strong> học sinh đang hiển thị trong danh sách.
+              </p>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="batch-coin-delta" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Nhập số xu (+ / -):</label>
+              <input type="number" id="batch-coin-delta" required placeholder="VD: 50 (để cộng) hoặc -20 (để trừ)" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+              <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương để cộng thêm, số âm để trừ bớt xu.</small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeBatchCoinModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" id="btn-confirm-batch-coin" class="btn btn-primary" style="padding: 8px 16px; border-radius: 6px; cursor: pointer;">💾 Cập nhật Xu</button>
+            </div>
+          </form>
+          <p id="batch-coin-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
       <!-- Modal Nhập Đánh Giá Cho Học Sinh -->
       <div id="feedback-student-modal" class="modal-backdrop">
         <div class="modal-card">
@@ -1107,11 +1176,11 @@
     /* BẬT / TẮT MENU BẢNG CHỌN TRÊN MOBILE */
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const overlay = document.getElementById('mobile-nav-overlay');
-    const adminSidebar = document.getElementById('admin-sidebar'); // Thay target là admin-sidebar
+    const adminSidebar = document.getElementById('admin-sidebar');
 
     if (mobileMenuBtn) {
       mobileMenuBtn.addEventListener('click', () => {
-        adminSidebar.classList.remove('collapsed'); // Khắc phục triệt để lỗi xung đột khi F5
+        adminSidebar.classList.remove('collapsed');
         adminSidebar.classList.toggle('show-menu');
         overlay.classList.toggle('show');
       });
@@ -1460,6 +1529,7 @@
     let adminMemesCache = [];
     let currentAdminFilter = 'ALL';
     let currentSelectedMeme = null;
+    let pendingRewardsList = [];
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -1473,7 +1543,6 @@
       
       sessionStorage.setItem("teacher_active_tab", tabId);
 
-      // Đóng menu trên Mobile sau khi chọn xong
       if (window.innerWidth <= 768) {
         const sidebarObj = document.getElementById('admin-sidebar');
         if (sidebarObj) sidebarObj.classList.remove('show-menu');
@@ -1481,7 +1550,9 @@
         if (overlayObj) overlayObj.classList.remove('show');
       }
 
-      if (tabId === 'tab-collection') {
+      if (tabId === 'tab-student-manage') {
+        fetchPendingRewardRequests();
+      } else if (tabId === 'tab-collection') {
         loadAdminMemeCollection();
       } else if (tabId === 'tab-login-history') {
         loadLoginHistory();
@@ -2266,7 +2337,7 @@
         return 0;
       });
 
-      let seenNames = new Set(); // Theo dõi phát hiện trùng lặp họ tên
+      let seenNames = new Set();
 
       studentListBody.innerHTML = "";
       sortedList.forEach((stu, index) => {
@@ -2280,12 +2351,11 @@
         const hasToneInFirstName = hasVietnameseTone(firstName);
         const isBothUnaccented = (!hasToneInLastName && !hasToneInFirstName) && (lastName !== '' || firstName !== '');
 
-        // Xác định trùng tên (Chỉ chạy khi đang bật chế độ xóa nhanh)
         let isDuplicate = false;
         if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
           const fullNameKey = (lastName + " " + firstName).toLowerCase();
           if (seenNames.has(fullNameKey)) {
-            isDuplicate = true; // Phát hiện tên bị trùng lặp từ người thứ 2
+            isDuplicate = true;
           } else {
             seenNames.add(fullNameKey);
           }
@@ -2345,13 +2415,12 @@
 
       applyColumnVisibility();
       
-      // Xử lý hiển thị cột đánh dấu xóa nhanh
       const chkHeaders = document.querySelectorAll('th[data-col="checkbox"]');
       const chkCells = document.querySelectorAll('td[data-col="checkbox"]');
       if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
         chkHeaders.forEach(el => el.style.display = "table-cell");
         chkCells.forEach(el => el.style.display = "table-cell");
-        updateQuickDeleteCount(); // Đếm ngay lập tức số học sinh đã bị tích chọn tự động
+        updateQuickDeleteCount();
       } else {
         chkHeaders.forEach(el => el.style.display = "none");
         chkCells.forEach(el => el.style.display = "none");
@@ -2553,7 +2622,6 @@
     let currentLogPage = 1;
     let currentLogPageSize = 20;
 
-    // Quản lý IP được đánh dấu sao (Starred/Trusted IPs) qua LocalStorage
     function getStarredIps() {
       try {
         return JSON.parse(localStorage.getItem("trusted_starred_ips") || "[]");
@@ -2669,7 +2737,6 @@
         return;
       }
 
-      // Cắt trang
       let pagedData = [];
       let startIdx = 0;
       let endIdx = totalItems;
@@ -2756,7 +2823,6 @@
 
         const starredList = getStarredIps();
 
-        // Đưa các IP có đánh dấu sao lên đầu
         ipList.sort((a, b) => {
           const isStarA = starredList.includes(a.ip_address) ? 1 : 0;
           const isStarB = starredList.includes(b.ip_address) ? 1 : 0;
@@ -2813,7 +2879,7 @@
 
     async function banIp(ipAddress) {
       const reason = prompt(`Nhập lý do khóa (Cấm vĩnh viễn) IP ${ipAddress}:`, "Vi phạm quy chế hệ thống");
-      if (reason === null) return; // Hủy bỏ
+      if (reason === null) return;
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -2888,12 +2954,12 @@
       const btnConfirm = document.getElementById("btn-confirm-quick-delete");
 
       if (isQuickDeleteMode) {
-        btnToggle.textContent = "Hủy xóa nhanh";
+        btnToggle.textContent = "Hủy xóa";
         btnToggle.style.background = "#e2e8f0";
         btnToggle.style.color = "#334155";
         btnConfirm.style.display = "inline-flex";
       } else {
-        btnToggle.innerHTML = "🗑️ Xóa nhanh";
+        btnToggle.innerHTML = "Xóa trùng tên";
         btnToggle.style.background = "#fee2e2";
         btnToggle.style.color = "#b91c1c";
         btnConfirm.style.display = "none";
@@ -2903,7 +2969,6 @@
         document.getElementById("quick-delete-count").textContent = "0";
       }
       
-      // Vẽ lại bảng (Hàm Render sẽ tự động gánh việc bắt trùng lặp tên & mở Checkbox)
       sortAndRenderStudents();
     }
 
@@ -2976,8 +3041,8 @@
 
         alert(result.message || "Đã xóa hàng loạt thành công!");
         closeBatchDeleteModal();
-        toggleQuickDeleteMode(); // Hủy chế độ xóa nhanh sau khi xong
-        fetchStudentList(true);  // Load lại danh sách
+        toggleQuickDeleteMode();
+        fetchStudentList(true);
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
         statusEl.textContent = "Lỗi kết nối máy chủ!";
@@ -2985,9 +3050,193 @@
         btnDelete.disabled = false;
       }
     }
+    
+    /* ========================================================
+       TÍNH NĂNG CỘNG/TRỪ XU CẢ LỚP
+       ======================================================== */
+    function openBatchCoinModal() {
+      if (!cachedStudentsList || cachedStudentsList.length === 0) {
+        alert("Danh sách học sinh đang trống. Vui lòng chọn trường, lớp và xem danh sách trước!");
+        return;
+      }
+      document.getElementById("batch-coin-count").textContent = cachedStudentsList.length;
+      document.getElementById("batch-coin-delta").value = "";
+      document.getElementById("batch-coin-status").textContent = "";
+      document.getElementById("batch-coin-status").className = "status-msg mt-2";
+      document.getElementById("batch-coin-modal").classList.add("show");
+    }
+
+    function closeBatchCoinModal() {
+      document.getElementById("batch-coin-modal").classList.remove("show");
+    }
+
+    async function submitBatchCoin(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("batch-coin-status");
+      const btnSubmit = document.getElementById("btn-confirm-batch-coin");
+      
+      const deltaRaw = document.getElementById("batch-coin-delta").value;
+      const coinDelta = parseInt(deltaRaw, 10);
+
+      if (isNaN(coinDelta) || coinDelta === 0) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập số lượng xu hợp lệ (khác 0)!";
+        return;
+      }
+
+      const studentIds = cachedStudentsList.map(s => s.id);
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang cập nhật xu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_update_coins",
+            student_ids: studentIds,
+            coin_delta: coinDelta
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Cập nhật thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Cập nhật xu cả lớp thành công!");
+        closeBatchCoinModal();
+        fetchStudentList(true);
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
+    /* ========================================================
+       TÍNH NĂNG DUYỆT THƯỞNG XU PHÁT BIỂU
+       ======================================================== */
+    async function fetchPendingRewardRequests() {
+      const tbody = document.getElementById("pending-rewards-tbody");
+      const badge = document.getElementById("approval-badge-count");
+      const btnApproveAll = document.getElementById("btn-approve-all-rewards");
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_pending_rewards" })
+        });
+        const result = await res.json();
+
+        if (!result.success || !result.data || !result.data.requests) {
+          pendingRewardsList = [];
+        } else {
+          pendingRewardsList = result.data.requests;
+        }
+
+        const count = pendingRewardsList.length;
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = "inline-block";
+          if (btnApproveAll) btnApproveAll.style.display = "inline-block";
+        } else {
+          badge.textContent = "0";
+          badge.style.display = "none";
+          if (btnApproveAll) btnApproveAll.style.display = "none";
+        }
+
+        if (count === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: #64748b;">Không có yêu cầu nào đang chờ duyệt.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        pendingRewardsList.forEach((req, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td><strong>${req.full_name || '---'}</strong></td>
+            <td><code>${req.username || '---'}</code></td>
+            <td>${req.class_name || '---'}</td>
+            <td><span class="badge-coin" style="background: #fef08a; color: #854d0e;">🪙 +${req.pending_coins}</span></td>
+            <td>
+              <button type="button" class="btn btn-primary btn-sm" onclick="approveSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #16a34a; border-color: #16a34a; padding: 4px 10px;">
+                Duyệt
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red; padding: 18px;">Lỗi kết nối máy chủ!</td></tr>`;
+      }
+    }
+
+    async function approveSingleReward(studentId, coins) {
+      if (!confirm(`Xác nhận duyệt cộng ${coins} xu cho học sinh này?`)) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "approve_reward",
+            student_id: studentId
+          })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          fetchPendingRewardRequests();
+          if (filterSchoolSelect.value) {
+            fetchStudentList(true);
+          }
+        }
+      } catch (err) {
+        alert("Lỗi kết nối máy chủ khi duyệt thưởng!");
+      }
+    }
+
+    async function approveAllRewards() {
+      if (!pendingRewardsList || pendingRewardsList.length === 0) return;
+      if (!confirm(`Bạn có chắc chắn muốn duyệt tất cả ${pendingRewardsList.length} yêu cầu nhận xu này không?`)) return;
+
+      const studentIds = pendingRewardsList.map(r => r.student_id);
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "approve_all_rewards",
+            student_ids: studentIds
+          })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          fetchPendingRewardRequests();
+          if (filterSchoolSelect.value) {
+            fetchStudentList(true);
+          }
+        }
+      } catch (err) {
+        alert("Lỗi kết nối máy chủ khi duyệt tất cả thưởng!");
+      }
+    }
 
     loadSchools().then(() => {
       restoreFilterAndStudents();
+      fetchPendingRewardRequests();
     });
   </script>
 </body>

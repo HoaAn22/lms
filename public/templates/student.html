@@ -581,6 +581,7 @@
     <nav class="student-nav" id="main-student-nav">
       <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
+      <button class="nav-btn" id="btn-tab-request-coins" onclick="switchStudentTab('tab-request-coins')">🙋 Yêu Cầu Nhận Xu</button>
       <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
       <button class="nav-btn" id="btn-tab-collection" onclick="switchStudentTab('tab-collection')">🖼️ Bộ Sưu Tập Meme</button>
       <button class="nav-btn" id="btn-tab-account" onclick="switchStudentTab('tab-account')">👤 Tài Khoản</button>
@@ -670,6 +671,32 @@
               <button class="btn btn-secondary btn-block mt-2" disabled>Chưa Mở</button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- TAB YÊU CẦU NHẬN XU (BÊN PHẢI LÀM KIỂM TRA) -->
+      <section id="tab-request-coins" class="tab-view">
+        <div class="card">
+          <div class="card-header">
+            <h3>🙋 Yêu Cầu Nhận Xu Phát Biểu</h3>
+          </div>
+          <p class="section-desc">Dành cho học sinh hăng hái phát biểu xây dựng bài trong lớp. Gửi yêu cầu để giáo viên xét duyệt cộng xu!</p>
+
+          <div style="background: #fef9c3; border: 1px solid #fef08a; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <div style="font-size: 14px; color: #854d0e;">
+              🪙 Số xu đang chờ giáo viên duyệt: <strong id="user-pending-coins-display" style="font-size: 18px; color: #b45309;">0</strong> xu
+            </div>
+          </div>
+
+          <form id="form-request-coins" onsubmit="submitCoinRequest(event)" style="max-width: 480px;">
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="input-request-coins" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 6px;">Số xu yêu cầu:</label>
+              <input type="number" id="input-request-coins" required min="1" max="1000" placeholder="VD: 10 hoặc 20" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+              <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">Nhập số xu tương ứng với số lần phát biểu được giáo viên ghi nhận.</small>
+            </div>
+            <button type="submit" id="btn-submit-request-coins" class="btn btn-primary" style="padding: 10px 20px;">🚀 Gửi Yêu Cầu</button>
+          </form>
+          <p id="request-coins-status" class="status-msg mt-2"></p>
         </div>
       </section>
 
@@ -899,6 +926,7 @@
     let studentCoins = 100;
     let studentTotalCoins = 100;
     let studentSpentCoins = 0;
+    let studentPendingCoins = 0;
     let studentMemeIds = [];
     let currentStudentFilter = 'ALL';
     let currentViewingMeme = null;
@@ -1001,6 +1029,7 @@
           studentCoins = result.data.coins !== undefined ? Number(result.data.coins) : 100;
           studentTotalCoins = result.data.total_coins !== undefined ? Number(result.data.total_coins) : 100;
           studentSpentCoins = result.data.spent_coins !== undefined ? Number(result.data.spent_coins) : 0;
+          studentPendingCoins = result.data.pending_coins !== undefined ? Number(result.data.pending_coins) : 0;
           
           studentMemeIds = Array.isArray(result.data.meme_id_list) 
             ? result.data.meme_id_list.map(Number) 
@@ -1025,8 +1054,63 @@
     function updateCoinsDisplay() {
       const coinsEl = document.getElementById("user-coins");
       const spentEl = document.getElementById("user-spent-coins");
+      const pendingEl = document.getElementById("user-pending-coins-display");
       if (coinsEl) coinsEl.textContent = studentCoins;
       if (spentEl) spentEl.textContent = studentSpentCoins;
+      if (pendingEl) pendingEl.textContent = studentPendingCoins;
+    }
+
+    async function submitCoinRequest(e) {
+      e.preventDefault();
+      const session = getSession();
+      if (!session) return;
+
+      const input = document.getElementById("input-request-coins");
+      const statusEl = document.getElementById("request-coins-status");
+      const btnSubmit = document.getElementById("btn-submit-request-coins");
+      const requestedCoins = parseInt(input.value, 10);
+
+      if (isNaN(requestedCoins) || requestedCoins <= 0) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập số xu hợp lệ (lớn hơn 0)!";
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang gửi yêu cầu cộng xu đến giáo viên...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "request_reward_coins",
+            student_id: session.id,
+            requested_coins: requestedCoins
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Gửi yêu cầu thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        statusEl.className = "status-msg status-success mt-2";
+        statusEl.textContent = `🎉 ${result.message}`;
+        input.value = "";
+        studentPendingCoins = result.data.pending_coins !== undefined ? result.data.pending_coins : (studentPendingCoins + requestedCoins);
+        updateCoinsDisplay();
+
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
     }
 
     async function loadStudentScores() {
