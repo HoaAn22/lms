@@ -852,8 +852,7 @@
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
                 <div style="display:flex; gap:8px; align-items:center;">
                   <span style="font-size:13px; font-weight:600; color:#475569;">Lọc:</span>
-                  <button class="btn btn-primary btn-sm" id="btn-log-all" onclick="filterLoginLogs('ALL')">Tất cả</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-log-student" onclick="filterLoginLogs('student')">Học sinh</button>
+                  <button class="btn btn-primary btn-sm" id="btn-log-student" onclick="filterLoginLogs('student')">Học sinh</button>
                   <button class="btn btn-secondary btn-sm" id="btn-log-teacher" onclick="filterLoginLogs('teacher')">Giáo viên</button>
                 </div>
 
@@ -872,12 +871,12 @@
 
               <div style="overflow-x: auto;">
                 <table class="data-table">
-                  <thead>
+                  <thead id="login-history-thead">
                     <tr>
                       <th>Thời gian</th>
                       <th>Tài khoản</th>
                       <th>Họ và tên</th>
-                      <th>Vai trò</th>
+                      <th id="th-log-class">Lớp</th>
                       <th>Địa chỉ IP</th>
                       <th>Thiết bị & Trình duyệt</th>
                     </tr>
@@ -899,7 +898,7 @@
               </div>
             </div>
 
-            <!-- CHẾ ĐỘ XEM 2: Quản lý IP (Bao gồm Đánh dấu sao, Khóa và Xóa IP) -->
+            <!-- CHẾ ĐỘ XEM 2: Quản lý IP -->
             <div id="view-ip-management" style="display:none;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
                 <div>
@@ -2618,9 +2617,9 @@
        QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP VÀ IP & THIẾT BỊ (TAB 6)
        ======================================================== */
     let loginLogsCache = [];
-    let currentLogRole = 'ALL';
+    let currentLogRole = 'student'; // Mặc định chỉ lọc Học sinh, đã xóa tab Tất cả
     let currentLogPage = 1;
-    let currentLogPageSize = 20;
+    let currentLogPageSize = 10;
 
     function getStarredIps() {
       try {
@@ -2689,9 +2688,13 @@
     function filterLoginLogs(role) {
       currentLogRole = role;
       currentLogPage = 1;
-      document.getElementById("btn-log-all").className = role === 'ALL' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-      document.getElementById("btn-log-student").className = role === 'student' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-      document.getElementById("btn-log-teacher").className = role === 'teacher' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      
+      const btnStudent = document.getElementById("btn-log-student");
+      const btnTeacher = document.getElementById("btn-log-teacher");
+
+      if (btnStudent) btnStudent.className = role === 'student' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      if (btnTeacher) btnTeacher.className = role === 'teacher' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+
       renderLoginHistory();
     }
 
@@ -2709,10 +2712,7 @@
     }
 
     function nextLogPage() {
-      let filtered = loginLogsCache;
-      if (currentLogRole !== 'ALL') {
-        filtered = filtered.filter(l => l.role === currentLogRole);
-      }
+      let filtered = loginLogsCache.filter(l => l.role === currentLogRole);
       const maxPages = currentLogPageSize === 'all' ? 1 : Math.ceil(filtered.length / currentLogPageSize);
       if (currentLogPage < maxPages) {
         currentLogPage++;
@@ -2722,15 +2722,29 @@
 
     function renderLoginHistory() {
       const tbody = document.getElementById("login-history-tbody");
-      let filtered = [...loginLogsCache];
+      const thead = document.getElementById("login-history-thead");
+      const isStudentTab = currentLogRole === 'student';
 
-      if (currentLogRole !== 'ALL') {
-        filtered = filtered.filter(l => l.role === currentLogRole);
+      // Cập nhật tiêu đề bảng theo tab: Tab học sinh có cột "Lớp", tab giáo viên ẩn cột "Lớp" (cột vai trò đã xóa ở cả 2)
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th>Thời gian</th>
+            <th>Tài khoản</th>
+            <th>Họ và tên</th>
+            ${isStudentTab ? '<th>Lớp</th>' : ''}
+            <th>Địa chỉ IP</th>
+            <th>Thiết bị & Trình duyệt</th>
+          </tr>
+        `;
       }
 
+      let filtered = loginLogsCache.filter(l => l.role === currentLogRole);
       const totalItems = filtered.length;
+      const colSpanNum = isStudentTab ? 6 : 5;
+
       if (totalItems === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">Chưa có bản ghi đăng nhập nào.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpanNum}" style="text-align:center; padding:24px; color:#64748b;">Chưa có bản ghi đăng nhập nào cho ${isStudentTab ? 'học sinh' : 'giáo viên'}.</td></tr>`;
         document.getElementById("log-pagination-info").textContent = "Hiển thị 0 - 0 của 0 mục";
         document.getElementById("btn-page-prev").disabled = true;
         document.getElementById("btn-page-next").disabled = true;
@@ -2765,13 +2779,12 @@
       pagedData.forEach(log => {
         const tr = document.createElement("tr");
         const timeStr = new Date(log.login_at).toLocaleString('vi-VN');
-        const isTeacher = log.role === 'teacher';
 
         tr.innerHTML = `
           <td><span style="font-size:12px; color:#64748b;">${timeStr}</span></td>
           <td><code>${log.username || '---'}</code></td>
           <td><strong>${log.full_name || '---'}</strong></td>
-          <td><span class="badge-role ${isTeacher ? 'teacher' : 'student'}">${isTeacher ? 'Giáo viên' : 'Học sinh'}</span></td>
+          ${isStudentTab ? `<td><span style="font-weight:600; color:#1e293b;">${log.class_name || '---'}</span></td>` : ''}
           <td><code style="background:#eff6ff; color:#1d4ed8; padding:2px 6px; border-radius:4px;">${log.ip_address || '---'}</code></td>
           <td><span style="font-size:13px; color:#334155;">💻 ${log.device_name || 'Không xác định'}</span></td>
         `;
@@ -2780,7 +2793,7 @@
     }
 
     async function clearAllLoginLogs() {
-      const roleText = currentLogRole === 'ALL' ? 'toàn bộ' : (currentLogRole === 'teacher' ? 'giáo viên' : 'học sinh');
+      const roleText = currentLogRole === 'teacher' ? 'giáo viên' : 'học sinh';
       if (!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn nhật ký đăng nhập (${roleText})?`)) return;
 
       try {

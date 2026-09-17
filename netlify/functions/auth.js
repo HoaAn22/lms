@@ -54,7 +54,7 @@ const parseDeviceInfo = (userAgent = "") => {
   return `${os} (${browser})`;
 };
 
-// Bộ phân tích mảng Meme an toàn (Phòng tránh lỗi mảng Supabase biến thành chuỗi String)
+// Bộ phân tích mảng Meme an toàn
 const parseMemeIds = (data) => {
   if (!data) return [];
   if (Array.isArray(data)) return data.map(Number);
@@ -99,9 +99,7 @@ exports.handler = async (event) => {
         .single();
 
       if (isBanned) {
-        return createResponse(
-          false, null, `${isBanned.reason}`
-        );
+        return createResponse(false, null, `${isBanned.reason}`);
       }
 
       // 0.2 Kiểm tra Tài khoản có nằm trong danh sách cấm (Banned Account) không
@@ -112,9 +110,7 @@ exports.handler = async (event) => {
         .single();
 
       if (isAccountBanned) {
-        return createResponse(
-          false, null, `${isAccountBanned.reason}`
-        );
+        return createResponse(false, null, `${isAccountBanned.reason}`);
       }
 
       // 1. Kiểm tra tài khoản Giáo viên (Admin)
@@ -128,6 +124,7 @@ exports.handler = async (event) => {
       if (adminData) {
         await supabase.from('login_history').insert([{
           user_id: adminData.id,
+          admin_id: adminData.id,
           username: adminData.username,
           role: 'teacher',
           full_name: adminData.full_name || 'Giáo viên',
@@ -156,9 +153,10 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Sai tên đăng nhập hoặc mật khẩu!");
       }
 
-      // Ghi lại nhật ký đăng nhập học sinh
+      // Ghi lại nhật ký đăng nhập học sinh kèm khóa ngoại student_id
       await supabase.from('login_history').insert([{
         user_id: studentData.id,
+        student_id: studentData.id,
         username: studentData.username,
         role: 'student',
         full_name: studentData.full_name,
@@ -180,12 +178,26 @@ exports.handler = async (event) => {
       });
     }
 
-    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP */
+    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (JOIN VỚI BẢNG STUDENTS ĐỂ LẤY CLASS_NAME) */
     if (action === "get_login_history") {
-      const limit = body.limit || 100;
+      const limit = body.limit || 1000;
       let query = supabase
         .from('login_history')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          student_id,
+          admin_id,
+          username,
+          role,
+          full_name,
+          ip_address,
+          device_name,
+          login_at,
+          students (
+            class_name
+          )
+        `)
         .order('login_at', { ascending: false })
         .limit(limit);
 
@@ -195,7 +207,13 @@ exports.handler = async (event) => {
 
       const { data: logs, error } = await query;
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
-      return createResponse(true, { logs: logs || [] });
+
+      const formattedLogs = (logs || []).map(log => ({
+        ...log,
+        class_name: log.students ? log.students.class_name : ""
+      }));
+
+      return createResponse(true, { logs: formattedLogs });
     }
 
     /* XÓA NHẬT KÝ CHI TIẾT */
@@ -214,7 +232,7 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Đã xóa dữ liệu nhật ký thành công!");
     }
 
-    /* XÓA IP RA KHỎI HỆ THỐNG (Xóa lịch sử của IP đó) */
+    /* XÓA IP RA KHỎI HỆ THỐNG */
     if (action === "delete_ip_logs") {
       const { ip_address } = body;
       if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP cần xóa.");
@@ -228,7 +246,7 @@ exports.handler = async (event) => {
       return createResponse(true, null, `Đã xóa hoàn toàn dữ liệu của IP ${ip_address}. Khi máy này đăng nhập lại, hệ thống sẽ ghi nhận lại từ đầu.`);
     }
 
-    /* QUẢN LÝ IP & THIẾT BỊ (Gộp nhóm theo IP) */
+    /* QUẢN LÝ IP & THIẾT BỊ */
     if (action === "get_ip_management") {
       const { data: logs, error: logErr } = await supabase
         .from('login_history')
@@ -268,7 +286,7 @@ exports.handler = async (event) => {
       return createResponse(true, { ip_list: ipList });
     }
 
-    /* KHÓA VÀ MỞ KHÓA TÀI KHOẢN (BAN ACCOUNT) */
+    /* KHÓA VÀ MỞ KHÓA TÀI KHOẢN */
     if (action === "ban_account") {
       const { username, reason } = body;
       if (!username) return createResponse(false, null, "Thiếu tên tài khoản.");
@@ -294,7 +312,7 @@ exports.handler = async (event) => {
       return createResponse(true, null, `Đã mở khóa truy cập cho tài khoản ${username}.`);
     }
 
-    /* KHÓA VÀ MỞ KHÓA IP (BAN IP) */
+    /* KHÓA VÀ MỞ KHÓA IP */
     if (action === "ban_ip") {
       const { ip_address, reason } = body;
       if (!ip_address) return createResponse(false, null, "Thiếu địa chỉ IP.");
@@ -828,6 +846,7 @@ exports.handler = async (event) => {
           coins: 100,
           total_coins: 100,
           spent_coins: 0,
+          pending_coins: 0,
           meme_id_list: []
         }]);
       } else {
@@ -1078,7 +1097,7 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Đã xóa học sinh thành công!");
     }
 
-    /* XÓA HỌC SINH HÀNG LOẠT (XÓA NHANH) */
+    /* XÓA HỌC SINH HÀNG LOẠT */
     if (action === "batch_delete_students") {
       const { student_ids, teacher_username, password } = body;
 
