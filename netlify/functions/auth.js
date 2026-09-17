@@ -897,6 +897,43 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Đã xóa học sinh thành công!");
     }
 
+    /* XÓA HỌC SINH HÀNG LOẠT (XÓA NHANH) */
+    if (action === "batch_delete_students") {
+      const { student_ids, teacher_username, password } = body;
+
+      if (!student_ids || !Array.isArray(student_ids) || student_ids.length === 0 || !teacher_username || !password) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin xác thực và chọn học sinh cần xóa!");
+      }
+
+      // Xác thực mật khẩu giáo viên
+      const { data: adminData, error: adminErr } = await supabase
+        .from('admins')
+        .select('id, username')
+        .eq('username', teacher_username)
+        .eq('password', password)
+        .single();
+
+      if (adminErr || !adminData) {
+        return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
+      }
+
+      // Xóa các dữ liệu liên kết trước (Bảng điểm, Vật phẩm)
+      await supabase.from('scores').delete().in('student_id', student_ids);
+      await supabase.from('items').delete().in('student_id', student_ids);
+
+      // Xóa học sinh
+      const { error: deleteStuErr } = await supabase
+        .from('students')
+        .delete()
+        .in('id', student_ids);
+
+      if (deleteStuErr) {
+        return createResponse(false, null, "Lỗi khi xóa học sinh: " + deleteStuErr.message);
+      }
+
+      return createResponse(true, null, `Đã xóa thành công ${student_ids.length} học sinh khỏi hệ thống!`);
+    }
+
     /* TẠO TÀI KHOẢN HÀNG LOẠT */
     if (action === "batch_create_students") {
       const { school, className, grade, students } = body;

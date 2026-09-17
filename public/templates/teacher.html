@@ -538,8 +538,8 @@
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tài khoản</span><input type="checkbox" class="col-toggler" data-col="3" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Mật khẩu</span><input type="checkbox" class="col-toggler" data-col="4" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Lớp</span><input type="checkbox" class="col-toggler" data-col="5" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Xu</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
-                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tổng xu</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Tổng xu</span><input type="checkbox" class="col-toggler" data-col="6" onchange="applyColumnVisibility()"></label>
+                        <label class="dropdown-item" onclick="event.stopPropagation()"><span>Xu</span><input type="checkbox" class="col-toggler" data-col="7" onchange="applyColumnVisibility()"></label>
                         <label class="dropdown-item" onclick="event.stopPropagation()"><span>Thao tác</span><input type="checkbox" class="col-toggler" data-col="8" onchange="applyColumnVisibility()"></label>
                       </div>
                     </div>
@@ -548,27 +548,32 @@
                 </div>
               </div>
 
-              <div class="mt-4 mb-4">
+              <div class="mt-4 mb-4" style="display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">🗑️ Xóa nhanh</button>
+                  <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
+                </div>
               </div>
 
               <div style="overflow-x: auto; padding: 0;">
                 <table class="data-table" id="student-table">
                   <thead>
                     <tr>
+                      <th data-col="checkbox" style="display: none; width: 40px; text-align: center;"><input type="checkbox" id="select-all-quick-delete" onchange="toggleSelectAllQuickDelete(this)"></th>
                       <th data-col="0">STT</th>
                       <th data-col="1">Họ</th>
                       <th data-col="2">Tên</th>
                       <th data-col="3">Tài khoản</th>
                       <th data-col="4">Mật khẩu</th>
                       <th data-col="5">Lớp</th>
-                      <th data-col="6">Xu</th>
-                      <th data-col="7">Tổng xu</th>
+                      <th data-col="6">Tổng xu</th>
+                      <th data-col="7">Xu</th>
                       <th data-col="8">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="student-list-body">
-                    <tr><td colspan="9" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
+                    <tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1014,6 +1019,36 @@
             </div>
           </form>
           <p id="delete-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Modal Xác Nhận Xóa Nhanh Hàng Loạt -->
+      <div id="batch-delete-student-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #ef4444;">🗑️ Xác Nhận Xóa Nhanh</h3>
+            <button onclick="closeBatchDeleteModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="batch-delete-student-form" onsubmit="submitBatchDeleteStudent(event)">
+            <div style="margin-bottom: 14px; background: #fef2f2; padding: 12px; border-radius: 6px; border: 1px solid #fecaca;">
+              <p style="margin: 0; color: #991b1b; font-size: 13px;">
+                Bạn đang chuẩn bị xóa vĩnh viễn <strong id="batch-delete-count-display" style="color: #7f1d1d; font-size: 16px;">0</strong> học sinh đã chọn.
+              </p>
+              <p style="margin: 6px 0 0 0; color: #b91c1c; font-size: 12px;">⚠️ Hành động này sẽ xóa toàn bộ tài khoản, vật phẩm và bảng điểm của các học sinh này!</p>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="batch-delete-admin-password" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Mật khẩu tài khoản giáo viên:</label>
+              <input type="password" id="batch-delete-admin-password" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeBatchDeleteModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" id="btn-confirm-batch-delete" class="btn" style="background: #ef4444; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Xác Nhận Xóa Hàng Loạt</button>
+            </div>
+          </form>
+          <p id="batch-delete-status" class="status-msg mt-2"></p>
         </div>
       </div>
 
@@ -2172,7 +2207,7 @@
       }
 
       if (!isSilentUpdate) {
-        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px;">Đang tải dữ liệu... ⏳</td></tr>`;
       }
 
       try {
@@ -2184,7 +2219,7 @@
         const result = await res.json();
         
         if (!res.ok || !result.success) {
-          studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
+          studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">${result.message || "Lỗi tải dữ liệu"}</td></tr>`;
           return;
         }
 
@@ -2192,13 +2227,13 @@
         sortAndRenderStudents();
         saveCurrentFilterState();
       } catch (err) {
-        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Lỗi kết nối đến máy chủ!</td></tr>`;
       }
     }
 
     function sortAndRenderStudents() {
       if (!cachedStudentsList || cachedStudentsList.length === 0) {
-        studentListBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
+        studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
         return;
       }
 
@@ -2208,11 +2243,17 @@
       sortedList.sort((a, b) => {
         const nameA = (a.firstName || "").toLowerCase();
         const nameB = (b.firstName || "").toLowerCase();
+        const lastNameA = (a.lastName || "").toLowerCase();
+        const lastNameB = (b.lastName || "").toLowerCase();
 
         if (sortBy === "name-az") {
-          return nameA.localeCompare(nameB);
+          const nameCompare = nameA.localeCompare(nameB, 'vi');
+          if (nameCompare === 0) return lastNameA.localeCompare(lastNameB, 'vi');
+          return nameCompare;
         } else if (sortBy === "name-za") {
-          return nameB.localeCompare(nameA);
+          const nameCompare = nameB.localeCompare(nameA, 'vi');
+          if (nameCompare === 0) return lastNameB.localeCompare(lastNameA, 'vi');
+          return nameCompare;
         } else if (sortBy === "total-coins-desc") {
           const coinA = Number(a.total_coins) || 0;
           const coinB = Number(b.total_coins) || 0;
@@ -2224,6 +2265,8 @@
         }
         return 0;
       });
+
+      let seenNames = new Set(); // Theo dõi phát hiện trùng lặp họ tên
 
       studentListBody.innerHTML = "";
       sortedList.forEach((stu, index) => {
@@ -2237,12 +2280,29 @@
         const hasToneInFirstName = hasVietnameseTone(firstName);
         const isBothUnaccented = (!hasToneInLastName && !hasToneInFirstName) && (lastName !== '' || firstName !== '');
 
-        if (isBothUnaccented) {
+        // Xác định trùng tên (Chỉ chạy khi đang bật chế độ xóa nhanh)
+        let isDuplicate = false;
+        if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+          const fullNameKey = (lastName + " " + firstName).toLowerCase();
+          if (seenNames.has(fullNameKey)) {
+            isDuplicate = true; // Phát hiện tên bị trùng lặp từ người thứ 2
+          } else {
+            seenNames.add(fullNameKey);
+          }
+        }
+
+        if (isBothUnaccented || isDuplicate) {
           tr.className = "row-unaccented-highlight";
-          tr.title = "Cả họ và tên đều chưa có dấu tiếng Việt";
+          let titles = [];
+          if (isBothUnaccented) titles.push("Cả họ và tên đều chưa có dấu tiếng Việt");
+          if (isDuplicate) titles.push("Học sinh bị trùng tên (Đã tự động chọn để xóa)");
+          tr.title = titles.join(" | ");
         }
 
         tr.innerHTML = `
+          <td data-col="checkbox" style="display: none; text-align: center;">
+             <input type="checkbox" class="quick-delete-checkbox" value="${stu.id}" onchange="updateQuickDeleteCount()" ${isDuplicate ? 'checked' : ''}>
+          </td>
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
           <td data-col="2" style="font-weight: 500;">${stu.firstName || '---'}</td>
@@ -2255,8 +2315,8 @@
             <button type="button" onclick="toggleTablePassword('${rawPassword}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
           </td>
           <td data-col="5">${stu.className || '---'}</td>
-          <td data-col="6"><span class="badge-coin">💰 ${stu.coins !== undefined ? stu.coins : '0'}</span></td>
-          <td data-col="7"><span class="badge-coin" style="background:#e0e7ff; color:#3730a3;">💎 ${stu.total_coins !== undefined ? stu.total_coins : '0'}</span></td>
+          <td data-col="6"><span class="badge-coin">💰 ${stu.total_coins !== undefined ? stu.total_coins : '0'}</span></td>
+          <td data-col="7"><span class="badge-coin">💰 ${stu.coins !== undefined ? stu.coins : '0'}</span></td>
           <td data-col="8">
             <div class="action-dropdown-wrapper">
               <button type="button" class="btn-action-main" onclick="toggleActionDropdown(event, ${index})">
@@ -2284,6 +2344,18 @@
       });
 
       applyColumnVisibility();
+      
+      // Xử lý hiển thị cột đánh dấu xóa nhanh
+      const chkHeaders = document.querySelectorAll('th[data-col="checkbox"]');
+      const chkCells = document.querySelectorAll('td[data-col="checkbox"]');
+      if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+        chkHeaders.forEach(el => el.style.display = "table-cell");
+        chkCells.forEach(el => el.style.display = "table-cell");
+        updateQuickDeleteCount(); // Đếm ngay lập tức số học sinh đã bị tích chọn tự động
+      } else {
+        chkHeaders.forEach(el => el.style.display = "none");
+        chkCells.forEach(el => el.style.display = "none");
+      }
     }
 
     function toggleTablePassword(realPassword, textElementId, btn) {
@@ -2802,6 +2874,115 @@
         }
       } catch (e) {
         alert("Lỗi kết nối máy chủ khi xóa IP!");
+      }
+    }
+
+    /* ========================================================
+       TÍNH NĂNG XÓA NHANH HỌC SINH
+       ======================================================== */
+    let isQuickDeleteMode = false;
+
+    function toggleQuickDeleteMode() {
+      isQuickDeleteMode = !isQuickDeleteMode;
+      const btnToggle = document.getElementById("btn-quick-delete-mode");
+      const btnConfirm = document.getElementById("btn-confirm-quick-delete");
+
+      if (isQuickDeleteMode) {
+        btnToggle.textContent = "Hủy xóa nhanh";
+        btnToggle.style.background = "#e2e8f0";
+        btnToggle.style.color = "#334155";
+        btnConfirm.style.display = "inline-flex";
+      } else {
+        btnToggle.innerHTML = "🗑️ Xóa nhanh";
+        btnToggle.style.background = "#fee2e2";
+        btnToggle.style.color = "#b91c1c";
+        btnConfirm.style.display = "none";
+        
+        const masterChk = document.getElementById("select-all-quick-delete");
+        if (masterChk) masterChk.checked = false;
+        document.getElementById("quick-delete-count").textContent = "0";
+      }
+      
+      // Vẽ lại bảng (Hàm Render sẽ tự động gánh việc bắt trùng lặp tên & mở Checkbox)
+      sortAndRenderStudents();
+    }
+
+    function toggleSelectAllQuickDelete(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.quick-delete-checkbox');
+      checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+      updateQuickDeleteCount();
+    }
+
+    function updateQuickDeleteCount() {
+      const count = document.querySelectorAll('.quick-delete-checkbox:checked').length;
+      document.getElementById("quick-delete-count").textContent = count;
+    }
+
+    function openBatchDeleteModal() {
+      const selectedCheckboxes = document.querySelectorAll('.quick-delete-checkbox:checked');
+      if (selectedCheckboxes.length === 0) {
+        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để xóa!");
+        return;
+      }
+      document.getElementById("batch-delete-count-display").textContent = selectedCheckboxes.length;
+      document.getElementById("batch-delete-admin-password").value = "";
+      document.getElementById("batch-delete-status").textContent = "";
+      document.getElementById("batch-delete-status").className = "status-msg mt-2";
+      document.getElementById("batch-delete-student-modal").classList.add("show");
+    }
+
+    function closeBatchDeleteModal() {
+      document.getElementById("batch-delete-student-modal").classList.remove("show");
+    }
+
+    async function submitBatchDeleteStudent(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("batch-delete-status");
+      const btnDelete = document.getElementById("btn-confirm-batch-delete");
+      const adminPassword = document.getElementById("batch-delete-admin-password").value.trim();
+
+      const selectedCheckboxes = document.querySelectorAll('.quick-delete-checkbox:checked');
+      const studentIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+      if (!adminPassword) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập mật khẩu giáo viên!";
+        return;
+      }
+
+      btnDelete.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang xác thực và xóa dữ liệu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_delete_students",
+            student_ids: studentIds,
+            teacher_username: user.username,
+            password: adminPassword
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Xóa hàng loạt thất bại!";
+          btnDelete.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Đã xóa hàng loạt thành công!");
+        closeBatchDeleteModal();
+        toggleQuickDeleteMode(); // Hủy chế độ xóa nhanh sau khi xong
+        fetchStudentList(true);  // Load lại danh sách
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnDelete.disabled = false;
       }
     }
 
