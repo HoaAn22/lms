@@ -586,8 +586,11 @@
                 </div>
               </div>
 
-              <div class="mt-4 mb-4" style="display: flex; justify-content: space-between; align-items: center;">
-                <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+              <div class="mt-4 mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+                  <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
+                </div>
                 <div style="display: flex; gap: 8px;">
                   <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ xu cả lớp</button>
                   <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
@@ -1500,8 +1503,14 @@
         statusEl.className = "status-msg status-success";
         statusEl.textContent = `🎉 ${result.message}`;
         clearBatchList();
-        loadSchools();
         
+        // Giữ lại trường học cố định đã chọn, chỉ xóa ô lớp học của phần tạo hàng loạt
+        classInput.value = "";
+        
+        await loadSchools();
+        schoolSelect.value = school;
+
+        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách
         filterSchoolSelect.value = school;
         document.getElementById("filter-class-input").value = rawClass;
         fetchStudentList(true);
@@ -1566,6 +1575,9 @@
 
     function renderSchoolDropdown(schools) {
       currentSchoolsData = schools || [];
+      const currentSelectedSchool = filterSchoolSelect.value;
+      const currentBatchSchool = batchSchoolSelect.value;
+
       filterSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
       batchSchoolSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn trường học --</option>';
       
@@ -1629,9 +1641,17 @@
         schoolsManagementList.appendChild(itemDiv);
       });
 
-      const savedFilters = getSavedFilters();
-      if (savedFilters && savedFilters.school) {
-        filterSchoolSelect.value = savedFilters.school;
+      if (currentSelectedSchool) {
+        filterSchoolSelect.value = currentSelectedSchool;
+      } else {
+        const savedFilters = getSavedFilters();
+        if (savedFilters && savedFilters.school) {
+          filterSchoolSelect.value = savedFilters.school;
+        }
+      }
+
+      if (currentBatchSchool) {
+        batchSchoolSelect.value = currentBatchSchool;
       }
     }
 
@@ -2301,6 +2321,17 @@
       }
     }
 
+    /* XÓA DANH SÁCH VỪA XEM: GIỮ NGUYÊN TÊN TRƯỜNG, CHỈ XÓA TÊN LỚP VÀ RESET BẢNG */
+    function clearStudentListSearch() {
+      document.getElementById("filter-class-input").value = "";
+      cachedStudentsList = [];
+      studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>`;
+      saveCurrentFilterState();
+      if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+        toggleQuickDeleteMode();
+      }
+    }
+
     function sortAndRenderStudents() {
       if (!cachedStudentsList || cachedStudentsList.length === 0) {
         studentListBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Không tìm thấy học sinh nào.</td></tr>`;
@@ -2617,7 +2648,7 @@
        QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP VÀ IP & THIẾT BỊ (TAB 6)
        ======================================================== */
     let loginLogsCache = [];
-    let currentLogRole = 'student'; // Mặc định chỉ lọc Học sinh, đã xóa tab Tất cả
+    let currentLogRole = 'student';
     let currentLogPage = 1;
     let currentLogPageSize = 10;
 
@@ -2725,7 +2756,6 @@
       const thead = document.getElementById("login-history-thead");
       const isStudentTab = currentLogRole === 'student';
 
-      // Cập nhật tiêu đề bảng theo tab: Tab học sinh có cột "Lớp", tab giáo viên ẩn cột "Lớp" (cột vai trò đã xóa ở cả 2)
       if (thead) {
         thead.innerHTML = `
           <tr>
