@@ -188,6 +188,26 @@
       background-color: #fef08a !important;
     }
 
+    tr.row-student-good {
+      background-color: #dcfce7 !important;
+    }
+    tr.row-student-good td {
+      background-color: #dcfce7 !important;
+    }
+    tr.row-student-good:hover td {
+      background-color: #bbf7d0 !important;
+    }
+
+    tr.row-student-bad {
+      background-color: #fee2e2 !important;
+    }
+    tr.row-student-bad td {
+      background-color: #fee2e2 !important;
+    }
+    tr.row-student-bad:hover td {
+      background-color: #fecaca !important;
+    }
+
     .username-cell-code {
       background: #e2e8f0;
       padding: 3px 6px;
@@ -223,17 +243,15 @@
       background: #1d4ed8;
     }
     .action-dropdown-menu {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 4px);
+      position: fixed;
       background: #ffffff;
-      min-width: 155px;
+      min-width: 175px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
       display: none;
       flex-direction: column;
-      z-index: 100;
+      z-index: 99999;
       overflow: hidden;
     }
     .action-dropdown-menu.show {
@@ -325,7 +343,6 @@
     .ban-status.active { background: #dcfce7; color: #166534; }
     .ban-status.banned { background: #fee2e2; color: #991b1b; }
 
-    /* CSS ĐIỀU HƯỚNG TRÊN MOBILE CHO GIÁO VIÊN */
     .mobile-menu-btn {
       display: none;
       background: none;
@@ -429,7 +446,6 @@
 <body>
   <div class="dashboard-layout">
     
-    <!-- Lớp phủ (Chỉ hiện trên Mobile khi mở menu) -->
     <div id="mobile-nav-overlay" class="mobile-nav-overlay"></div>
 
     <aside class="sidebar" id="admin-sidebar">
@@ -506,7 +522,6 @@
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                   <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
                   
-                  <!-- DANH SÁCH CHỌN LỚP ĐỂ DUYỆT THƯỞNG (ẨN KHI KHÔNG CÓ LỚP NÀO) -->
                   <div id="reward-class-filter-wrapper" style="display: none; align-items: center; gap: 6px;">
                     <label for="reward-class-select" style="font-size: 12px; font-weight: 600; color: #334155;">Lớp:</label>
                     <select id="reward-class-select" onchange="filterRewardsByClass(this.value)" style="padding: 4px 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #1e293b; font-weight: 500;">
@@ -740,7 +755,6 @@
                 </div>
               </div>
 
-              <!-- Khu vực hiển thị danh sách học sinh để chuyển -->
               <div id="transfer-preview-wrapper" style="display: none; margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                   <strong style="color: #334155;">Danh sách học sinh (<span id="transfer-count">0</span>):</strong>
@@ -1232,11 +1246,42 @@
     function toggleActionDropdown(event, index) {
       event.stopPropagation();
       const currentMenu = document.getElementById(`action-menu-${index}`);
+      const btn = event.currentTarget;
+      
       document.querySelectorAll('.action-dropdown-menu.show').forEach(m => {
         if (m !== currentMenu) m.classList.remove('show');
       });
-      if (currentMenu) currentMenu.classList.toggle('show');
+
+      if (currentMenu) {
+        const isOpening = !currentMenu.classList.contains('show');
+        
+        if (isOpening) {
+          const rect = btn.getBoundingClientRect();
+          const menuWidth = 175;
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const menuHeight = 220;
+
+          currentMenu.style.left = `${rect.right - menuWidth}px`;
+          currentMenu.style.right = 'auto';
+
+          if (spaceBelow < menuHeight && rect.top > menuHeight) {
+            currentMenu.style.top = 'auto';
+            currentMenu.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+          } else {
+            currentMenu.style.bottom = 'auto';
+            currentMenu.style.top = `${rect.bottom + 4}px`;
+          }
+
+          currentMenu.classList.add('show');
+        } else {
+          currentMenu.classList.remove('show');
+        }
+      }
     }
+
+    window.addEventListener('scroll', () => {
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+    }, true);
 
     function togglePasswordVisibility(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -1515,13 +1560,11 @@
         statusEl.textContent = `🎉 ${result.message}`;
         clearBatchList();
         
-        // Giữ lại trường học cố định đã chọn, chỉ xóa ô lớp học của phần tạo hàng loạt[cite: 5]
         classInput.value = "";
         
         await loadSchools();
         schoolSelect.value = school;
 
-        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách[cite: 5]
         filterSchoolSelect.value = school;
         document.getElementById("filter-class-input").value = rawClass;
         fetchStudentList(true);
@@ -2043,6 +2086,34 @@
       }
     }
 
+    /* TÍNH NĂNG ĐÁNH DẤU HỌC SINH: TỐT (true) - KÉM (false) - HỦY (null) */
+    async function setStudentHighlight(studentId, status) {
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_student_highlight",
+            student_id: studentId,
+            status: status
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
+          if (stu) {
+            stu.is_highlighted = status;
+          }
+          saveCurrentFilterState();
+          sortAndRenderStudents();
+        } else {
+          alert(result.message || "Cập nhật trạng thái đánh dấu thất bại!");
+        }
+      } catch (err) {
+        alert("Lỗi kết nối máy chủ khi đánh dấu!");
+      }
+    }
+
     function openEditStudentModal(studentId) {
       const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
       if (!stu) return;
@@ -2333,12 +2404,13 @@
       }
     }
 
-    /* XÓA DANH SÁCH VỪA XEM: GIỮ NGUYÊN TÊN TRƯỜNG, CHỈ XÓA TÊN LỚP VÀ RESET BẢNG */
+    /* XÓA DANH SÁCH VỪA XEM: XÓA CẢ TRƯỜNG, LỚP VÀ RESET BẢNG */
     function clearStudentListSearch() {
+      filterSchoolSelect.value = "";
       document.getElementById("filter-class-input").value = "";
       cachedStudentsList = [];
       studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>`;
-      saveCurrentFilterState();
+      sessionStorage.removeItem("teacher_student_filter");
       if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
         toggleQuickDeleteMode();
       }
@@ -2403,13 +2475,22 @@
           }
         }
 
-        if (isBothUnaccented || isDuplicate) {
+        // Ưu tiên hiển thị màu đánh dấu: Tốt (xanh lá pastel), Kém (đỏ pastel)
+        if (stu.is_highlighted === true || stu.is_highlighted === "true") {
+          tr.className = "row-student-good";
+          tr.title = "Học sinh được đánh dấu: Tốt ⭐";
+        } else if (stu.is_highlighted === false || stu.is_highlighted === "false") {
+          tr.className = "row-student-bad";
+          tr.title = "Học sinh được đánh dấu: Kém ⚠️";
+        } else if (isBothUnaccented || isDuplicate) {
           tr.className = "row-unaccented-highlight";
           let titles = [];
           if (isBothUnaccented) titles.push("Cả họ và tên đều chưa có dấu tiếng Việt");
           if (isDuplicate) titles.push("Học sinh bị trùng tên (Đã tự động chọn để xóa)");
           tr.title = titles.join(" | ");
         }
+
+        const isMarked = stu.is_highlighted === true || stu.is_highlighted === false || stu.is_highlighted === "true" || stu.is_highlighted === "false";
 
         tr.innerHTML = `
           <td data-col="checkbox" style="display: none; text-align: center;">
@@ -2441,6 +2522,20 @@
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
                 </button>
+                
+                <!-- CÁC TÙY CHỌN ĐÁNH DẤU HỌC SINH -->
+                <button type="button" class="action-dropdown-item" style="color: #16a34a;" onclick="setStudentHighlight('${stu.id}', true)">
+                  ⭐ Đánh dấu: Tốt
+                </button>
+                <button type="button" class="action-dropdown-item" style="color: #dc2626;" onclick="setStudentHighlight('${stu.id}', false)">
+                  ⚠️ Đánh dấu: Kém
+                </button>
+                ${isMarked ? `
+                  <button type="button" class="action-dropdown-item" style="color: #64748b;" onclick="setStudentHighlight('${stu.id}', null)">
+                    ↺ Hủy đánh dấu
+                  </button>
+                ` : ''}
+
                 ${stu.is_banned
                   ? `<button type="button" class="action-dropdown-item" style="color:#16a34a;" onclick="unbanStudent('${stu.username}')">🔓 Mở khóa tài khoản</button>`
                   : `<button type="button" class="action-dropdown-item danger" onclick="banStudent('${stu.username}')">🔒 Khóa tài khoản</button>`
@@ -3208,10 +3303,8 @@
           badge.style.display = "none";
         }
 
-        // Lấy danh sách các lớp duy nhất có yêu cầu duyệt
         const classes = [...new Set(pendingRewardsList.map(r => r.class_name).filter(Boolean))].sort();
 
-        // Nếu không có lớp nào (hoặc không có yêu cầu nào), ẩn hoàn toàn danh sách chọn lớp
         if (classes.length === 0) {
           if (filterWrapper) filterWrapper.style.display = "none";
           currentRewardClassFilter = 'ALL';

@@ -153,7 +153,6 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Sai tên đăng nhập hoặc mật khẩu!");
       }
 
-      // Ghi lại nhật ký đăng nhập học sinh kèm khóa ngoại student_id
       await supabase.from('login_history').insert([{
         user_id: studentData.id,
         student_id: studentData.id,
@@ -178,7 +177,7 @@ exports.handler = async (event) => {
       });
     }
 
-    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP (JOIN VỚI BẢNG STUDENTS ĐỂ LẤY CLASS_NAME + DỰ PHÒNG CHO LOG CŨ) */
+    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP */
     if (action === "get_login_history") {
       const limit = body.limit || 1000;
       let query = supabase
@@ -208,7 +207,6 @@ exports.handler = async (event) => {
       const { data: logs, error } = await query;
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký đăng nhập: " + error.message);
 
-      // Cơ chế dự phòng cho các bản ghi đăng nhập trước đó chưa có student_id
       let enrichedLogs = logs || [];
       const missingUsernames = enrichedLogs
         .filter(l => l.role === 'student' && (!l.students || !l.students.class_name) && l.username)
@@ -423,6 +421,27 @@ exports.handler = async (event) => {
         pending_coins: itemData.pending_coins !== undefined ? itemData.pending_coins : 0,
         meme_id_list: parseMemeIds(itemData.meme_id_list)
       });
+    }
+
+    /* CẬP NHẬT TRẠNG THÁI ĐÁNH DẤU HỌC SINH (NULL: Bình thường, true: Tốt, false: Kém) */
+    if (action === "update_student_highlight") {
+      const { student_id, status } = body;
+      if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
+
+      let highlightValue = null;
+      if (status === true || status === "true") highlightValue = true;
+      else if (status === false || status === "false") highlightValue = false;
+
+      const { error } = await supabase
+        .from('students')
+        .update({ is_highlighted: highlightValue })
+        .eq('id', student_id);
+
+      if (error) {
+        return createResponse(false, null, "Lỗi khi cập nhật trạng thái đánh dấu: " + error.message);
+      }
+
+      return createResponse(true, { is_highlighted: highlightValue }, "Đã cập nhật trạng thái đánh dấu thành công!");
     }
 
     /* HỌC SINH YÊU CẦU NHẬN XU PHÁT BIỂU */
@@ -911,7 +930,7 @@ exports.handler = async (event) => {
 
     if (action === "get_students") {
       let query = supabase.from('students').select(`
-        id, full_name, last_name, first_name, class_name, username, password, grade,
+        id, full_name, last_name, first_name, class_name, username, password, grade, is_highlighted,
         scores (score_1, score_2, score_3, score_4, score_5, feedback),
         items (coins, total_coins, spent_coins, meme_id_list)
       `).eq('school', body.school);
@@ -945,6 +964,7 @@ exports.handler = async (event) => {
           grade: row.grade || '7',
           username: row.username, 
           password: row.password, 
+          is_highlighted: row.is_highlighted !== undefined ? row.is_highlighted : null,
           feedback: s.feedback || "",
           coins: studentItems.coins !== undefined ? studentItems.coins : 100,
           total_coins: studentItems.total_coins !== undefined ? studentItems.total_coins : 100,
@@ -1206,7 +1226,8 @@ exports.handler = async (event) => {
           class_name: className.trim().toUpperCase(),
           school: school,
           grade: grade || '7',
-          username_change_limit: 2
+          username_change_limit: 2,
+          is_highlighted: null
         }]).select().single();
 
         if (userErr) throw userErr;
@@ -1258,7 +1279,8 @@ exports.handler = async (event) => {
         username, password, full_name: fullName, 
         last_name: lastName, first_name: firstName, class_name: className, school,
         grade: grade,
-        username_change_limit: 2
+        username_change_limit: 2,
+        is_highlighted: null
       }]).select().single();
 
       if (userErr) {
