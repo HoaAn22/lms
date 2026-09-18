@@ -581,7 +581,9 @@
 
           <div class="card mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('search-student-body', 'search-student-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">Tra cứu danh sách học sinh</h3>
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">
+                <img src="img/bucket-list.png" alt="Icon" style="width: 18px; height: 18px; object-fit: contain;">
+                 Danh sách học sinh</h3>
               <span id="search-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
             </div>
 
@@ -641,7 +643,7 @@
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ xu cả lớp</button>
+                  <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ cả lớp</button>
                   <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
                   <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
                 </div>
@@ -674,22 +676,25 @@
           <!-- TẠO TÀI KHOẢN HÀNG LOẠT -->
           <div class="card form-container">
             <div class="card-header-collapse" onclick="toggleCardBody('batch-create-student-body', 'batch-student-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">⚡ Tạo tài khoản hàng loạt:</h3>
-              <span id="batch-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
+                <h3 style="margin: 0; font-size: 16px; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                    <img src="img/add-group.png" alt="Icon" style="width: 18px; height: 18px; object-fit: contain;"> 
+                    Tạo tài khoản:
+                </h3>
+                <span id="batch-student-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
             
             <div id="batch-create-student-body" class="card-body-collapsible collapsed">
               <div style="margin-top: 16px;">
                 <div class="grid-2">
                   <div class="form-group">
-                    <label for="batch-school-select">Chọn trường học cố định:</label>
+                    <label for="batch-school-select">Trường:</label>
                     <select id="batch-school-select" required>
-                      <option value="" disabled selected hidden>-- Chọn trường học --</option>
+                      <option value="" disabled selected hidden>-- Chọn trường --</option>
                     </select>
                   </div>
                   
                   <div class="form-group">
-                    <label for="batch-stu-class">Lớp học cố định:</label>
+                    <label for="batch-stu-class">Lớp:</label>
                     <input type="text" id="batch-stu-class" required style="text-transform: uppercase;" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
                   </div>
                 </div>
@@ -698,9 +703,9 @@
                   <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                     <div style="flex: 2; min-width: 220px;">
                       <label for="batch-fullname-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
-                        Họ và tên học sinh:
+                        Họ và tên:
                       </label>
-                      <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)" placeholder="Nhập họ tên rồi nhấn Tab để thêm">
+                      <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)">
                     </div>
 
                     <!-- Ô NHẬP XU (MẶC ĐỊNH ẨN, CHỈ HIỆN KHI BẤM NÚT ĐIỀU CHỈNH) -->
@@ -708,7 +713,7 @@
                       <label for="batch-coin-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
                         Xu (+ / -):
                       </label>
-                      <input type="text" id="batch-coin-input" placeholder="+50 hoặc -20" style="width: 100%; box-sizing: border-box;" autocomplete="off">
+                      <input type="text" id="batch-coin-input" style="width: 100%; box-sizing: border-box;" autocomplete="off">
                     </div>
 
                     <!-- NÚT BẤM ĐIỀU CHỈNH XU KẾ BÊN HỌ VÀ TÊN -->
@@ -722,8 +727,12 @@
                   </div>
 
                   <small style="color: #64748b; font-size: 12px; display: block; margin-top: 8px;">
-                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm học sinh ngay. Có thể bấm trực tiếp vào ô trong bảng để chỉnh sửa thông tin. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 xu</strong>.
-                  </small>
+                    💡 Phím tắt: 
+                    <ul style="margin: 4px 0 0 0; padding-left: 20px;">
+                        <li style="margin-bottom: 5px;"><kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để vào hàng đợi.</li>
+                        <li style="margin-bottom: 5px;"><kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt.</li>
+                    </ul>
+                </small>
                 </div>
 
                 <div id="batch-preview-wrapper" style="display: none; margin-top: 14px;">
@@ -750,7 +759,7 @@
 
                   <div style="margin-top: 16px; display: flex; gap: 10px;">
                     <button type="button" id="btn-submit-batch" onclick="executeBatchCreateStudents()" class="btn btn-success" style="height: 42px; font-weight: 600;">
-                      🚀 Xác Nhận Tạo Hàng Loạt (Enter)
+                      Xác Nhận Tạo (Enter)
                     </button>
                   </div>
                 </div>
@@ -763,7 +772,9 @@
           <!-- CHUYỂN LỚP HÀNG LOẠT -->
           <div class="card form-container mt-4">
             <div class="card-header-collapse" onclick="toggleCardBody('batch-transfer-body', 'batch-transfer-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">🔄 Chuyển Lớp Hàng Loạt</h3>
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">
+                <img src="img/refer.png" alt="Icon" style="width: 18px; height: 18px; object-fit: contain;">
+                 Chuyển lớp:</h3>
               <span id="batch-transfer-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
             
@@ -776,7 +787,7 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="transfer-old-class">Lớp hiện tại (VD: 7B9):</label>
+                  <label for="transfer-old-class">Lớp hiện tại:</label>
                   <div style="display:flex; gap:8px;">
                     <input type="text" id="transfer-old-class" style="text-transform: uppercase; flex:1;" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
                     <button type="button" class="btn btn-secondary" onclick="fetchStudentsForTransfer()">Tìm kiếm</button>
@@ -808,11 +819,11 @@
 
                 <div style="display: flex; gap: 12px; align-items: flex-end;">
                   <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                    <label for="transfer-new-class" style="color: #1e293b; font-weight: bold;">Nhập tên Lớp Mới (VD: 8B9):</label>
+                    <label for="transfer-new-class" style="color: #1e293b; font-weight: bold;">Lớp mới:</label>
                     <input type="text" id="transfer-new-class" style="text-transform: uppercase;" autocomplete="off" oninput="this.value = this.value.toUpperCase()" placeholder="Tên lớp mới">
                   </div>
                   <button type="button" id="btn-submit-transfer" onclick="executeBatchTransfer()" class="btn btn-primary" style="height: 41px;">
-                    🚀 Xác Nhận Chuyển Lớp
+                    Xác Nhận Chuyển Lớp
                   </button>
                 </div>
                 <p id="transfer-status" class="status-msg mt-2"></p>
@@ -2631,11 +2642,11 @@
                 Thao tác ▾
               </button>
               <div class="action-dropdown-menu" id="action-menu-${index}">
-                <button type="button" class="action-dropdown-item" onclick="openFeedbackModal('${stu.id}')">
-                  ✍️ Nhận xét
-                </button>
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
+                </button>
+                <button type="button" class="action-dropdown-item" onclick="openFeedbackModal('${stu.id}')">
+                  ✍️ Nhận xét
                 </button>
                 
                 <!-- CÁC TÙY CHỌN ĐÁNH DẤU HỌC SINH -->
@@ -2656,7 +2667,7 @@
                   : `<button type="button" class="action-dropdown-item danger" onclick="banStudent('${stu.username}')">🔒 Khóa tài khoản</button>`
                 }
                 <button type="button" class="action-dropdown-item danger" onclick="openDeleteStudentModal('${stu.id}')">
-                  🗑️ Xóa
+                  🗑️ Xóa tài khoản
                 </button>
               </div>
             </div>
