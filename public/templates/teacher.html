@@ -565,7 +565,7 @@
                       <th>Tài khoản</th>
                       <th>Lớp</th>
                       <th>Xu chờ duyệt</th>
-                      <th style="width: 140px;">Thao tác</th>
+                      <th style="width: 155px;">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="pending-rewards-tbody">
@@ -1571,7 +1571,6 @@
         if (parsed) {
           batchStudentsList[index].usernameBase = parsed.usernameBase;
           recalculateBatchUsernames();
-          // Cập nhật trực tiếp giá trị vào ô tài khoản của dòng đó mà không vẽ lại cả bảng
           const userInput = document.getElementById(`batch-user-input-${index}`);
           if (userInput) {
             userInput.value = batchStudentsList[index].username;
@@ -1674,12 +1673,10 @@
         statusEl.textContent = `🎉 ${result.message}`;
         clearBatchList();
         
-        // Giữ nguyên cả trường và lớp đã nhập (không xóa ô nào)
         await loadSchools();
         schoolSelect.value = school;
         classInput.value = rawClass;
 
-        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách
         filterSchoolSelect.value = school;
         document.getElementById("filter-class-input").value = rawClass;
         fetchStudentList(true);
@@ -2934,7 +2931,7 @@
         currentLogPage = 1;
         renderLoginHistory();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
     }
 
@@ -3493,9 +3490,14 @@
           <td>${req.class_name || '---'}</td>
           <td><span class="badge-coin" style="background: #fef08a; color: #854d0e;">🪙 +${req.pending_coins}</span></td>
           <td>
-            <button type="button" class="btn btn-primary btn-sm" onclick="approveSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #16a34a; border-color: #16a34a; padding: 4px 10px;">
-              Duyệt
-            </button>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="approveSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #16a34a; border-color: #16a34a; padding: 4px 10px;">
+                Duyệt
+              </button>
+              <button type="button" class="btn btn-sm" onclick="rejectSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #ef4444; color: #fff; border: 1px solid #ef4444; padding: 4px 8px;">
+                Từ chối
+              </button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
@@ -3524,6 +3526,30 @@
         }
       } catch (err) {
         alert("Lỗi kết nối máy chủ khi duyệt thưởng!");
+      }
+    }
+
+    async function rejectSingleReward(studentId, coins) {
+      const reason = prompt(`Nhập lý do từ chối (+${coins} xu):`, "Không hợp lệ");
+      if (reason === null) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "reject_reward",
+            student_id: studentId,
+            reason: reason.trim()
+          })
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          fetchPendingRewardRequests();
+        }
+      } catch (err) {
+        alert("Lỗi kết nối máy chủ khi từ chối nhận thưởng!");
       }
     }
 
