@@ -380,6 +380,9 @@
     }
 
     @media (max-width: 768px) {
+      h2 {
+        display: none;
+      }
       .sidebar {
         display: none !important;
       }
@@ -487,7 +490,7 @@
           <div><h2 id="view-title" style="margin: 0;">Trang quản lý</h2></div>
         </div>
         <div class="topbar-right">
-          <span class="sub-text">Giáo viên: <strong id="teacher-name"></strong></span>
+          <span class="sub-text"><strong id="teacher-name"></strong></span>
           <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
         </div>
       </header>

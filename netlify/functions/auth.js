@@ -23,7 +23,6 @@ const capitalizeWords = (str) => {
     .join(' ');
 };
 
-// Hàm trích xuất IP Client trên Netlify Functions
 const getClientIp = (event) => {
   const headers = event.headers || {};
   return (
@@ -34,7 +33,6 @@ const getClientIp = (event) => {
   );
 };
 
-// Hàm nhận diện Thiết bị và Hệ điều hành từ User-Agent
 const parseDeviceInfo = (userAgent = "") => {
   let os = "Thiết bị khác";
   if (/windows nt 10/i.test(userAgent)) os = "Windows 10/11";
@@ -54,7 +52,6 @@ const parseDeviceInfo = (userAgent = "") => {
   return `${os} (${browser})`;
 };
 
-// Bộ phân tích mảng Meme an toàn
 const parseMemeIds = (data) => {
   if (!data) return [];
   if (Array.isArray(data)) return data.map(Number);
@@ -391,7 +388,7 @@ exports.handler = async (event) => {
 
       let { data: itemData } = await supabase
         .from('items')
-        .select('coins, total_coins, spent_coins, meme_id_list, pending_coins, reward_notice')
+        .select('coins, total_coins, spent_coins, meme_id_list, pending_coins, reward_notice, reward_status')
         .eq('student_id', body.id)
         .single();
 
@@ -403,9 +400,10 @@ exports.handler = async (event) => {
           spent_coins: 0,
           pending_coins: 0,
           reward_notice: null,
+          reward_status: null,
           meme_id_list: []
         }]);
-        itemData = { coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, meme_id_list: [] };
+        itemData = { coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, reward_status: null, meme_id_list: [] };
       }
 
       return createResponse(true, {
@@ -417,6 +415,7 @@ exports.handler = async (event) => {
         spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0,
         pending_coins: itemData.pending_coins !== undefined ? itemData.pending_coins : 0,
         reward_notice: itemData.reward_notice || null,
+        reward_status: itemData.reward_status || null,
         meme_id_list: parseMemeIds(itemData.meme_id_list)
       });
     }
@@ -462,7 +461,7 @@ exports.handler = async (event) => {
 
       const { error } = await supabase
         .from('items')
-        .update({ pending_coins: newPending, reward_notice: null }) // Xóa thông báo cũ nếu có
+        .update({ pending_coins: newPending, reward_notice: null, reward_status: null })
         .eq('student_id', student_id);
 
       if (error) {
@@ -472,14 +471,14 @@ exports.handler = async (event) => {
       return createResponse(true, { pending_coins: newPending }, `Đã gửi yêu cầu cộng ${coinsNum} xu đến giáo viên!`);
     }
 
-    /* XÓA THÔNG BÁO TỪ CHỐI DUYỆT THƯỞNG SAU KHI HỌC SINH ĐÃ XEM */
+    /* XÓA THÔNG BÁO TỪ CHỐI DUYỆT THƯỞNG VÀ XÓA DẤU CHẤM */
     if (action === "clear_reward_notice") {
       const { student_id } = body;
       if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
 
       await supabase
         .from('items')
-        .update({ reward_notice: null })
+        .update({ reward_notice: null, reward_status: null })
         .eq('student_id', student_id);
 
       return createResponse(true, null, "Đã xóa thông báo!");
@@ -512,7 +511,7 @@ exports.handler = async (event) => {
       return createResponse(true, { requests });
     }
 
-    /* GIÁO VIÊN: DUYỆT TỪNG NGƯỜI */
+    /* GIÁO VIÊN: DUYỆT TỪNG NGƯỜI (CẬP NHẬT reward_status = 'approved') */
     if (action === "approve_reward") {
       const { student_id } = body;
       if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
@@ -541,7 +540,8 @@ exports.handler = async (event) => {
           coins: curCoins + pending,
           total_coins: curTotal + pending,
           pending_coins: 0,
-          reward_notice: null
+          reward_notice: `Yêu cầu nhận ${pending} xu phát biểu của bạn đã được giáo viên duyệt thành công! 🎉`,
+          reward_status: 'approved'
         })
         .eq('student_id', student_id);
 
@@ -552,7 +552,7 @@ exports.handler = async (event) => {
       return createResponse(true, null, `Đã duyệt và cộng thành công ${pending} xu cho học sinh!`);
     }
 
-    /* GIÁO VIÊN: TỪ CHỐI DUYỆT THƯỞNG VÀ LƯU THÔNG BÁO CHO HỌC SINH */
+    /* GIÁO VIÊN: TỪ CHỐI DUYỆT THƯỞNG (CẬP NHẬT reward_status = 'rejected') */
     if (action === "reject_reward") {
       const { student_id, reason } = body;
       if (!student_id) return createResponse(false, null, "Thiếu mã học sinh!");
@@ -565,7 +565,8 @@ exports.handler = async (event) => {
         .from('items')
         .update({
           pending_coins: 0,
-          reward_notice: noticeText
+          reward_notice: noticeText,
+          reward_status: 'rejected'
         })
         .eq('student_id', student_id);
 
@@ -605,7 +606,8 @@ exports.handler = async (event) => {
             coins: curCoins + pending,
             total_coins: curTotal + pending,
             pending_coins: 0,
-            reward_notice: null
+            reward_notice: `Yêu cầu nhận ${pending} xu phát biểu của bạn đã được giáo viên duyệt thành công! 🎉`,
+            reward_status: 'approved'
           })
           .eq('student_id', item.student_id);
       });
@@ -930,6 +932,7 @@ exports.handler = async (event) => {
           spent_coins: 0,
           pending_coins: 0,
           reward_notice: null,
+          reward_status: null,
           meme_id_list: []
         }]);
       } else {
@@ -1278,6 +1281,7 @@ exports.handler = async (event) => {
           spent_coins: 0,
           pending_coins: 0,
           reward_notice: null,
+          reward_status: null,
           meme_id_list: []
         }]);
 
@@ -1335,6 +1339,7 @@ exports.handler = async (event) => {
         spent_coins: 0,
         pending_coins: 0,
         reward_notice: null,
+        reward_status: null,
         meme_id_list: []
       }]);
 

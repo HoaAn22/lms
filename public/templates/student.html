@@ -30,9 +30,34 @@
     }
 
     .student-nav { background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; padding: 0 24px; gap: 8px; overflow-x: auto; }
-    .nav-btn { background: none; border: none; padding: 14px 18px; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+    .nav-btn { position: relative; background: none; border: none; padding: 14px 18px; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
     .nav-btn:hover { color: #2563eb; }
     .nav-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* Dấu chấm thông báo duyệt thưởng (đỏ / xanh lá) bên góc phải tab */
+    .nav-status-dot {
+      display: none;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      position: absolute;
+      top: 10px;
+      right: 6px;
+      box-shadow: 0 0 0 2px #ffffff;
+      animation: dotPulse 1.5s infinite;
+    }
+    .nav-status-dot.approved {
+      display: inline-block;
+      background-color: #22c55e; /* Xanh lá */
+    }
+    .nav-status-dot.rejected {
+      display: inline-block;
+      background-color: #ef4444; /* Đỏ */
+    }
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.8; }
+    }
 
     .student-content { padding: 24px; max-width: 1000px; width: 100%; margin: 0 auto; flex: 1; }
     .tab-view { display: none; }
@@ -59,12 +84,6 @@
     .badge-locked { background: #e2e8f0; color: #64748b; }
     .reward-hint { font-size: 13px; color: #d97706; font-weight: 600; margin-top: 6px; }
 
-    .game-timer { font-size: 18px; font-weight: bold; color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 12px; }
-    .game-question-box { background: #f1f5f9; padding: 24px; border-radius: 8px; text-align: center; margin: 16px 0; }
-    .game-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .game-opt-btn { padding: 14px; font-size: 16px; font-weight: 600; border: 2px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; }
-    .game-opt-btn:hover { border-color: #2563eb; background: #eff6ff; }
-
     .gacha-stage { padding: 40px; text-align: center; }
     .gacha-box-animation { font-size: 72px; display: inline-block; transition: transform 0.3s; }
     .shake { animation: shake 0.5s infinite; }
@@ -76,19 +95,6 @@
       100% { transform: translate(1px, -1px) rotate(0deg); }
     }
 
-    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-    .inventory-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; font-size: 12px; font-weight: 600; }
-    .inventory-item .icon { font-size: 32px; display: block; margin-bottom: 4px; }
-    .tier-legendary { border: 2px solid #f59e0b; background: #fef3c7; }
-    .tier-epic { border: 2px solid #a855f7; background: #f3e8ff; }
-    .tier-common { border: 1px solid #cbd5e1; }
-    .text-center { text-align: center; }
-    .text-success { color: #16a34a; }
-    .py-4 { padding-top: 16px; padding-bottom: 16px; }
-    .btn-sm { padding: 6px 10px; font-size: 12px; width: auto; margin: 0; }
-    .btn-lg { padding: 12px 24px; font-size: 16px; width: auto; margin: 0; }
-
-    /* CSS RIÊNG CỦA TRANG */
     .meme-collection-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -183,7 +189,6 @@
       border-color: #2563eb;
     }
 
-    /* Hiệu ứng quay Gacha */
     .gacha-card-wrapper {
       position: relative;
     }
@@ -249,7 +254,6 @@
       to { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.9)); }
     }
 
-    /* Lịch sử quay Gacha */
     .gacha-history-box {
       margin-top: 24px;
       border-top: 1px dashed #cbd5e1;
@@ -281,7 +285,6 @@
       border-radius: 4px;
     }
 
-    /* Modal xem chi tiết Meme & Đổi tên/Mật khẩu */
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -346,7 +349,6 @@
       margin: 16px 0 12px 0;
     }
 
-    /* Header Profile Clickable */
     .header-user-clickable {
       cursor: pointer;
       padding: 6px 12px;
@@ -395,18 +397,25 @@
       border-radius: 10px !important;
     }
 
-    /* Khung thông báo phản hồi từ chối xu */
+    /* Khung thông báo phản hồi từ chối hoặc duyệt thưởng xu */
     .rejection-notice-box {
       display: none;
-      background: #fee2e2;
-      border: 1px solid #fecaca;
       border-radius: 8px;
       padding: 12px 14px;
       margin-bottom: 14px;
-      color: #991b1b;
       font-size: 13.5px;
       position: relative;
       animation: modalFadeIn 0.25s ease-out;
+    }
+    .rejection-notice-box.rejected {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+    .rejection-notice-box.approved {
+      background: #dcfce7;
+      border: 1px solid #bbf7d0;
+      color: #166534;
     }
 
     @media (max-width: 760px) {
@@ -586,7 +595,10 @@
     <nav class="student-nav" id="main-student-nav">
       <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
-      <button class="nav-btn" id="btn-tab-request-coins" onclick="switchStudentTab('tab-request-coins')">🙋 Yêu Cầu Nhận Xu</button>
+      <button class="nav-btn" id="btn-tab-request-coins" onclick="switchStudentTab('tab-request-coins')">
+        🙋 Yêu Cầu Nhận Xu
+        <span id="nav-reward-dot" class="nav-status-dot"></span>
+      </button>
       <button class="nav-btn" id="btn-tab-gacha" onclick="switchStudentTab('tab-gacha')">🎁 Vòng Quay Gacha</button>
       <button class="nav-btn" id="btn-tab-collection" onclick="switchStudentTab('tab-collection')">🖼️ Bộ Sưu Tập Meme</button>
       <button class="nav-btn" id="btn-tab-account" onclick="switchStudentTab('tab-account')">👤 Tài Khoản</button>
@@ -685,14 +697,14 @@
           </div>
           <p class="section-desc">Dành cho học sinh hăng hái phát biểu xây dựng bài trong lớp. Gửi yêu cầu để giáo viên xét duyệt cộng xu!</p>
 
-          <!-- HỘP THÔNG BÁO TỪ CHỐI DUYỆT THƯỞNG (ẨN MẶC ĐỊNH, HIỆN KHI CÓ THÔNG BÁO) -->
+          <!-- HỘP THÔNG BÁO DUYỆT HOẶC TỪ CHỐI DUYỆT THƯỞNG -->
           <div id="reward-rejection-notice" class="rejection-notice-box">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
               <div>
-                <strong>⚠️ Thông báo từ giáo viên:</strong>
+                <strong id="reward-rejection-title">📢 Thông báo từ giáo viên:</strong>
                 <p id="reward-rejection-text" style="margin: 4px 0 0 0; font-size: 13px;"></p>
               </div>
-              <button type="button" onclick="dismissRejectionNotice()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #991b1b; font-weight: bold;">✕</button>
+              <button type="button" onclick="dismissRejectionNotice()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: inherit; font-weight: bold;">✕</button>
             </div>
           </div>
 
@@ -1045,15 +1057,34 @@
             updateUsernameLimitUI(result.data.username_change_limit);
           }
 
-          // Kiểm tra và hiển thị thông báo từ chối duyệt thưởng từ giáo viên nếu có
+          // Cập nhật dấu chấm thông báo trạng thái trên Tab Yêu cầu nhận xu
+          const navDot = document.getElementById("nav-reward-dot");
           const noticeBox = document.getElementById("reward-rejection-notice");
+          const noticeTitle = document.getElementById("reward-rejection-title");
           const noticeText = document.getElementById("reward-rejection-text");
-          if (result.data.reward_notice && result.data.reward_notice.trim() !== "") {
+
+          if (result.data.reward_status === 'approved') {
+            if (navDot) {
+              navDot.className = "nav-status-dot approved"; // Chấm xanh lá
+            }
             if (noticeBox && noticeText) {
-              noticeText.textContent = result.data.reward_notice;
+              noticeBox.className = "rejection-notice-box approved";
+              noticeTitle.textContent = "Thông báo thành công:";
+              noticeText.textContent = result.data.reward_notice || "Yêu cầu nhận xu của bạn đã được giáo viên duyệt!";
+              noticeBox.style.display = "block";
+            }
+          } else if (result.data.reward_status === 'rejected') {
+            if (navDot) {
+              navDot.className = "nav-status-dot rejected"; // Chấm đỏ
+            }
+            if (noticeBox && noticeText) {
+              noticeBox.className = "rejection-notice-box rejected";
+              noticeTitle.textContent = "Thông báo từ chối:";
+              noticeText.textContent = result.data.reward_notice || "Yêu cầu nhận xu của bạn đã bị từ chối.";
               noticeBox.style.display = "block";
             }
           } else {
+            if (navDot) navDot.className = "nav-status-dot";
             if (noticeBox) noticeBox.style.display = "none";
           }
 
@@ -1081,7 +1112,10 @@
     async function dismissRejectionNotice() {
       const session = getSession();
       const noticeBox = document.getElementById("reward-rejection-notice");
+      const navDot = document.getElementById("nav-reward-dot");
+
       if (noticeBox) noticeBox.style.display = "none";
+      if (navDot) navDot.className = "nav-status-dot";
 
       if (session) {
         try {
@@ -1140,9 +1174,10 @@
         input.value = "";
         studentPendingCoins = result.data.pending_coins !== undefined ? result.data.pending_coins : (studentPendingCoins + requestedCoins);
         
-        // Ẩn thông báo từ chối cũ (nếu có) khi vừa gửi yêu cầu mới
         const noticeBox = document.getElementById("reward-rejection-notice");
+        const navDot = document.getElementById("nav-reward-dot");
         if (noticeBox) noticeBox.style.display = "none";
+        if (navDot) navDot.className = "nav-status-dot";
 
         updateCoinsDisplay();
 
