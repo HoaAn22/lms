@@ -188,6 +188,7 @@
       background-color: #fef08a !important;
     }
 
+    /* MÀU ĐÁNH DẤU HỌC SINH TỐT (XANH LÁ PASTEL) VÀ KÉM (ĐỎ PASTEL) */
     tr.row-student-good {
       background-color: #dcfce7 !important;
     }
@@ -289,13 +290,31 @@
       font-size: 13px;
     }
     .batch-preview-table th, .batch-preview-table td {
-      padding: 8px 10px;
+      padding: 6px 8px;
       border: 1px solid #cbd5e1;
       text-align: left;
     }
     .batch-preview-table th {
       background: #f1f5f9;
       color: #334155;
+    }
+
+    /* Style cho ô sửa trực tiếp trên bảng batch */
+    .batch-table-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #ffffff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .batch-table-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
 
     .modal-backdrop {
@@ -343,6 +362,7 @@
     .ban-status.active { background: #dcfce7; color: #166534; }
     .ban-status.banned { background: #fee2e2; color: #991b1b; }
 
+    /* CSS ĐIỀU HƯỚNG TRÊN MOBILE CHO GIÁO VIÊN */
     .mobile-menu-btn {
       display: none;
       background: none;
@@ -361,6 +381,9 @@
     }
 
     @media (max-width: 768px) {
+      #view-title {
+        display: none;
+      }
       .sidebar {
         display: none !important;
       }
@@ -468,7 +491,7 @@
           <div><h2 id="view-title" style="margin: 0;">Trang quản lý</h2></div>
         </div>
         <div class="topbar-right">
-          <span class="sub-text">Giáo viên: <strong id="teacher-name"></strong></span>
+          <span class="sub-text">Admin: <strong id="teacher-name"></strong></span>
           <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
         </div>
       </header>
@@ -522,6 +545,7 @@
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                   <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
                   
+                  <!-- DANH SÁCH CHỌN LỚP ĐỂ DUYỆT THƯỞNG (ẨN KHI KHÔNG CÓ LỚP NÀO) -->
                   <div id="reward-class-filter-wrapper" style="display: none; align-items: center; gap: 6px;">
                     <label for="reward-class-select" style="font-size: 12px; font-weight: 600; color: #334155;">Lớp:</label>
                     <select id="reward-class-select" onchange="filterRewardsByClass(this.value)" style="padding: 4px 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #1e293b; font-weight: 500;">
@@ -672,20 +696,26 @@
                 </div>
 
                 <div class="form-group" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
-                  <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                  <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                     <div style="flex: 2; min-width: 220px;">
                       <label for="batch-fullname-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
                         Họ và tên học sinh:
                       </label>
-                      <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)">
+                      <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)" placeholder="Nhập họ tên rồi nhấn Tab để thêm">
                     </div>
 
-                    <div style="flex: 1; min-width: 140px;">
+                    <!-- Ô NHẬP XU (MẶC ĐỊNH ẨN, CHỈ HIỆN KHI BẤM NÚT ĐIỀU CHỈNH) -->
+                    <div id="batch-coin-input-wrapper" style="display: none; width: 140px;">
                       <label for="batch-coin-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
-                        Thưởng Xu (+ / -):
+                        Xu (+ / -):
                       </label>
-                      <input type="text" id="batch-coin-input" placeholder="+50 hoặc -20 (Tùy chọn)" style="width: 100%; box-sizing: border-box;" autocomplete="off">
+                      <input type="text" id="batch-coin-input" placeholder="+50 hoặc -20" style="width: 100%; box-sizing: border-box;" autocomplete="off">
                     </div>
+
+                    <!-- NÚT BẤM ĐIỀU CHỈNH XU KẾ BÊN HỌ VÀ TÊN -->
+                    <button type="button" id="btn-toggle-batch-coin" onclick="toggleBatchCoinInput()" class="btn btn-secondary" style="height: 41px; white-space: nowrap; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;" tabindex="-1" title="Nhấn để cộng hoặc trừ xu cho học sinh này">
+                      🪙 Điều chỉnh
+                    </button>
 
                     <button type="button" onclick="addStudentToBatchList()" class="btn btn-secondary" style="height: 41px; white-space: nowrap;">
                       + Thêm
@@ -693,7 +723,7 @@
                   </div>
 
                   <small style="color: #64748b; font-size: 12px; display: block; margin-top: 8px;">
-                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> qua ô Xu ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm và gõ tiếp. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 xu</strong>.
+                    💡 Phím tắt: Gõ tên ➔ nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Tab</kbd> để thêm học sinh ngay. Có thể bấm trực tiếp vào ô trong bảng để chỉnh sửa thông tin. Nhấn <kbd style="background:#e2e8f0; padding:2px 5px; border-radius:4px;">Enter</kbd> để tạo hàng loạt. Mặc định có sẵn <strong>100 xu</strong>.
                   </small>
                 </div>
 
@@ -702,17 +732,17 @@
                     <strong style="color: #334155;">Danh sách chờ tạo (<span id="batch-count">0</span> học sinh):</strong>
                     <button type="button" onclick="clearBatchList()" class="btn btn-secondary btn-sm" style="font-size: 11px;">Xóa hết</button>
                   </div>
-                  <div style="max-height: 240px; overflow-y: auto; margin-top: 8px;">
+                  <div style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
                     <table class="batch-preview-table">
                       <thead>
                         <tr>
-                          <th style="width: 40px;">STT</th>
-                          <th>Họ và tên đệm</th>
-                          <th>Tên</th>
-                          <th>Tài khoản dự kiến</th>
-                          <th>Mật khẩu</th>
-                          <th>Xu ban đầu</th>
-                          <th style="width: 50px;">Xóa</th>
+                          <th style="width: 40px; text-align: center;">STT</th>
+                          <th style="width: 28%;">Họ và tên đệm</th>
+                          <th style="width: 18%;">Tên</th>
+                          <th style="width: 20%;">Tài khoản dự kiến</th>
+                          <th style="width: 14%;">Mật khẩu</th>
+                          <th style="width: 12%;">Xu ban đầu</th>
+                          <th style="width: 45px; text-align: center;">Xóa</th>
                         </tr>
                       </thead>
                       <tbody id="batch-preview-tbody"></tbody>
@@ -1373,7 +1403,12 @@
     const batchCoinInput = document.getElementById("batch-coin-input");
 
     batchFullnameInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (batchFullnameInput.value.trim() !== "") {
+          addStudentToBatchList();
+        }
+      } else if (e.key === "Enter") {
         e.preventDefault();
         if (batchFullnameInput.value.trim() !== "") {
           addStudentToBatchList();
@@ -1383,17 +1418,36 @@
     });
 
     batchCoinInput.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        addStudentToBatchList();
-      } else if (e.key === "Enter") {
+      if (e.key === "Tab" || e.key === "Enter") {
         e.preventDefault();
         if (batchFullnameInput.value.trim() !== "") {
           addStudentToBatchList();
         }
-        executeBatchCreateStudents();
       }
     });
+
+    function toggleBatchCoinInput() {
+      const wrapper = document.getElementById("batch-coin-input-wrapper");
+      const coinInput = document.getElementById("batch-coin-input");
+      const btn = document.getElementById("btn-toggle-batch-coin");
+
+      if (wrapper.style.display === "none" || wrapper.style.display === "") {
+        wrapper.style.display = "block";
+        coinInput.focus();
+        btn.textContent = "✕ Đóng";
+        btn.style.background = "#fee2e2";
+        btn.style.color = "#991b1b";
+        btn.style.borderColor = "#fca5a5";
+      } else {
+        wrapper.style.display = "none";
+        coinInput.value = "";
+        btn.textContent = "🪙 Điều chỉnh";
+        btn.style.background = "#fef08a";
+        btn.style.color = "#854d0e";
+        btn.style.borderColor = "#fde047";
+        document.getElementById("batch-fullname-input").focus();
+      }
+    }
 
     function addStudentToBatchList() {
       const nameInput = document.getElementById("batch-fullname-input");
@@ -1436,10 +1490,24 @@
 
       nameInput.value = "";
       coinInput.value = "";
+      
+      const coinWrapper = document.getElementById("batch-coin-input-wrapper");
+      const btnCoin = document.getElementById("btn-toggle-batch-coin");
+      if (coinWrapper && coinWrapper.style.display !== "none") {
+        coinWrapper.style.display = "none";
+        if (btnCoin) {
+          btnCoin.textContent = "🪙 Điều chỉnh";
+          btnCoin.style.background = "#fef08a";
+          btnCoin.style.color = "#854d0e";
+          btnCoin.style.borderColor = "#fde047";
+        }
+      }
+
       nameInput.focus();
       renderBatchPreviewTable();
     }
 
+    /* RENDER BẢNG CHỜ VÀ CHO PHÉP ĐIỀU CHỈNH TRỰC TIẾP CÁC CỘT */
     function renderBatchPreviewTable() {
       const tbody = document.getElementById("batch-preview-tbody");
       const wrapper = document.getElementById("batch-preview-wrapper");
@@ -1458,18 +1526,65 @@
       batchStudentsList.forEach((stu, idx) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${stu.lastName || '---'}</td>
-          <td><strong>${stu.firstName}</strong></td>
-          <td><code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight:600;">${stu.username}</code></td>
-          <td><span style="font-family: monospace;">123</span></td>
-          <td><span class="badge-coin">💰 ${stu.coins}</span></td>
-          <td style="text-align:center;">
-            <button type="button" onclick="removeBatchItem(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button>
+          <td style="text-align: center; color: #64748b; font-weight: bold;">${idx + 1}</td>
+          <td>
+            <input type="text" class="batch-table-input" value="${stu.lastName || ''}" 
+              placeholder="Họ và tên đệm"
+              oninput="formatNameInput(this); updateBatchField(${idx}, 'lastName', this.value)">
+          </td>
+          <td>
+            <input type="text" class="batch-table-input" value="${stu.firstName || ''}" 
+              placeholder="Tên" style="font-weight: 600;"
+              oninput="formatNameInput(this); updateBatchField(${idx}, 'firstName', this.value)">
+          </td>
+          <td>
+            <input type="text" class="batch-table-input" value="${stu.username || ''}" 
+              placeholder="Tên tài khoản" style="font-family: monospace; font-weight: 600;"
+              onchange="updateBatchField(${idx}, 'username', this.value)">
+          </td>
+          <td>
+            <input type="text" class="batch-table-input" value="${stu.password || '123'}" 
+              placeholder="Mật khẩu" style="font-family: monospace;"
+              onchange="updateBatchField(${idx}, 'password', this.value)">
+          </td>
+          <td>
+            <input type="number" class="batch-table-input" value="${stu.coins !== undefined ? stu.coins : 100}" 
+              style="width: 100%; text-align: center;"
+              onchange="updateBatchField(${idx}, 'coins', Number(this.value) || 0)">
+          </td>
+          <td style="text-align: center;">
+            <button type="button" onclick="removeBatchItem(${idx})" 
+              style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; font-size: 16px;" 
+              title="Xóa học sinh này">✕</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    /* HÀM CẬP NHẬT GIÁ TRỊ TRỰC TIẾP TỪNG CỘT TRÊN BẢNG CHỜ */
+    function updateBatchField(index, field, value) {
+      if (!batchStudentsList[index]) return;
+
+      if (field === 'lastName' || field === 'firstName') {
+        batchStudentsList[index][field] = value.trim();
+        const full = `${batchStudentsList[index].lastName || ''} ${batchStudentsList[index].firstName || ''}`.trim();
+        batchStudentsList[index].fullName = full;
+
+        // Nếu sửa tên, tự động cập nhật lại usernameBase và username dự kiến
+        const parsed = parseStudentFullName(full);
+        if (parsed) {
+          batchStudentsList[index].usernameBase = parsed.usernameBase;
+          recalculateBatchUsernames();
+          renderBatchPreviewTable();
+        }
+      } else if (field === 'username') {
+        batchStudentsList[index].username = value.trim().toLowerCase();
+      } else if (field === 'password') {
+        batchStudentsList[index].password = value.trim();
+      } else if (field === 'coins') {
+        batchStudentsList[index].coins = Math.max(0, Number(value) || 0);
+      }
     }
 
     function removeBatchItem(index) {
@@ -1481,7 +1596,7 @@
     function recalculateBatchUsernames() {
       const seen = {};
       batchStudentsList.forEach(stu => {
-        const base = stu.usernameBase;
+        const base = stu.usernameBase || stu.username;
         if (!seen[base]) {
           seen[base] = 0;
           stu.username = base;
@@ -1560,11 +1675,12 @@
         statusEl.textContent = `🎉 ${result.message}`;
         clearBatchList();
         
-        classInput.value = "";
-        
+        // Giữ nguyên cả trường và lớp đã nhập (không xóa ô nào)
         await loadSchools();
         schoolSelect.value = school;
+        classInput.value = rawClass;
 
+        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách
         filterSchoolSelect.value = school;
         document.getElementById("filter-class-input").value = rawClass;
         fetchStudentList(true);
