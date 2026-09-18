@@ -503,7 +503,18 @@
 
             <div id="reward-approval-body" class="card-body-collapsible collapsed" style="margin-top: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
+                  
+                  <!-- DANH SÁCH CHỌN LỚP ĐỂ DUYỆT THƯỞNG (ẨN KHI KHÔNG CÓ LỚP NÀO) -->
+                  <div id="reward-class-filter-wrapper" style="display: none; align-items: center; gap: 6px;">
+                    <label for="reward-class-select" style="font-size: 12px; font-weight: 600; color: #334155;">Lớp:</label>
+                    <select id="reward-class-select" onchange="filterRewardsByClass(this.value)" style="padding: 4px 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #1e293b; font-weight: 500;">
+                      <option value="ALL">-- Tất cả --</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div style="display: flex; gap: 8px;">
                   <button type="button" class="btn btn-secondary btn-sm" onclick="fetchPendingRewardRequests()">🔄 Làm mới</button>
                   <button type="button" id="btn-approve-all-rewards" class="btn btn-primary btn-sm" onclick="approveAllRewards()" style="background: #16a34a; border-color: #16a34a; display: none;">✅ Duyệt tất cả</button>
@@ -1504,13 +1515,13 @@
         statusEl.textContent = `🎉 ${result.message}`;
         clearBatchList();
         
-        // Giữ lại trường học cố định đã chọn, chỉ xóa ô lớp học của phần tạo hàng loạt
+        // Giữ lại trường học cố định đã chọn, chỉ xóa ô lớp học của phần tạo hàng loạt[cite: 5]
         classInput.value = "";
         
         await loadSchools();
         schoolSelect.value = school;
 
-        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách
+        // Đồng bộ và hiển thị ngay danh sách lớp mới tạo lên phần Tra cứu danh sách[cite: 5]
         filterSchoolSelect.value = school;
         document.getElementById("filter-class-input").value = rawClass;
         fetchStudentList(true);
@@ -1538,6 +1549,7 @@
     let currentAdminFilter = 'ALL';
     let currentSelectedMeme = null;
     let pendingRewardsList = [];
+    let currentRewardClassFilter = 'ALL';
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -3170,6 +3182,8 @@
       const tbody = document.getElementById("pending-rewards-tbody");
       const badge = document.getElementById("approval-badge-count");
       const btnApproveAll = document.getElementById("btn-approve-all-rewards");
+      const filterWrapper = document.getElementById("reward-class-filter-wrapper");
+      const classSelect = document.getElementById("reward-class-select");
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -3189,39 +3203,95 @@
         if (count > 0) {
           badge.textContent = count;
           badge.style.display = "inline-block";
-          if (btnApproveAll) btnApproveAll.style.display = "inline-block";
         } else {
           badge.textContent = "0";
           badge.style.display = "none";
-          if (btnApproveAll) btnApproveAll.style.display = "none";
         }
 
-        if (count === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: #64748b;">Không có yêu cầu nào đang chờ duyệt.</td></tr>`;
-          return;
+        // Lấy danh sách các lớp duy nhất có yêu cầu duyệt
+        const classes = [...new Set(pendingRewardsList.map(r => r.class_name).filter(Boolean))].sort();
+
+        // Nếu không có lớp nào (hoặc không có yêu cầu nào), ẩn hoàn toàn danh sách chọn lớp
+        if (classes.length === 0) {
+          if (filterWrapper) filterWrapper.style.display = "none";
+          currentRewardClassFilter = 'ALL';
+        } else {
+          if (filterWrapper) filterWrapper.style.display = "inline-flex";
+          
+          const previousSelected = currentRewardClassFilter;
+          if (classSelect) {
+            classSelect.innerHTML = '<option value="ALL">-- Tất cả --</option>';
+            classes.forEach(cls => {
+              const opt = document.createElement("option");
+              opt.value = cls;
+              opt.textContent = `Lớp ${cls}`;
+              classSelect.appendChild(opt);
+            });
+
+            if (classes.includes(previousSelected)) {
+              classSelect.value = previousSelected;
+            } else {
+              classSelect.value = 'ALL';
+              currentRewardClassFilter = 'ALL';
+            }
+          }
         }
 
-        tbody.innerHTML = "";
-        pendingRewardsList.forEach((req, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td><strong>${req.full_name || '---'}</strong></td>
-            <td><code>${req.username || '---'}</code></td>
-            <td>${req.class_name || '---'}</td>
-            <td><span class="badge-coin" style="background: #fef08a; color: #854d0e;">🪙 +${req.pending_coins}</span></td>
-            <td>
-              <button type="button" class="btn btn-primary btn-sm" onclick="approveSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #16a34a; border-color: #16a34a; padding: 4px 10px;">
-                Duyệt
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+        renderPendingRewardsTable();
 
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red; padding: 18px;">Lỗi kết nối máy chủ!</td></tr>`;
       }
+    }
+
+    function filterRewardsByClass(selectedClass) {
+      currentRewardClassFilter = selectedClass;
+      renderPendingRewardsTable();
+    }
+
+    function renderPendingRewardsTable() {
+      const tbody = document.getElementById("pending-rewards-tbody");
+      const btnApproveAll = document.getElementById("btn-approve-all-rewards");
+
+      let filteredList = [...pendingRewardsList];
+      if (currentRewardClassFilter !== 'ALL') {
+        filteredList = filteredList.filter(r => r.class_name === currentRewardClassFilter);
+      }
+
+      if (filteredList.length === 0) {
+        if (btnApproveAll) btnApproveAll.style.display = "none";
+        if (pendingRewardsList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: #64748b;">Không có yêu cầu nào đang chờ duyệt.</td></tr>`;
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: #64748b;">Không có yêu cầu nào thuộc lớp ${currentRewardClassFilter}.</td></tr>`;
+        }
+        return;
+      }
+
+      if (btnApproveAll) {
+        btnApproveAll.style.display = "inline-block";
+        btnApproveAll.textContent = currentRewardClassFilter === 'ALL' 
+          ? `✅ Duyệt tất cả (${filteredList.length})` 
+          : `✅ Duyệt cả lớp ${currentRewardClassFilter} (${filteredList.length})`;
+      }
+
+      tbody.innerHTML = "";
+      filteredList.forEach((req, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><strong>${req.full_name || '---'}</strong></td>
+          <td><code>${req.username || '---'}</code></td>
+          <td>${req.class_name || '---'}</td>
+          <td><span class="badge-coin" style="background: #fef08a; color: #854d0e;">🪙 +${req.pending_coins}</span></td>
+          <td>
+            <button type="button" class="btn btn-primary btn-sm" onclick="approveSingleReward('${req.student_id}', ${req.pending_coins})" style="background: #16a34a; border-color: #16a34a; padding: 4px 10px;">
+              Duyệt
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     async function approveSingleReward(studentId, coins) {
@@ -3250,10 +3320,20 @@
     }
 
     async function approveAllRewards() {
-      if (!pendingRewardsList || pendingRewardsList.length === 0) return;
-      if (!confirm(`Bạn có chắc chắn muốn duyệt tất cả ${pendingRewardsList.length} yêu cầu nhận xu này không?`)) return;
+      let filteredList = [...pendingRewardsList];
+      if (currentRewardClassFilter !== 'ALL') {
+        filteredList = filteredList.filter(r => r.class_name === currentRewardClassFilter);
+      }
 
-      const studentIds = pendingRewardsList.map(r => r.student_id);
+      if (!filteredList || filteredList.length === 0) return;
+
+      const confirmMsg = currentRewardClassFilter === 'ALL'
+        ? `Bạn có chắc chắn muốn duyệt tất cả ${filteredList.length} yêu cầu nhận xu này không?`
+        : `Bạn có chắc chắn muốn duyệt tất cả ${filteredList.length} yêu cầu của lớp ${currentRewardClassFilter} không?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      const studentIds = filteredList.map(r => r.student_id);
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
