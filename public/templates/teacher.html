@@ -299,7 +299,6 @@
       color: #334155;
     }
 
-    /* Style cho ô sửa trực tiếp trên bảng batch */
     .batch-table-input {
       width: 100%;
       box-sizing: border-box;
@@ -381,9 +380,6 @@
     }
 
     @media (max-width: 768px) {
-      #view-title {
-        display: none;
-      }
       .sidebar {
         display: none !important;
       }
@@ -491,7 +487,7 @@
           <div><h2 id="view-title" style="margin: 0;">Trang quản lý</h2></div>
         </div>
         <div class="topbar-right">
-          <span class="sub-text">Admin: <strong id="teacher-name"></strong></span>
+          <span class="sub-text">Giáo viên: <strong id="teacher-name"></strong></span>
           <button onclick="logout()" class="btn btn-logout-sm">Đăng xuất</button>
         </div>
       </header>
@@ -1507,7 +1503,7 @@
       renderBatchPreviewTable();
     }
 
-    /* RENDER BẢNG CHỜ VÀ CHO PHÉP ĐIỀU CHỈNH TRỰC TIẾP CÁC CỘT */
+    /* RENDER BẢNG CHỜ VÀ CHO PHÉP ĐIỀU CHỈNH TRỰC TIẾP CÁC CỘT (KHÔNG RE-RENDER KHI ĐANG GÕ) */
     function renderBatchPreviewTable() {
       const tbody = document.getElementById("batch-preview-tbody");
       const wrapper = document.getElementById("batch-preview-wrapper");
@@ -1530,15 +1526,15 @@
           <td>
             <input type="text" class="batch-table-input" value="${stu.lastName || ''}" 
               placeholder="Họ và tên đệm"
-              oninput="formatNameInput(this); updateBatchField(${idx}, 'lastName', this.value)">
+              onchange="updateBatchField(${idx}, 'lastName', this.value)">
           </td>
           <td>
             <input type="text" class="batch-table-input" value="${stu.firstName || ''}" 
               placeholder="Tên" style="font-weight: 600;"
-              oninput="formatNameInput(this); updateBatchField(${idx}, 'firstName', this.value)">
+              onchange="updateBatchField(${idx}, 'firstName', this.value)">
           </td>
           <td>
-            <input type="text" class="batch-table-input" value="${stu.username || ''}" 
+            <input type="text" class="batch-table-input" id="batch-user-input-${idx}" value="${stu.username || ''}" 
               placeholder="Tên tài khoản" style="font-family: monospace; font-weight: 600;"
               onchange="updateBatchField(${idx}, 'username', this.value)">
           </td>
@@ -1562,7 +1558,7 @@
       });
     }
 
-    /* HÀM CẬP NHẬT GIÁ TRỊ TRỰC TIẾP TỪNG CỘT TRÊN BẢNG CHỜ */
+    /* HÀM CẬP NHẬT GIÁ TRỊ TRỰC TIẾP TỪNG CỘT TRÊN BẢNG CHỜ (TRÁNH MẤT FOCUS) */
     function updateBatchField(index, field, value) {
       if (!batchStudentsList[index]) return;
 
@@ -1571,12 +1567,15 @@
         const full = `${batchStudentsList[index].lastName || ''} ${batchStudentsList[index].firstName || ''}`.trim();
         batchStudentsList[index].fullName = full;
 
-        // Nếu sửa tên, tự động cập nhật lại usernameBase và username dự kiến
         const parsed = parseStudentFullName(full);
         if (parsed) {
           batchStudentsList[index].usernameBase = parsed.usernameBase;
           recalculateBatchUsernames();
-          renderBatchPreviewTable();
+          // Cập nhật trực tiếp giá trị vào ô tài khoản của dòng đó mà không vẽ lại cả bảng
+          const userInput = document.getElementById(`batch-user-input-${index}`);
+          if (userInput) {
+            userInput.value = batchStudentsList[index].username;
+          }
         }
       } else if (field === 'username') {
         batchStudentsList[index].username = value.trim().toLowerCase();
@@ -2935,7 +2934,7 @@
         currentLogPage = 1;
         renderLoginHistory();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
     }
 
