@@ -643,21 +643,28 @@
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <!-- Tính năng Khóa -->
-                  <button type="button" id="btn-quick-ban-mode" class="btn btn-secondary" onclick="toggleQuickBanMode()" style="height: 41px; padding: 0 14px; background: #e2e8f0; color: #1e293b; border-color: #cbd5e1; font-weight: 600;">🔒 Khóa nhanh</button>
-                  <button type="button" id="btn-confirm-quick-ban" class="btn btn-primary" onclick="executeBatchBan()" style="height: 41px; padding: 0 14px; display: none; background: #ea580c; border-color: #c2410c;">Tiến hành khóa (<span id="quick-ban-count">0</span>)</button>
+                  <!-- Nút Dropdown Thao tác Lớp -->
+                  <div class="action-dropdown-wrapper" id="batch-action-wrapper">
+                    <button type="button" class="btn-action-main" onclick="toggleBatchActionDropdown(event)" style="height: 41px; padding: 0 14px; background: #3b82f6; color: #fff;">
+                      Thao tác lớp ▾
+                    </button>
+                    <!-- Đã chỉnh sửa position absolute, right: 0 để xổ lề phải -->
+                    <div class="action-dropdown-menu" id="batch-action-menu" style="position: absolute; min-width: 200px; top: calc(100% + 4px); right: 0; left: auto; z-index: 9999;">
+                      <button type="button" class="action-dropdown-item" onclick="activateBatchMode('coin')">💰 Cộng / trừ xu</button>
+                      <button type="button" class="action-dropdown-item" onclick="activateBatchMode('ban')">🔒 Khóa nhanh</button>
+                      <button type="button" class="action-dropdown-item" onclick="activateBatchMode('unban')">🔓 Mở khóa nhanh</button>
+                      <button type="button" class="action-dropdown-item danger" onclick="activateBatchMode('delete')">🗑️ Xóa trùng tên</button>
+                    </div>
+                  </div>
+
+                  <!-- Các nút xác nhận chức năng (ẩn mặc định) -->
+                  <button type="button" id="btn-confirm-batch-coin-mode" class="btn btn-primary" onclick="openBatchCoinModal()" style="display: none; height: 41px; padding: 0 14px; background: #ca8a04; border-color: #a16207; align-items: center; justify-content: center;">Tiến hành xu (<span id="batch-coin-selected-count">0</span>)</button>
+                  <button type="button" id="btn-confirm-quick-ban" class="btn btn-primary" onclick="executeBatchBan()" style="display: none; height: 41px; padding: 0 14px; background: #ea580c; border-color: #c2410c; align-items: center; justify-content: center;">Tiến hành khóa (<span id="quick-ban-count">0</span>)</button>
+                  <button type="button" id="btn-confirm-quick-unban" class="btn btn-primary" onclick="executeBatchUnban()" style="display: none; height: 41px; padding: 0 14px; background: #16a34a; border-color: #15803d; align-items: center; justify-content: center;">Tiến hành mở khóa (<span id="quick-unban-count">0</span>)</button>
+                  <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="display: none; height: 41px; padding: 0 14px; background: #ef4444; border-color: #ef4444; align-items: center; justify-content: center;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
                   
-                  <!-- Tính năng Mở Khóa -->
-                  <button type="button" id="btn-quick-unban-mode" class="btn btn-secondary" onclick="toggleQuickUnbanMode()" style="height: 41px; padding: 0 14px; background: #dcfce7; color: #166534; border-color: #bbf7d0; font-weight: 600;">🔓 Mở khóa nhanh</button>
-                  <button type="button" id="btn-confirm-quick-unban" class="btn btn-primary" onclick="executeBatchUnban()" style="height: 41px; padding: 0 14px; display: none; background: #16a34a; border-color: #15803d;">Tiến hành mở khóa (<span id="quick-unban-count">0</span>)</button>
-
-                  <!-- Tính năng Cộng/Trừ xu (Dùng checkbox) -->
-                  <button type="button" id="btn-batch-coin-mode" class="btn btn-secondary" onclick="toggleBatchCoinMode()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Chọn HS cộng/trừ</button>
-                  <button type="button" id="btn-confirm-batch-coin-mode" class="btn btn-primary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; display: none; background: #ca8a04; border-color: #a16207;">Tiến hành xu (<span id="batch-coin-selected-count">0</span>)</button>
-
-                  <!-- Tính năng Xóa -->
-                  <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
-                  <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
+                  <!-- Nút Hủy (ẩn mặc định) -->
+                  <button type="button" id="btn-cancel-batch-mode" class="btn btn-secondary" onclick="turnOffAllBatchModes()" style="display: none; height: 41px; padding: 0 14px; background: #e2e8f0; color: #334155; border-color: #cbd5e1; font-weight: 600; align-items: center; justify-content: center;">Hủy</button>
                 </div>
               </div>
 
@@ -1057,6 +1064,40 @@
         </div>
       </div>
 
+      <!-- Modal Cập Nhật Xu Cá Nhân -->
+      <div id="single-coin-modal" class="modal-backdrop">
+        <div class="modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">💰 Cập Nhật Xu Học Sinh</h3>
+            <button onclick="closeSingleCoinModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="single-coin-form" onsubmit="submitSingleCoin(event)">
+            <input type="hidden" id="single-coin-stu-id">
+            
+            <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">Học sinh: <strong id="single-coin-stu-name" style="color: #1e293b;">---</strong></div>
+              <div style="font-size: 13px; color: #64748b; margin-top: 4px; display: flex; justify-content: space-between;">
+                <span>Lớp: <span id="single-coin-stu-class" style="color: #1e293b; font-weight: 500;">---</span></span>
+                <span>Hiện có: <strong id="single-coin-current-coins" style="color: #d97706;">0</strong> 🪙</span>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="single-coin-delta" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Tăng / Giảm Xu (+ / -):</label>
+              <input type="number" id="single-coin-delta" required placeholder="VD: 50 (để cộng) hoặc -20 (để trừ)" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+              <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeSingleCoinModal()" class="btn btn-secondary">Hủy</button>
+              <button type="submit" id="btn-confirm-single-coin" class="btn btn-primary" style="padding: 8px 16px; border-radius: 6px; cursor: pointer;">💾 Cập nhật Xu</button>
+            </div>
+          </form>
+          <p id="single-coin-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
       <!-- Modal Chỉnh sửa Học Sinh -->
       <div id="edit-student-modal" class="modal-backdrop">
         <div class="modal-card">
@@ -1088,15 +1129,6 @@
                 <label for="edit-stu-password">Mật khẩu:</label>
                 <input type="text" id="edit-stu-password" placeholder="Để trống nếu giữ nguyên" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
               </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
-                <label for="edit-stu-coindelta" style="font-weight:600; color:#1e293b;">Tăng / Giảm Xu:</label>
-                <span style="font-size:12px; color:#64748b;">Hiện có: <strong id="edit-stu-current-coins" style="color:#d97706;">0</strong> 🪙</span>
-              </div>
-              <input type="number" id="edit-stu-coindelta" placeholder="VD: 100 (để cộng) hoặc -50 (để trừ)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px;">
-              <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -1310,19 +1342,11 @@
         if (isOpening) {
           const rect = btn.getBoundingClientRect();
           const menuWidth = 175;
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const menuHeight = 220;
 
           currentMenu.style.left = `${rect.right - menuWidth}px`;
           currentMenu.style.right = 'auto';
-
-          if (spaceBelow < menuHeight && rect.top > menuHeight) {
-            currentMenu.style.top = 'auto';
-            currentMenu.style.bottom = `${window.innerHeight - rect.top + 4}px`;
-          } else {
-            currentMenu.style.bottom = 'auto';
-            currentMenu.style.top = `${rect.bottom + 4}px`;
-          }
+          currentMenu.style.bottom = 'auto';
+          currentMenu.style.top = `${rect.bottom + 4}px`;
 
           currentMenu.classList.add('show');
         } else {
@@ -1334,6 +1358,21 @@
     window.addEventListener('scroll', () => {
       document.querySelectorAll('.action-dropdown-menu.show').forEach(m => m.classList.remove('show'));
     }, true);
+
+    function toggleBatchActionDropdown(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('batch-action-menu');
+      
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
+
+      if (!menu.classList.contains('show')) {
+        menu.classList.add('show');
+      } else {
+        menu.classList.remove('show');
+      }
+    }
 
     function togglePasswordVisibility(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -2252,6 +2291,76 @@
       }
     }
 
+    function openSingleCoinModal(studentId) {
+      const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+
+      document.getElementById("single-coin-stu-id").value = stu.id;
+      document.getElementById("single-coin-stu-name").textContent = stu.fullName || `${stu.lastName || ''} ${stu.firstName || ''}`.trim() || stu.username;
+      document.getElementById("single-coin-stu-class").textContent = stu.className || "---";
+      document.getElementById("single-coin-current-coins").textContent = stu.coins !== undefined ? stu.coins : 0;
+      document.getElementById("single-coin-delta").value = "";
+
+      const statusEl = document.getElementById("single-coin-status");
+      statusEl.textContent = "";
+      statusEl.className = "status-msg mt-2";
+
+      document.getElementById("single-coin-modal").classList.add("show");
+    }
+
+    function closeSingleCoinModal() {
+      document.getElementById("single-coin-modal").classList.remove("show");
+    }
+
+    async function submitSingleCoin(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("single-coin-status");
+      const btnSubmit = document.getElementById("btn-confirm-single-coin");
+      
+      const studentId = document.getElementById("single-coin-stu-id").value;
+      const deltaRaw = document.getElementById("single-coin-delta").value;
+      const coinDelta = parseInt(deltaRaw, 10);
+
+      if (isNaN(coinDelta) || coinDelta === 0) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập số lượng xu hợp lệ (khác 0)!";
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang cập nhật xu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_update_coins",
+            student_ids: [studentId],
+            coin_delta: coinDelta
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Cập nhật thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Cập nhật xu học sinh thành công!");
+        closeSingleCoinModal();
+        fetchStudentList(true);
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
     function openEditStudentModal(studentId) {
       const stu = cachedStudentsList.find(s => String(s.id) === String(studentId));
       if (!stu) return;
@@ -2261,8 +2370,6 @@
       document.getElementById("edit-stu-firstname").value = stu.firstName || "";
       document.getElementById("edit-stu-class").value = stu.className || "";
       document.getElementById("edit-stu-password").value = "";
-      document.getElementById("edit-stu-current-coins").textContent = stu.coins || 0;
-      document.getElementById("edit-stu-coindelta").value = "";
 
       const statusEl = document.getElementById("edit-student-status");
       statusEl.textContent = "";
@@ -2413,18 +2520,6 @@
       const firstName = document.getElementById("edit-stu-firstname").value.trim();
       const className = document.getElementById("edit-stu-class").value.trim();
       const password = document.getElementById("edit-stu-password").value.trim();
-      
-      const rawDelta = document.getElementById("edit-stu-coindelta").value.trim();
-      
-      let coinDelta = 0;
-      if (rawDelta !== "") {
-        coinDelta = parseInt(rawDelta, 10);
-        if (isNaN(coinDelta)) {
-          statusEl.className = "status-msg status-error mt-2";
-          statusEl.textContent = "Vui lòng nhập một số hợp lệ để cộng hoặc trừ xu!";
-          return;
-        }
-      }
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -2437,7 +2532,7 @@
             firstName,
             className,
             password,
-            coin_delta: coinDelta
+            coin_delta: 0 
           })
         });
         const result = await res.json();
@@ -2562,83 +2657,67 @@
     let isBatchCoinMode = false;
     let isQuickDeleteMode = false;
 
-    // Hàm tắt tất cả các chế độ chọn nhiều
-    function turnOffAllBatchModes() {
-        isQuickBanMode = false;
-        isQuickUnbanMode = false;
-        isBatchCoinMode = false;
-        isQuickDeleteMode = false;
+    function toggleBatchActionDropdown(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('batch-action-menu');
+      
+      document.querySelectorAll('.action-dropdown-menu.show').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
 
-        document.getElementById("btn-quick-ban-mode").textContent = "🔒 Khóa nhanh";
-        document.getElementById("btn-quick-ban-mode").style.background = "#e2e8f0";
-        document.getElementById("btn-confirm-quick-ban").style.display = "none";
-
-        document.getElementById("btn-quick-unban-mode").textContent = "🔓 Mở khóa nhanh";
-        document.getElementById("btn-quick-unban-mode").style.background = "#dcfce7";
-        document.getElementById("btn-confirm-quick-unban").style.display = "none";
-
-        document.getElementById("btn-batch-coin-mode").textContent = "💰 Chọn HS cộng/trừ";
-        document.getElementById("btn-batch-coin-mode").style.background = "#fef08a";
-        document.getElementById("btn-confirm-batch-coin-mode").style.display = "none";
-
-        document.getElementById("btn-quick-delete-mode").textContent = "Xóa trùng tên";
-        document.getElementById("btn-quick-delete-mode").style.background = "#fee2e2";
-        document.getElementById("btn-quick-delete-mode").style.color = "#b91c1c";
-        document.getElementById("btn-confirm-quick-delete").style.display = "none";
-
-        const masterChk = document.getElementById("select-all-batch");
-        if (masterChk) masterChk.checked = false;
-        updateBatchSelectionCount();
-    }
-
-    // --- CÁC HÀM TOGGLE BẬT/TẮT CHẾ ĐỘ ---
-    function toggleQuickBanMode() {
-      if (isQuickBanMode) { turnOffAllBatchModes(); } else {
-        turnOffAllBatchModes();
-        isQuickBanMode = true;
-        const btnToggle = document.getElementById("btn-quick-ban-mode");
-        btnToggle.textContent = "Hủy khóa";
-        btnToggle.style.background = "#cbd5e1";
-        document.getElementById("btn-confirm-quick-ban").style.display = "inline-flex";
+      if (!menu.classList.contains('show')) {
+        menu.classList.add('show');
+      } else {
+        menu.classList.remove('show');
       }
-      sortAndRenderStudents();
     }
 
-    function toggleQuickUnbanMode() {
-      if (isQuickUnbanMode) { turnOffAllBatchModes(); } else {
-        turnOffAllBatchModes();
-        isQuickUnbanMode = true;
-        const btnToggle = document.getElementById("btn-quick-unban-mode");
-        btnToggle.textContent = "Hủy mở khóa";
-        btnToggle.style.background = "#bbf7d0";
-        document.getElementById("btn-confirm-quick-unban").style.display = "inline-flex";
-      }
-      sortAndRenderStudents();
-    }
+    function activateBatchMode(mode) {
+      turnOffAllBatchModes();
 
-    function toggleBatchCoinMode() {
-      if (isBatchCoinMode) { turnOffAllBatchModes(); } else {
-        turnOffAllBatchModes();
+      document.getElementById('batch-action-wrapper').style.display = 'none';
+      document.getElementById('btn-cancel-batch-mode').style.display = 'inline-flex';
+
+      if (mode === 'coin') {
         isBatchCoinMode = true;
-        const btnToggle = document.getElementById("btn-batch-coin-mode");
-        btnToggle.textContent = "Hủy chọn xu";
-        btnToggle.style.background = "#fde047";
-        document.getElementById("btn-confirm-batch-coin-mode").style.display = "inline-flex";
+        document.getElementById('btn-confirm-batch-coin-mode').style.display = 'inline-flex';
+      } else if (mode === 'ban') {
+        isQuickBanMode = true;
+        document.getElementById('btn-confirm-quick-ban').style.display = 'inline-flex';
+      } else if (mode === 'unban') {
+        isQuickUnbanMode = true;
+        document.getElementById('btn-confirm-quick-unban').style.display = 'inline-flex';
+      } else if (mode === 'delete') {
+        isQuickDeleteMode = true;
+        document.getElementById('btn-confirm-quick-delete').style.display = 'inline-flex';
       }
-      sortAndRenderStudents();
+
+      if (document.getElementById('student-list-body').innerHTML !== '') {
+        sortAndRenderStudents();
+      }
     }
 
-    function toggleQuickDeleteMode() {
-      if (isQuickDeleteMode) { turnOffAllBatchModes(); } else {
-        turnOffAllBatchModes();
-        isQuickDeleteMode = true;
-        const btnToggle = document.getElementById("btn-quick-delete-mode");
-        btnToggle.textContent = "Hủy xóa";
-        btnToggle.style.background = "#e2e8f0";
-        btnToggle.style.color = "#334155";
-        document.getElementById("btn-confirm-quick-delete").style.display = "inline-flex";
+    function turnOffAllBatchModes() {
+      isQuickBanMode = false;
+      isQuickUnbanMode = false;
+      isBatchCoinMode = false;
+      isQuickDeleteMode = false;
+
+      document.getElementById('btn-confirm-batch-coin-mode').style.display = 'none';
+      document.getElementById('btn-confirm-quick-ban').style.display = 'none';
+      document.getElementById('btn-confirm-quick-unban').style.display = 'none';
+      document.getElementById('btn-confirm-quick-delete').style.display = 'none';
+      document.getElementById('btn-cancel-batch-mode').style.display = 'none';
+
+      document.getElementById('batch-action-wrapper').style.display = 'inline-block';
+
+      const masterChk = document.getElementById("select-all-batch");
+      if (masterChk) masterChk.checked = false;
+      updateBatchSelectionCount();
+
+      if (document.getElementById('student-list-body').innerHTML !== '') {
+        sortAndRenderStudents();
       }
-      sortAndRenderStudents();
     }
 
     // --- LOGIC CHECKBOX CHỌN TẤT CẢ ---
@@ -2691,7 +2770,7 @@
       alert(`Đã khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành khóa (<span id="quick-ban-count">0</span>)`;
-      toggleQuickBanMode();
+      turnOffAllBatchModes();
       fetchStudentList(true); 
     }
 
@@ -2723,7 +2802,7 @@
       alert(`Đã mở khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành mở khóa (<span id="quick-unban-count">0</span>)`;
-      toggleQuickUnbanMode();
+      turnOffAllBatchModes();
       fetchStudentList(true); 
     }
 
@@ -2786,13 +2865,14 @@
           }
         }
         
-        // Mặc định tích tất cả checkbox đối với 3 tính năng: Khóa, Mở khóa, Cộng xu
+        // Mặc định tích tất cả checkbox đối với tính năng Khóa, Mở khóa
+        // thêm (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode) nếu muốn mặc định tích checkbox khi bật chế độ cộng/xóa xu
         let isChecked = false;
         if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
           isChecked = isDuplicate;
         } else if ((typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
                    (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) || 
-                   (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode)) {
+                   (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode)) { // <-- THÊM DÒNG NÀY
           isChecked = true;
         }
 
@@ -2837,6 +2917,9 @@
                 Thao tác ▾
               </button>
               <div class="action-dropdown-menu" id="action-menu-${index}">
+                <button type="button" class="action-dropdown-item" onclick="openSingleCoinModal('${stu.id}')">
+                  💰 Xu
+                </button>
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
                 </button>
@@ -2887,8 +2970,11 @@
         chkCells.forEach(el => el.style.display = "table-cell");
         
         // Đồng bộ ô master checkbox (Ngoại trừ tính năng Xóa thì giữ nguyên vì chỉ tích những ai trùng tên)
+        // THÊM ĐIỀU KIỆN isBatchCoinMode nếu muốn mặc định tích checkbox khi bật chế độ cộng/xóa xu
         if (masterChk) {
-          masterChk.checked = !(typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode);
+          masterChk.checked = (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
+                              (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) ||
+                              (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode); // <-- THÊM DÒNG NÀY
         }
         
         updateBatchSelectionCount();
@@ -3009,7 +3095,7 @@
 
         alert(result.message || "Đã xóa hàng loạt thành công!");
         closeBatchDeleteModal();
-        toggleQuickDeleteMode();
+        turnOffAllBatchModes();
         fetchStudentList(true);
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
@@ -3083,7 +3169,7 @@
 
         alert(result.message || "Cập nhật xu các học sinh đã chọn thành công!");
         closeBatchCoinModal();
-        if (typeof toggleBatchCoinMode === 'function') toggleBatchCoinMode();
+        if (typeof turnOffAllBatchModes === 'function') turnOffAllBatchModes();
         fetchStudentList(true);
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
