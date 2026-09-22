@@ -643,6 +643,8 @@
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
                 <div style="display: flex; gap: 8px;">
+                  <button type="button" id="btn-quick-ban-mode" class="btn btn-secondary" onclick="toggleQuickBanMode()" style="height: 41px; padding: 0 14px; background: #e2e8f0; color: #1e293b; border-color: #cbd5e1; font-weight: 600;">🔒 Khóa nhanh</button>
+                  <button type="button" id="btn-confirm-quick-ban" class="btn btn-primary" onclick="executeBatchBan()" style="height: 41px; padding: 0 14px; display: none; background: #ea580c; border-color: #c2410c;">Tiến hành khóa (<span id="quick-ban-count">0</span>)</button>
                   <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ cả lớp</button>
                   <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
                   <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
@@ -2540,6 +2542,87 @@
       if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
         toggleQuickDeleteMode();
       }
+      if (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) {
+        toggleQuickBanMode();
+      }
+    }
+
+    /* ========================================================
+       TÍNH NĂNG KHÓA TÀI KHOẢN NHANH HÀNG LOẠT
+       ======================================================== */
+    let isQuickBanMode = false;
+
+    function toggleQuickBanMode() {
+      isQuickBanMode = !isQuickBanMode;
+      const btnToggle = document.getElementById("btn-quick-ban-mode");
+      const btnConfirm = document.getElementById("btn-confirm-quick-ban");
+
+      if (isQuickBanMode && typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+        toggleQuickDeleteMode(); 
+      }
+
+      if (isQuickBanMode) {
+        btnToggle.textContent = "Hủy khóa";
+        btnToggle.style.background = "#cbd5e1";
+        btnConfirm.style.display = "inline-flex";
+      } else {
+        btnToggle.innerHTML = "🔒 Khóa nhanh";
+        btnToggle.style.background = "#e2e8f0";
+        btnConfirm.style.display = "none";
+        
+        const masterChk = document.getElementById("select-all-quick-delete");
+        if (masterChk) masterChk.checked = false;
+        const banSpan = document.getElementById("quick-ban-count");
+        if (banSpan) banSpan.textContent = "0";
+      }
+      
+      sortAndRenderStudents();
+    }
+
+    async function executeBatchBan() {
+      const selectedCheckboxes = document.querySelectorAll('.quick-delete-checkbox:checked');
+      if (selectedCheckboxes.length === 0) {
+        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để khóa!");
+        return;
+      }
+
+      const reason = prompt(`Nhập lý do khóa cho ${selectedCheckboxes.length} tài khoản này:`, "Vi phạm nội quy");
+      if (reason === null) return; 
+
+      const btnConfirm = document.getElementById("btn-confirm-quick-ban");
+      btnConfirm.disabled = true;
+      btnConfirm.textContent = "Đang xử lý...";
+
+      const usernamesToBan = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-username'));
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const uname of usernamesToBan) {
+          try {
+              const res = await fetch("/.netlify/functions/auth", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "ban_account", username: uname, reason: reason })
+              });
+              const result = await res.json();
+              if (result.success) {
+                  successCount++;
+              } else {
+                  failCount++;
+              }
+          } catch (e) {
+              failCount++;
+          }
+      }
+
+      alert(`Đã khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
+      
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = `Tiến hành khóa (<span id="quick-ban-count">0</span>)`;
+      
+      toggleQuickBanMode();
+      fetchStudentList(true); 
     }
 
     function sortAndRenderStudents() {
@@ -2620,7 +2703,7 @@
 
         tr.innerHTML = `
           <td data-col="checkbox" style="display: none; text-align: center;">
-             <input type="checkbox" class="quick-delete-checkbox" value="${stu.id}" onchange="updateQuickDeleteCount()" ${isDuplicate ? 'checked' : ''}>
+             <input type="checkbox" class="quick-delete-checkbox" value="${stu.id}" data-username="${stu.username}" onchange="updateQuickDeleteCount()" ${isDuplicate ? 'checked' : ''}>
           </td>
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
@@ -2680,7 +2763,7 @@
       
       const chkHeaders = document.querySelectorAll('th[data-col="checkbox"]');
       const chkCells = document.querySelectorAll('td[data-col="checkbox"]');
-      if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+      if ((typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) || (typeof isQuickBanMode !== 'undefined' && isQuickBanMode)) {
         chkHeaders.forEach(el => el.style.display = "table-cell");
         chkCells.forEach(el => el.style.display = "table-cell");
         updateQuickDeleteCount();
@@ -3229,6 +3312,10 @@
       const btnToggle = document.getElementById("btn-quick-delete-mode");
       const btnConfirm = document.getElementById("btn-confirm-quick-delete");
 
+      if (isQuickDeleteMode && typeof isQuickBanMode !== 'undefined' && isQuickBanMode) {
+        toggleQuickBanMode();
+      }
+
       if (isQuickDeleteMode) {
         btnToggle.textContent = "Hủy xóa";
         btnToggle.style.background = "#e2e8f0";
@@ -3256,7 +3343,10 @@
 
     function updateQuickDeleteCount() {
       const count = document.querySelectorAll('.quick-delete-checkbox:checked').length;
-      document.getElementById("quick-delete-count").textContent = count;
+      const delSpan = document.getElementById("quick-delete-count");
+      const banSpan = document.getElementById("quick-ban-count");
+      if (delSpan) delSpan.textContent = count;
+      if (banSpan) banSpan.textContent = count;
     }
 
     function openBatchDeleteModal() {
