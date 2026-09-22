@@ -675,7 +675,8 @@
               <h4>Bài Kiểm Tra Định Kỳ 1</h4>
               <p>Thời gian: Không giới hạn | 5 câu hỏi</p>
               <p class="reward-hint">Thưởng: Lên tới +50 🪙</p>
-              <a href="/quiz" id="btn-do-quiz" class="btn btn-primary btn-block mt-2">Vào Làm Bài</a>
+              <!-- THAY ĐỔI: Sử dụng button gọi API kiểm tra thay vì the <a> trực tiếp -->
+              <button id="btn-do-quiz" onclick="goToQuiz(event)" class="btn btn-primary btn-block mt-2">Vào Làm Bài</button>
             </div>
 
             <div class="quiz-card-item disabled">
@@ -1775,6 +1776,41 @@
         }
       } catch (err) {
         console.error("Lỗi kiểm tra trạng thái bài thi");
+      }
+    }
+
+    /* HÀM MỚI: Bắt sự kiện click để kiểm tra trạng thái khóa thực tế ngay lúc ấn nút */
+    async function goToQuiz(e) {
+      e.preventDefault();
+      const btn = e.target;
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Đang kiểm tra phòng thi...";
+
+      try {
+        const session = getSession();
+        if (!session || !session.school) {
+          window.location.href = "/quiz";
+          return;
+        }
+
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_school_exam_status", school: session.school })
+        });
+        const result = await res.json();
+        
+        if (result.success && result.data.is_exam_locked) {
+          alert("Bài thi đã bị khóa.");
+          checkStudentExamLockStatus(); // Cập nhật lại giao diện thành "Đã khóa" ngay lập tức
+        } else {
+          window.location.href = "/quiz";
+        }
+      } catch (err) {
+        alert("Lỗi kết nối khi kiểm tra phòng thi!");
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
     }
 

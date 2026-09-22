@@ -1388,6 +1388,22 @@ exports.handler = async (event) => {
     }
 
     if (action === "save_score") {
+      // 1. Kiểm tra xem bài thi của trường đã bị khóa chưa
+      const { data: schoolData, error: schoolErr } = await supabase
+        .from('schools')
+        .select('is_exam_locked')
+        .eq('name', body.school)
+        .single();
+
+      if (schoolErr || !schoolData) {
+        return createResponse(false, null, "Không thể xác thực trạng thái trường học.");
+      }
+
+      if (schoolData.is_exam_locked) {
+        return createResponse(false, null, "Bài thi đã đóng. Không thể nộp bài vào lúc này!");
+      }
+
+      // 2. Nếu chưa khóa, tiến hành lưu điểm bình thường
       const colName = `score_${body.scoreColumn}`;
       const { error } = await supabase.from('scores').update({ [colName]: body.score }).eq('student_id', body.id);
       if (error) return createResponse(false, null, "Lỗi cập nhật điểm.");

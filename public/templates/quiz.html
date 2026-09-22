@@ -78,6 +78,24 @@
     let questionsData = [];
 
     async function startQuiz() {
+      // Kiểm tra trạng thái khóa bài thi trước khi tải câu hỏi
+      try {
+        const checkRes = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_school_exam_status", school: user.school })
+        });
+        const checkResult = await checkRes.json();
+        
+        if (checkResult.success && checkResult.data.is_exam_locked) {
+          alert("Bài thi hiện đang khóa.");
+          window.location.href = "/student"; // Đẩy học sinh về trang chủ
+          return; // Dừng việc tải câu hỏi
+        }
+      } catch (err) {
+        console.error("Lỗi kiểm tra trạng thái bài thi");
+      }
+
       try {
         const res = await fetch("/questions.json");
         questionsData = await res.json();
