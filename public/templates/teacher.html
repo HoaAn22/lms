@@ -642,14 +642,20 @@
                   <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <!-- Tính năng Khóa -->
                   <button type="button" id="btn-quick-ban-mode" class="btn btn-secondary" onclick="toggleQuickBanMode()" style="height: 41px; padding: 0 14px; background: #e2e8f0; color: #1e293b; border-color: #cbd5e1; font-weight: 600;">🔒 Khóa nhanh</button>
                   <button type="button" id="btn-confirm-quick-ban" class="btn btn-primary" onclick="executeBatchBan()" style="height: 41px; padding: 0 14px; display: none; background: #ea580c; border-color: #c2410c;">Tiến hành khóa (<span id="quick-ban-count">0</span>)</button>
                   
+                  <!-- Tính năng Mở Khóa -->
                   <button type="button" id="btn-quick-unban-mode" class="btn btn-secondary" onclick="toggleQuickUnbanMode()" style="height: 41px; padding: 0 14px; background: #dcfce7; color: #166534; border-color: #bbf7d0; font-weight: 600;">🔓 Mở khóa nhanh</button>
                   <button type="button" id="btn-confirm-quick-unban" class="btn btn-primary" onclick="executeBatchUnban()" style="height: 41px; padding: 0 14px; display: none; background: #16a34a; border-color: #15803d;">Tiến hành mở khóa (<span id="quick-unban-count">0</span>)</button>
 
-                  <button type="button" class="btn btn-secondary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Cộng/trừ cả lớp</button>
+                  <!-- Tính năng Cộng/Trừ xu (Dùng checkbox) -->
+                  <button type="button" id="btn-batch-coin-mode" class="btn btn-secondary" onclick="toggleBatchCoinMode()" style="height: 41px; padding: 0 14px; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;">💰 Chọn HS cộng/trừ</button>
+                  <button type="button" id="btn-confirm-batch-coin-mode" class="btn btn-primary" onclick="openBatchCoinModal()" style="height: 41px; padding: 0 14px; display: none; background: #ca8a04; border-color: #a16207;">Tiến hành xu (<span id="batch-coin-selected-count">0</span>)</button>
+
+                  <!-- Tính năng Xóa -->
                   <button type="button" id="btn-quick-delete-mode" class="btn btn-secondary" onclick="toggleQuickDeleteMode()" style="height: 41px; padding: 0 14px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Xóa trùng tên</button>
                   <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="height: 41px; padding: 0 14px; display: none; background: #ef4444; border-color: #ef4444;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
                 </div>
@@ -659,7 +665,7 @@
                 <table class="data-table" id="student-table">
                   <thead>
                     <tr>
-                      <th data-col="checkbox" style="display: none; width: 40px; text-align: center;"><input type="checkbox" id="select-all-quick-delete" onchange="toggleSelectAllQuickDelete(this)"></th>
+                      <th data-col="checkbox" style="display: none; width: 40px; text-align: center;"><input type="checkbox" id="select-all-batch" onchange="toggleSelectAllBatch(this)" title="Chọn/Hủy tất cả"></th>
                       <th data-col="0">STT</th>
                       <th data-col="1">Họ</th>
                       <th data-col="2">Tên</th>
@@ -2543,85 +2549,120 @@
       cachedStudentsList = [];
       studentListBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 32px; color: #64748b;">Vui lòng chọn trường và bấm "Xem danh sách"</td></tr>`;
       sessionStorage.removeItem("teacher_student_filter");
-      if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
-        toggleQuickDeleteMode();
-      }
-      if (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) {
-        toggleQuickBanMode();
-      }
-      if (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) {
-        toggleQuickUnbanMode();
+      if (typeof turnOffAllBatchModes === 'function') {
+        turnOffAllBatchModes();
       }
     }
 
     /* ========================================================
-       TÍNH NĂNG KHÓA VÀ MỞ KHÓA TÀI KHOẢN NHANH HÀNG LOẠT
+       TÍNH NĂNG CHỌN NHIỀU HỌC SINH ĐỂ THAO TÁC
        ======================================================== */
     let isQuickBanMode = false;
     let isQuickUnbanMode = false;
+    let isBatchCoinMode = false;
+    let isQuickDeleteMode = false;
 
+    // Hàm tắt tất cả các chế độ chọn nhiều
+    function turnOffAllBatchModes() {
+        isQuickBanMode = false;
+        isQuickUnbanMode = false;
+        isBatchCoinMode = false;
+        isQuickDeleteMode = false;
+
+        document.getElementById("btn-quick-ban-mode").textContent = "🔒 Khóa nhanh";
+        document.getElementById("btn-quick-ban-mode").style.background = "#e2e8f0";
+        document.getElementById("btn-confirm-quick-ban").style.display = "none";
+
+        document.getElementById("btn-quick-unban-mode").textContent = "🔓 Mở khóa nhanh";
+        document.getElementById("btn-quick-unban-mode").style.background = "#dcfce7";
+        document.getElementById("btn-confirm-quick-unban").style.display = "none";
+
+        document.getElementById("btn-batch-coin-mode").textContent = "💰 Chọn HS cộng/trừ";
+        document.getElementById("btn-batch-coin-mode").style.background = "#fef08a";
+        document.getElementById("btn-confirm-batch-coin-mode").style.display = "none";
+
+        document.getElementById("btn-quick-delete-mode").textContent = "Xóa trùng tên";
+        document.getElementById("btn-quick-delete-mode").style.background = "#fee2e2";
+        document.getElementById("btn-quick-delete-mode").style.color = "#b91c1c";
+        document.getElementById("btn-confirm-quick-delete").style.display = "none";
+
+        const masterChk = document.getElementById("select-all-batch");
+        if (masterChk) masterChk.checked = false;
+        updateBatchSelectionCount();
+    }
+
+    // --- CÁC HÀM TOGGLE BẬT/TẮT CHẾ ĐỘ ---
     function toggleQuickBanMode() {
-      isQuickBanMode = !isQuickBanMode;
-      const btnToggle = document.getElementById("btn-quick-ban-mode");
-      const btnConfirm = document.getElementById("btn-confirm-quick-ban");
-
-      if (isQuickBanMode && typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
-        toggleQuickDeleteMode(); 
-      }
-      if (isQuickBanMode && typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) {
-        toggleQuickUnbanMode();
-      }
-
-      if (isQuickBanMode) {
+      if (isQuickBanMode) { turnOffAllBatchModes(); } else {
+        turnOffAllBatchModes();
+        isQuickBanMode = true;
+        const btnToggle = document.getElementById("btn-quick-ban-mode");
         btnToggle.textContent = "Hủy khóa";
         btnToggle.style.background = "#cbd5e1";
-        btnConfirm.style.display = "inline-flex";
-      } else {
-        btnToggle.innerHTML = "🔒 Khóa nhanh";
-        btnToggle.style.background = "#e2e8f0";
-        btnConfirm.style.display = "none";
-        
-        const masterChk = document.getElementById("select-all-quick-delete");
-        if (masterChk) masterChk.checked = false;
-        const banSpan = document.getElementById("quick-ban-count");
-        if (banSpan) banSpan.textContent = "0";
+        document.getElementById("btn-confirm-quick-ban").style.display = "inline-flex";
       }
-      
       sortAndRenderStudents();
     }
 
     function toggleQuickUnbanMode() {
-      isQuickUnbanMode = !isQuickUnbanMode;
-      const btnToggle = document.getElementById("btn-quick-unban-mode");
-      const btnConfirm = document.getElementById("btn-confirm-quick-unban");
-
-      if (isQuickUnbanMode && typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
-        toggleQuickDeleteMode(); 
-      }
-      if (isQuickUnbanMode && typeof isQuickBanMode !== 'undefined' && isQuickBanMode) {
-        toggleQuickBanMode(); 
-      }
-
-      if (isQuickUnbanMode) {
+      if (isQuickUnbanMode) { turnOffAllBatchModes(); } else {
+        turnOffAllBatchModes();
+        isQuickUnbanMode = true;
+        const btnToggle = document.getElementById("btn-quick-unban-mode");
         btnToggle.textContent = "Hủy mở khóa";
-        btnToggle.style.background = "#cbd5e1";
-        btnConfirm.style.display = "inline-flex";
-      } else {
-        btnToggle.innerHTML = "🔓 Mở khóa nhanh";
-        btnToggle.style.background = "#dcfce7";
-        btnConfirm.style.display = "none";
-        
-        const masterChk = document.getElementById("select-all-quick-delete");
-        if (masterChk) masterChk.checked = false;
-        const unbanSpan = document.getElementById("quick-unban-count");
-        if (unbanSpan) unbanSpan.textContent = "0";
+        btnToggle.style.background = "#bbf7d0";
+        document.getElementById("btn-confirm-quick-unban").style.display = "inline-flex";
       }
-      
       sortAndRenderStudents();
     }
 
+    function toggleBatchCoinMode() {
+      if (isBatchCoinMode) { turnOffAllBatchModes(); } else {
+        turnOffAllBatchModes();
+        isBatchCoinMode = true;
+        const btnToggle = document.getElementById("btn-batch-coin-mode");
+        btnToggle.textContent = "Hủy chọn xu";
+        btnToggle.style.background = "#fde047";
+        document.getElementById("btn-confirm-batch-coin-mode").style.display = "inline-flex";
+      }
+      sortAndRenderStudents();
+    }
+
+    function toggleQuickDeleteMode() {
+      if (isQuickDeleteMode) { turnOffAllBatchModes(); } else {
+        turnOffAllBatchModes();
+        isQuickDeleteMode = true;
+        const btnToggle = document.getElementById("btn-quick-delete-mode");
+        btnToggle.textContent = "Hủy xóa";
+        btnToggle.style.background = "#e2e8f0";
+        btnToggle.style.color = "#334155";
+        document.getElementById("btn-confirm-quick-delete").style.display = "inline-flex";
+      }
+      sortAndRenderStudents();
+    }
+
+    // --- LOGIC CHECKBOX CHỌN TẤT CẢ ---
+    function toggleSelectAllBatch(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.batch-checkbox');
+      checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+      updateBatchSelectionCount();
+    }
+
+    function updateBatchSelectionCount() {
+      const count = document.querySelectorAll('.batch-checkbox:checked').length;
+      const banSpan = document.getElementById("quick-ban-count");
+      const unbanSpan = document.getElementById("quick-unban-count");
+      const coinSpan = document.getElementById("batch-coin-selected-count");
+      const delSpan = document.getElementById("quick-delete-count");
+
+      if (banSpan) banSpan.textContent = count;
+      if (unbanSpan) unbanSpan.textContent = count;
+      if (coinSpan) coinSpan.textContent = count;
+      if (delSpan) delSpan.textContent = count;
+    }
+
     async function executeBatchBan() {
-      const selectedCheckboxes = document.querySelectorAll('.quick-delete-checkbox:checked');
+      const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
         alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để khóa!");
         return;
@@ -2635,78 +2676,53 @@
       btnConfirm.textContent = "Đang xử lý...";
 
       const usernamesToBan = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-username'));
-      
-      let successCount = 0;
-      let failCount = 0;
+      let successCount = 0, failCount = 0;
 
       for (const uname of usernamesToBan) {
           try {
               const res = await fetch("/.netlify/functions/auth", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  method: "POST", headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ action: "ban_account", username: uname, reason: reason })
               });
               const result = await res.json();
-              if (result.success) {
-                  successCount++;
-              } else {
-                  failCount++;
-              }
-          } catch (e) {
-              failCount++;
-          }
+              if (result.success) successCount++; else failCount++;
+          } catch (e) { failCount++; }
       }
-
       alert(`Đã khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
-      
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành khóa (<span id="quick-ban-count">0</span>)`;
-      
       toggleQuickBanMode();
       fetchStudentList(true); 
     }
 
     async function executeBatchUnban() {
-      const selectedCheckboxes = document.querySelectorAll('.quick-delete-checkbox:checked');
+      const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
         alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để mở khóa!");
         return;
       }
-
-      if (!confirm(`Bạn có chắc chắn muốn mở khóa cho ${selectedCheckboxes.length} tài khoản này không?`)) return;
+      if (!confirm(`Bạn có chắc chắn muốn mở khóa cho ${selectedCheckboxes.length} tài khoản đã chọn?`)) return;
 
       const btnConfirm = document.getElementById("btn-confirm-quick-unban");
       btnConfirm.disabled = true;
       btnConfirm.textContent = "Đang xử lý...";
 
       const usernamesToUnban = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-username'));
-      
-      let successCount = 0;
-      let failCount = 0;
+      let successCount = 0, failCount = 0;
 
       for (const uname of usernamesToUnban) {
           try {
               const res = await fetch("/.netlify/functions/auth", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  method: "POST", headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ action: "unban_account", username: uname })
               });
               const result = await res.json();
-              if (result.success) {
-                  successCount++;
-              } else {
-                  failCount++;
-              }
-          } catch (e) {
-              failCount++;
-          }
+              if (result.success) successCount++; else failCount++;
+          } catch (e) { failCount++; }
       }
-
       alert(`Đã mở khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
-      
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành mở khóa (<span id="quick-unban-count">0</span>)`;
-      
       toggleQuickUnbanMode();
       fetchStudentList(true); 
     }
@@ -2789,7 +2805,7 @@
 
         tr.innerHTML = `
           <td data-col="checkbox" style="display: none; text-align: center;">
-             <input type="checkbox" class="quick-delete-checkbox" value="${stu.id}" data-username="${stu.username}" onchange="updateQuickDeleteCount()" ${isDuplicate ? 'checked' : ''}>
+             <input type="checkbox" class="batch-checkbox" value="${stu.id}" data-username="${stu.username}" onchange="updateBatchSelectionCount()" ${isDuplicate ? 'checked' : ''}>
           </td>
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
@@ -2847,14 +2863,18 @@
 
       applyColumnVisibility();
       
+      const isAnyBatchMode = (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
+                             (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) || 
+                             (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode) || 
+                             (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode);
+                             
       const chkHeaders = document.querySelectorAll('th[data-col="checkbox"]');
       const chkCells = document.querySelectorAll('td[data-col="checkbox"]');
-      if ((typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) || 
-          (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
-          (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode)) {
+      
+      if (isAnyBatchMode) {
         chkHeaders.forEach(el => el.style.display = "table-cell");
         chkCells.forEach(el => el.style.display = "table-cell");
-        updateQuickDeleteCount();
+        updateBatchSelectionCount();
       } else {
         chkHeaders.forEach(el => el.style.display = "none");
         chkCells.forEach(el => el.style.display = "none");
@@ -2911,6 +2931,148 @@
         chk.checked = false;
       });
       applyColumnVisibility();
+    }
+
+    function openBatchDeleteModal() {
+      const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
+      if (selectedCheckboxes.length === 0) {
+        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để xóa!");
+        return;
+      }
+      document.getElementById("batch-delete-count-display").textContent = selectedCheckboxes.length;
+      document.getElementById("batch-delete-admin-password").value = "";
+      document.getElementById("batch-delete-status").textContent = "";
+      document.getElementById("batch-delete-status").className = "status-msg mt-2";
+      document.getElementById("batch-delete-student-modal").classList.add("show");
+    }
+
+    function closeBatchDeleteModal() {
+      document.getElementById("batch-delete-student-modal").classList.remove("show");
+    }
+
+    async function submitBatchDeleteStudent(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("batch-delete-status");
+      const btnDelete = document.getElementById("btn-confirm-batch-delete");
+      const adminPassword = document.getElementById("batch-delete-admin-password").value.trim();
+
+      const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
+      const studentIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+      if (!adminPassword) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập mật khẩu giáo viên!";
+        return;
+      }
+
+      btnDelete.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang xác thực và xóa dữ liệu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_delete_students",
+            student_ids: studentIds,
+            teacher_username: user.username,
+            password: adminPassword
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Xóa hàng loạt thất bại!";
+          btnDelete.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Đã xóa hàng loạt thành công!");
+        closeBatchDeleteModal();
+        toggleQuickDeleteMode();
+        fetchStudentList(true);
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnDelete.disabled = false;
+      }
+    }
+    
+    /* ========================================================
+       TÍNH NĂNG CỘNG/TRỪ XU CẢ LỚP
+       ======================================================== */
+    function openBatchCoinModal() {
+      const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
+      if (selectedCheckboxes.length === 0) {
+        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để cộng/trừ xu!");
+        return;
+      }
+      
+      window.selectedBatchCoinIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+      document.getElementById("batch-coin-count").textContent = window.selectedBatchCoinIds.length;
+      document.getElementById("batch-coin-delta").value = "";
+      document.getElementById("batch-coin-status").textContent = "";
+      document.getElementById("batch-coin-status").className = "status-msg mt-2";
+      document.getElementById("batch-coin-modal").classList.add("show");
+    }
+
+    function closeBatchCoinModal() {
+      document.getElementById("batch-coin-modal").classList.remove("show");
+    }
+
+    async function submitBatchCoin(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("batch-coin-status");
+      const btnSubmit = document.getElementById("btn-confirm-batch-coin");
+      const deltaRaw = document.getElementById("batch-coin-delta").value;
+      const coinDelta = parseInt(deltaRaw, 10);
+
+      if (isNaN(coinDelta) || coinDelta === 0) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Vui lòng nhập số lượng xu hợp lệ (khác 0)!";
+        return;
+      }
+
+      const studentIds = window.selectedBatchCoinIds || [];
+      if (studentIds.length === 0) return;
+
+      btnSubmit.disabled = true;
+      statusEl.className = "status-msg mt-2";
+      statusEl.textContent = "Đang cập nhật xu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_update_coins",
+            student_ids: studentIds, 
+            coin_delta: coinDelta
+          })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          statusEl.className = "status-msg status-error mt-2";
+          statusEl.textContent = result.message || "Cập nhật thất bại!";
+          btnSubmit.disabled = false;
+          return;
+        }
+
+        alert(result.message || "Cập nhật xu các học sinh đã chọn thành công!");
+        closeBatchCoinModal();
+        if (typeof toggleBatchCoinMode === 'function') toggleBatchCoinMode();
+        fetchStudentList(true);
+      } catch (err) {
+        statusEl.className = "status-msg status-error mt-2";
+        statusEl.textContent = "Lỗi kết nối máy chủ!";
+      } finally {
+        btnSubmit.disabled = false;
+      }
     }
 
     /* ========================================================
