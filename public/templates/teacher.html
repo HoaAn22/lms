@@ -2785,6 +2785,16 @@
             seenNames.add(fullNameKey);
           }
         }
+        
+        // Mặc định tích tất cả checkbox đối với 3 tính năng: Khóa, Mở khóa, Cộng xu
+        let isChecked = false;
+        if (typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode) {
+          isChecked = isDuplicate;
+        } else if ((typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
+                   (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) || 
+                   (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode)) {
+          isChecked = true;
+        }
 
         // Ưu tiên hiển thị màu đánh dấu: Tốt (xanh lá pastel), Kém (đỏ pastel)
         if (stu.is_highlighted === true || stu.is_highlighted === "true") {
@@ -2805,7 +2815,7 @@
 
         tr.innerHTML = `
           <td data-col="checkbox" style="display: none; text-align: center;">
-             <input type="checkbox" class="batch-checkbox" value="${stu.id}" data-username="${stu.username}" onchange="updateBatchSelectionCount()" ${isDuplicate ? 'checked' : ''}>
+             <input type="checkbox" class="batch-checkbox" value="${stu.id}" data-username="${stu.username}" onchange="updateBatchSelectionCount()" ${isChecked ? 'checked' : ''}>
           </td>
           <td data-col="0">${index + 1}</td>
           <td data-col="1">${stu.lastName || '---'}</td>
@@ -2870,14 +2880,22 @@
                              
       const chkHeaders = document.querySelectorAll('th[data-col="checkbox"]');
       const chkCells = document.querySelectorAll('td[data-col="checkbox"]');
+      const masterChk = document.getElementById("select-all-batch");
       
       if (isAnyBatchMode) {
         chkHeaders.forEach(el => el.style.display = "table-cell");
         chkCells.forEach(el => el.style.display = "table-cell");
+        
+        // Đồng bộ ô master checkbox (Ngoại trừ tính năng Xóa thì giữ nguyên vì chỉ tích những ai trùng tên)
+        if (masterChk) {
+          masterChk.checked = !(typeof isQuickDeleteMode !== 'undefined' && isQuickDeleteMode);
+        }
+        
         updateBatchSelectionCount();
       } else {
         chkHeaders.forEach(el => el.style.display = "none");
         chkCells.forEach(el => el.style.display = "none");
+        if (masterChk) masterChk.checked = false;
       }
     }
 
