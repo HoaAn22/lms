@@ -5,6 +5,7 @@ const path = require("path");
 
 // Nạp trực tiếp function handler
 const authHandler = require("./netlify/functions/auth").handler;
+const attendanceHandler = require("./netlify/functions/attendance").handler; // Thêm handler điểm danh
 const PORT = 8888;
 
 const MIME_TYPES = {
@@ -21,19 +22,33 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = url.pathname;
 
-  // 1. Xử lý Function /.netlify/functions/auth (Giống hệt Netlify)
-  if (pathname === "/.netlify/functions/auth") {
+  // 1. Xử lý các Function trong /.netlify/functions/ (Giống hệt Netlify)
+  if (pathname.startsWith("/.netlify/functions/")) {
     let body = "";
     req.on("data", chunk => (body += chunk));
     req.on("end", async () => {
+      // Mô phỏng lại object event của AWS Lambda/Netlify Functions
       const event = {
         httpMethod: req.method,
         headers: req.headers,
-        body: body
+        body: body,
+        queryStringParameters: Object.fromEntries(url.searchParams) // Quan trọng: Đọc query string (vd: ?date=2024-10-25)
       };
+      
       try {
-        const result = await authHandler(event);
-        res.writeHead(result.statusCode || 200, result.headers || {});
+        let result;
+        // Điều hướng tới đúng handler
+        if (pathname === "/.netlify/functions/auth") {
+          result = await authHandler(event);
+        } else if (pathname === "/.netlify/functions/attendance") {
+          result = await attendanceHandler(event);
+        } else {
+          // Trả về 404 nếu gọi sai tên function
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+          return res.end("Function not found");
+        }
+
+        res.writeHead(result.statusCode || 200, result.headers || { "Content-Type": "application/json" });
         res.end(result.body || "");
       } catch (err) {
         res.writeHead(500, { "Content-Type": "application/json" });

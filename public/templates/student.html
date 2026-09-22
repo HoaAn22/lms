@@ -418,6 +418,49 @@
       color: #166534;
     }
 
+    /* ========================================== */
+    /* CSS MỚI THÊM CHO PHẦN ĐIỂM DANH            */
+    /* ========================================== */
+    .attendance-section {
+      padding: 24px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background-color: #f8fafc;
+      text-align: center;
+      margin-top: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .btn-checkin {
+      padding: 14px 28px;
+      background-color: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      margin-top: 12px;
+      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+    }
+    .btn-checkin:hover {
+      background-color: #059669;
+      transform: translateY(-2px);
+    }
+    .btn-checkin:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    #checkin-msg {
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 14.5px;
+      min-height: 20px;
+    }
+    /* ========================================== */
+
     @media (max-width: 760px) {
       h2 {
           display: none;
@@ -594,6 +637,10 @@
 
     <nav class="student-nav" id="main-student-nav">
       <button class="nav-btn active" id="btn-tab-overview" onclick="switchStudentTab('tab-overview')">📊 Tổng Quan & Điểm</button>
+      
+      <!-- NÚT ĐIỂM DANH MỚI THÊM -->
+      <button class="nav-btn" id="btn-tab-attendance" onclick="switchStudentTab('tab-attendance')">📍 Điểm Danh</button>
+
       <button class="nav-btn" id="btn-tab-quizzes" onclick="switchStudentTab('tab-quizzes')">📝 Làm Kiểm Tra</button>
       <button class="nav-btn" id="btn-tab-request-coins" onclick="switchStudentTab('tab-request-coins')">
         🙋 Yêu Cầu Nhận Xu
@@ -661,6 +708,23 @@
               <tr><td colspan="3">Đang đồng bộ dữ liệu điểm...</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- TAB ĐIỂM DANH MỚI THÊM -->
+      <section id="tab-attendance" class="tab-view">
+        <div class="card">
+          <div class="card-header">
+            <h3>📍 Điểm Danh Hàng Ngày</h3>
+          </div>
+          <p class="section-desc">Hãy xác nhận sự hiện diện của bạn trong lớp học ngày hôm nay.</p>
+          
+          <div class="attendance-section">
+            <h4 style="color: #1e293b; margin-bottom: 8px; font-size: 18px;">Bạn đã tham gia lớp học hôm nay chưa?</h4>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Mỗi ngày bạn chỉ có thể điểm danh 1 lần.</p>
+            <button id="btn-checkin" class="btn-checkin">Ghi Nhận Có Mặt</button>
+            <p id="checkin-msg"></p>
+          </div>
         </div>
       </section>
 
@@ -1815,6 +1879,57 @@
     }
 
     checkStudentExamLockStatus();
+
+    /* ========================================== */
+    /* LOGIC MỚI THÊM CHO PHẦN ĐIỂM DANH          */
+    /* ========================================== */
+    document.getElementById('btn-checkin').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-checkin');
+        const msgEl = document.getElementById('checkin-msg');
+        
+        btn.disabled = true;
+        msgEl.textContent = "Đang xử lý thông tin...";
+        msgEl.style.color = "#2563eb";
+
+        const session = typeof getSession === 'function' ? getSession() : null; //[cite: 8]
+        
+        if (!session || !session.id) {
+            msgEl.textContent = "Lỗi: Không tìm thấy phiên đăng nhập.";
+            msgEl.style.color = "#ef4444";
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await fetch('/.netlify/functions/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: session.id, //[cite: 8]
+                    student_name: session.fullName || session.username, //[cite: 8]
+                    school: session.school, //[cite: 8]
+                    class_name: session.className //[cite: 8]
+                })
+            });
+            
+            const result = await response.json();
+            msgEl.textContent = result.message;
+            
+            if (response.ok) {
+                msgEl.style.color = "#16a34a";
+                btn.textContent = "Đã điểm danh hôm nay";
+            } else {
+                msgEl.style.color = "#ef4444";
+                btn.disabled = false;
+            }
+        } catch (err) {
+            msgEl.textContent = "Lỗi kết nối máy chủ!";
+            msgEl.style.color = "#ef4444";
+            btn.disabled = false;
+        }
+    });
+    /* ========================================== */
+
   </script>
 </body>
 </html>
