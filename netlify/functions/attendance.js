@@ -106,6 +106,7 @@ exports.handler = async (event) => {
       }
 
       // 2.3 Xem chi tiết điểm danh của 1 lớp: đối chiếu toàn bộ học sinh
+      // 2.3 Xem chi tiết điểm danh của 1 lớp: đối chiếu toàn bộ học sinh
       if (action === 'get_class_attendance') {
         const { school, className, date } = params;
 
@@ -138,6 +139,8 @@ exports.handler = async (event) => {
             student_id: stu.id,
             username: stu.username,
             student_name: name,
+            last_name: stu.last_name || '', // Thêm trường last_name
+            first_name: stu.first_name || '',
             status: att ? 'Có mặt' : 'Vắng',
             checkin_time: att ? att.checkin_time : null
           };

@@ -379,7 +379,7 @@
       display: none;
     }
 
-    /* CSS MỚI CHO NÚT LỚP HỌC TRONG TAB ĐIỂM DANH */
+    /* CSS NÚT LỚP HỌC TRONG TAB ĐIỂM DANH */
     .class-attendance-btn {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -498,10 +498,7 @@
       <nav class="sidebar-nav" id="main-teacher-nav">
         <button class="nav-item active" onclick="switchTab('tab-school-manage')">🏫 Quản lý trường học</button>
         <button class="nav-item" onclick="switchTab('tab-student-manage')">👥 Quản lý học sinh</button>
-        
-        <!-- NÚT ĐIỀU HƯỚNG TAB QUẢN LÝ ĐIỂM DANH -->
         <button class="nav-item" id="btn-nav-attendance" onclick="switchTab('tab-attendance')">📍 Quản lý điểm danh</button>
-
         <button class="nav-item" onclick="switchTab('tab-exam')">📝 Quản lý đề thi</button>
         <button class="nav-item" onclick="switchTab('tab-grading')">📊 Bảng điểm & Thống kê</button>
         <button class="nav-item" onclick="switchTab('tab-collection')">🖼️ Quản lý phần thưởng</button>
@@ -571,7 +568,6 @@
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                   <span style="font-size: 13px; color: #475569;">Danh sách các yêu cầu nhận xu phát biểu đang chờ xét duyệt:</span>
                   
-                  <!-- DANH SÁCH CHỌN LỚP ĐỂ DUYỆT THƯỞNG (ẨN KHI KHÔNG CÓ LỚP NÀO) -->
                   <div id="reward-class-filter-wrapper" style="display: none; align-items: center; gap: 6px;">
                     <label for="reward-class-select" style="font-size: 12px; font-weight: 600; color: #334155;">Lớp:</label>
                     <select id="reward-class-select" onchange="filterRewardsByClass(this.value)" style="padding: 4px 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #1e293b; font-weight: 500;">
@@ -670,12 +666,10 @@
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <!-- Nút Dropdown Thao tác Lớp -->
                   <div class="action-dropdown-wrapper" id="batch-action-wrapper">
                     <button type="button" class="btn-action-main" onclick="toggleBatchActionDropdown(event)" style="height: 41px; padding: 0 14px; background: #3b82f6; color: #fff;">
                       Thao tác lớp ▾
                     </button>
-                    <!-- Đã chỉnh sửa position absolute, right: 0 để xổ lề phải -->
                     <div class="action-dropdown-menu" id="batch-action-menu" style="position: absolute; min-width: 200px; top: calc(100% + 4px); right: 0; left: auto; z-index: 9999;">
                       <button type="button" class="action-dropdown-item" onclick="activateBatchMode('coin')">💰 Cộng / trừ xu</button>
                       <button type="button" class="action-dropdown-item" onclick="activateBatchMode('ban')">🔒 Khóa nhanh</button>
@@ -684,13 +678,10 @@
                     </div>
                   </div>
 
-                  <!-- Các nút xác nhận chức năng (ẩn mặc định) -->
                   <button type="button" id="btn-confirm-batch-coin-mode" class="btn btn-primary" onclick="openBatchCoinModal()" style="display: none; height: 41px; padding: 0 14px; background: #ca8a04; border-color: #a16207; align-items: center; justify-content: center;">Tiến hành xu (<span id="batch-coin-selected-count">0</span>)</button>
                   <button type="button" id="btn-confirm-quick-ban" class="btn btn-primary" onclick="executeBatchBan()" style="display: none; height: 41px; padding: 0 14px; background: #ea580c; border-color: #c2410c; align-items: center; justify-content: center;">Tiến hành khóa (<span id="quick-ban-count">0</span>)</button>
                   <button type="button" id="btn-confirm-quick-unban" class="btn btn-primary" onclick="executeBatchUnban()" style="display: none; height: 41px; padding: 0 14px; background: #16a34a; border-color: #15803d; align-items: center; justify-content: center;">Tiến hành mở khóa (<span id="quick-unban-count">0</span>)</button>
                   <button type="button" id="btn-confirm-quick-delete" class="btn btn-primary" onclick="openBatchDeleteModal()" style="display: none; height: 41px; padding: 0 14px; background: #ef4444; border-color: #ef4444; align-items: center; justify-content: center;">Tiến hành xóa (<span id="quick-delete-count">0</span>)</button>
-                  
-                  <!-- Nút Hủy (ẩn mặc định) -->
                   <button type="button" id="btn-cancel-batch-mode" class="btn btn-secondary" onclick="turnOffAllBatchModes()" style="display: none; height: 41px; padding: 0 14px; background: #e2e8f0; color: #334155; border-color: #cbd5e1; font-weight: 600; align-items: center; justify-content: center;">Hủy</button>
                 </div>
               </div>
@@ -754,7 +745,6 @@
                       <input type="text" id="batch-fullname-input" style="width: 100%; box-sizing: border-box;" autocomplete="off" oninput="formatNameInput(this)">
                     </div>
 
-                    <!-- Ô NHẬP XU (MẶC ĐỊNH ẨN, CHỈ HIỆN KHI BẤM NÚT ĐIỀU CHỈNH) -->
                     <div id="batch-coin-input-wrapper" style="display: none; width: 140px;">
                       <label for="batch-coin-input" style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 4px;">
                         Xu (+ / -):
@@ -762,7 +752,6 @@
                       <input type="text" id="batch-coin-input" style="width: 100%; box-sizing: border-box;" autocomplete="off">
                     </div>
 
-                    <!-- NÚT BẤM ĐIỀU CHỈNH XU KẾ BÊN HỌ VÀ TÊN -->
                     <button type="button" id="btn-toggle-batch-coin" onclick="toggleBatchCoinInput()" class="btn btn-secondary" style="height: 41px; white-space: nowrap; background: #fef08a; color: #854d0e; border-color: #fde047; font-weight: 600;" tabindex="-1" title="Nhấn để cộng hoặc trừ xu cho học sinh này">
                       🪙 Điều chỉnh
                     </button>
@@ -879,7 +868,7 @@
 
         </div>
 
-        <!-- TAB MỚI: QUẢN LÝ ĐIỂM DANH & LỊCH HỌC CÁC LỚP -->
+        <!-- TAB: QUẢN LÝ ĐIỂM DANH & LỊCH HỌC CÁC LỚP -->
         <div id="tab-attendance" class="tab-panel">
           
           <!-- KHỐI 1: CÀI ĐẶT LỊCH THEO THỨ VÀ KHÓA ĐIỂM DANH -->
@@ -966,12 +955,24 @@
               </div>
             </div>
 
-            <!-- BẢNG CHI TIẾT TOÀN BỘ DANH SÁCH LỚP (CÓ MẶT / VẮNG TÔ ĐỎ) -->
+            <!-- BẢNG CHI TIẾT TOÀN BỘ DANH SÁCH LỚP -->
             <div id="class-detail-container" style="display: none; margin-top: 20px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                <h4 style="margin: 0; font-size: 16px; color: #1e293b;">
-                  Chi tiết điểm danh lớp: <strong id="current-viewing-class" style="color: #2563eb;">---</strong>
-                </h4>
+                
+                <!-- TIÊU ĐỀ KÈM Ô SẮP XẾP THEO TÊN (A-Z, Z-A) -->
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                  <h4 style="margin: 0; font-size: 16px; color: #1e293b;">
+                    Chi tiết điểm danh lớp: <strong id="current-viewing-class" style="color: #2563eb;">---</strong>
+                  </h4>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="att-sort-select" style="font-size: 13px; font-weight: 600; color: #475569;">Sắp xếp theo Tên:</label>
+                    <select id="att-sort-select" onchange="sortAndRenderClassAttendance()" style="padding: 4px 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1e293b; font-weight: 500;">
+                      <option value="first_name_asc">Tên (A → Z)</option>
+                      <option value="first_name_desc">Tên (Z → A)</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div style="display: flex; gap: 12px;">
                   <span style="background: #eff6ff; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #1d4ed8;">Sĩ số: <strong id="stat-class-total">0</strong></span>
                   <span style="background: #dcfce7; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #166534;">Có mặt: <strong id="stat-class-present">0</strong></span>
@@ -984,8 +985,8 @@
                   <thead>
                     <tr>
                       <th style="width: 50px;">STT</th>
-                      <th>Mã HS / Tài khoản</th>
-                      <th>Họ và Tên</th>
+                      <th>Họ</th>
+                      <th>Tên</th>
                       <th>Trạng thái</th>
                       <th style="text-align: right; width: 150px;">Thời gian</th>
                     </tr>
@@ -1601,9 +1602,7 @@
       };
     }
 
-    /* ========================================================
-       QUẢN LÝ DANH SÁCH TẠO HÀNG LOẠT (BATCH CREATE)
-       ======================================================== */
+    /* QUẢN LÝ DANH SÁCH TẠO HÀNG LOẠT (BATCH CREATE) */
     let batchStudentsList = [];
 
     const batchFullnameInput = document.getElementById("batch-fullname-input");
@@ -2436,7 +2435,7 @@
       }
     }
 
-    /* TÍNH NĂNG ĐÁNH DẤU HỌC SINH: TỐT (true) - KÉM (false) - HỦY (null) */
+    /* TÍNH NĂNG ĐÁNH DẤU HỌC SINH */
     async function setStudentHighlight(studentId, status) {
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -2821,9 +2820,7 @@
       }
     }
 
-    /* ========================================================
-       TÍNH NĂNG CHỌN NHIỀU HỌC SINH ĐỂ THAO TÁC
-       ======================================================== */
+    /* TÍNH NĂNG CHỌN NHIỀU HỌC SINH ĐỂ THAO TÁC */
     let isQuickBanMode = false;
     let isQuickUnbanMode = false;
     let isBatchCoinMode = false;
@@ -3008,7 +3005,7 @@
         const firstName = (stu.firstName || '').trim();
 
         const hasToneInLastName = hasVietnameseTone(lastName);
-        const hasToneInFirstName = hasVietnameseTone(firstName);
+        const hasToneInFirstName = hasToneInLastName;
         const isBothUnaccented = (!hasToneInLastName && !hasToneInFirstName) && (lastName !== '' || firstName !== '');
 
         let isDuplicate = false;
@@ -3459,9 +3456,7 @@
       }
     }
 
-    /* ========================================================
-       QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP VÀ IP & THIẾT BỊ (TAB 6)
-       ======================================================== */
+    /* QUẢN LÝ LỊCH SỬ ĐĂNG NHẬP VÀ IP & THIẾT BỊ (TAB 6) */
     let loginLogsCache = [];
     let currentLogRole = 'student';
     let currentLogPage = 1;
@@ -3526,7 +3521,7 @@
         currentLogPage = 1;
         renderLoginHistory();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
     }
 
@@ -4012,9 +4007,10 @@
     });
 
     /* ========================================================
-       LOGIC QUẢN LÝ ĐIỂM DANH THEO THỨ, KHÓA/MỞ VÀ TRA CỨU SĨ SỐ
+       LOGIC QUẢN LÝ ĐIỂM DANH THEO THỨ, KHÓA/MỞ VÀ SẮP XẾP TÊN
        ======================================================== */
     const DAY_NAMES = { 1: "Thứ 2", 2: "Thứ 3", 3: "Thứ 4", 4: "Thứ 5", 5: "Thứ 6", 6: "Thứ 7", 0: "Chủ nhật" };
+    let currentClassAttendanceRecords = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       const picker = document.getElementById("view-att-date-picker");
@@ -4172,6 +4168,57 @@
       }
     }
 
+    /* HÀM SẮP XẾP THEO TÊN (first_name) VÀ RENDER 2 CỘT HỌ - TÊN */
+    function sortAndRenderClassAttendance() {
+      const tbody = document.getElementById("class-attendance-tbody");
+      if (!tbody || currentClassAttendanceRecords.length === 0) return;
+
+      const sortMode = document.getElementById("att-sort-select")?.value || "first_name_asc";
+
+      const sorted = [...currentClassAttendanceRecords].sort((a, b) => {
+        const firstA = (a.first_name || '').trim();
+        const firstB = (b.first_name || '').trim();
+        const lastA = (a.last_name || '').trim();
+        const lastB = (b.last_name || '').trim();
+
+        if (sortMode === "first_name_asc") {
+          const cmp = firstA.localeCompare(firstB, 'vi');
+          return cmp !== 0 ? cmp : lastA.localeCompare(lastB, 'vi');
+        } else {
+          const cmp = firstB.localeCompare(firstA, 'vi');
+          return cmp !== 0 ? cmp : lastB.localeCompare(lastA, 'vi');
+        }
+      });
+
+      tbody.innerHTML = "";
+      sorted.forEach((stu, idx) => {
+        const isPresent = stu.status === 'Có mặt';
+        const timeDisplay = stu.checkin_time 
+          ? new Date(stu.checkin_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
+          : '';
+
+        const tr = document.createElement("tr");
+        if (!isPresent) {
+          tr.style.backgroundColor = "#fee2e2"; // Tô nền đỏ nhạt nếu vắng
+        }
+
+        tr.innerHTML = `
+          <td style="color: #64748b; font-weight: 600;">${idx + 1}</td>
+          <td>${stu.last_name || '---'}</td>
+          <td style="font-weight: 600;">${stu.first_name || '---'}</td>
+          <td>
+            <span style="padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; background: ${isPresent ? '#dcfce7' : '#fecaca'}; color: ${isPresent ? '#166534' : '#991b1b'};">
+              ${stu.status}
+            </span>
+          </td>
+          <td style="text-align: right; font-family: monospace; color: #475569; font-weight: 600;">
+            ${timeDisplay}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     async function loadClassAttendanceDetail(school, className, date) {
       const detailBox = document.getElementById("class-detail-container");
       const tbody = document.getElementById("class-attendance-tbody");
@@ -4190,36 +4237,12 @@
 
         if (!result.records || result.records.length === 0) {
           tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Lớp này chưa có học sinh nào trong cơ sở dữ liệu.</td></tr>`;
+          currentClassAttendanceRecords = [];
           return;
         }
 
-        tbody.innerHTML = "";
-        result.records.forEach((stu, idx) => {
-          const isPresent = stu.status === 'Có mặt';
-          const timeDisplay = stu.checkin_time 
-            ? new Date(stu.checkin_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
-            : '';
-
-          const tr = document.createElement("tr");
-          if (!isPresent) {
-            tr.style.backgroundColor = "#fee2e2"; // Tô đỏ nhạt cả dòng nếu vắng
-          }
-
-          tr.innerHTML = `
-            <td style="color: #64748b; font-weight: 600;">${idx + 1}</td>
-            <td><code>${stu.username || '---'}</code></td>
-            <td style="font-weight: 500;">${stu.student_name}</td>
-            <td>
-              <span style="padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; background: ${isPresent ? '#dcfce7' : '#fecaca'}; color: ${isPresent ? '#166534' : '#991b1b'};">
-                ${stu.status}
-              </span>
-            </td>
-            <td style="text-align: right; font-family: monospace; color: #475569; font-weight: 600;">
-              ${timeDisplay}
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+        currentClassAttendanceRecords = result.records;
+        sortAndRenderClassAttendance();
 
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Lỗi tải dữ liệu chi tiết điểm danh!</td></tr>`;
