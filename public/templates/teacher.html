@@ -379,7 +379,7 @@
       display: none;
     }
 
-    /* CSS NÚT LỚP HỌC TRONG TAB ĐIỂM DANH */
+    /* CSS CHO CÁC NÚT LỚP HỌC TRONG TAB ĐIỂM DANH */
     .class-attendance-btn {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -871,14 +871,14 @@
         <!-- TAB: QUẢN LÝ ĐIỂM DANH & LỊCH HỌC CÁC LỚP -->
         <div id="tab-attendance" class="tab-panel">
           
-          <!-- KHỐI 1: CÀI ĐẶT LỊCH THEO THỨ VÀ KHÓA ĐIỂM DANH -->
+          <!-- KHỐI 1: CÀI ĐẶT LỊCH THEO THỨ VÀ KHÓA ĐIỂM DANH (MẶC ĐỊNH THU GỌN)[cite: 19] -->
           <div class="card form-container mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('schedule-manage-body', 'schedule-manage-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">📅 Cài đặt Lịch theo thứ & Khóa điểm danh lớp</h3>
-              <span id="schedule-manage-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+              <span id="schedule-manage-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
 
-            <div id="schedule-manage-body" class="card-body-collapsible" style="margin-top: 16px;">
+            <div id="schedule-manage-body" class="card-body-collapsible collapsed" style="margin-top: 16px;">
               <div class="grid-2">
                 <div class="form-group">
                   <label for="sched-school-select">Chọn trường học:</label>
@@ -917,7 +917,7 @@
                       <th>Lớp</th>
                       <th>Thứ được phép điểm danh</th>
                       <th>Khóa điểm danh thủ công</th>
-                      <th style="width: 100px;">Thao tác</th>
+                      <th style="width: 140px; text-align: center;">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="sched-table-body">
@@ -959,7 +959,7 @@
             <div id="class-detail-container" style="display: none; margin-top: 20px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 
-                <!-- TIÊU ĐỀ KÈM Ô SẮP XẾP THEO TÊN (A-Z, Z-A) -->
+                <!-- TIÊU ĐỀ KÈM Ô SẮP XẾP THEO TÊN (A-Z, Z-A)[cite: 13, 15] -->
                 <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
                   <h4 style="margin: 0; font-size: 16px; color: #1e293b;">
                     Chi tiết điểm danh lớp: <strong id="current-viewing-class" style="color: #2563eb;">---</strong>
@@ -2041,17 +2041,16 @@
         schoolsManagementList.appendChild(itemDiv);
       });
 
-      if (currentSelectedSchool) {
-        filterSchoolSelect.value = currentSelectedSchool;
-        if (schedSchoolSel) schedSchoolSel.value = currentSelectedSchool;
-        if (viewAttSchoolSel) viewAttSchoolSel.value = currentSelectedSchool;
-      } else {
+      let defaultSchool = currentSelectedSchool;
+      if (!defaultSchool) {
         const savedFilters = getSavedFilters();
-        if (savedFilters && savedFilters.school) {
-          filterSchoolSelect.value = savedFilters.school;
-          if (schedSchoolSel) schedSchoolSel.value = savedFilters.school;
-          if (viewAttSchoolSel) viewAttSchoolSel.value = savedFilters.school;
-        }
+        defaultSchool = (savedFilters && savedFilters.school) ? savedFilters.school : (currentSchoolsData[0]?.name || currentSchoolsData[0] || "");
+      }
+
+      if (defaultSchool) {
+        filterSchoolSelect.value = defaultSchool;
+        if (schedSchoolSel) schedSchoolSel.value = defaultSchool;
+        if (viewAttSchoolSel) viewAttSchoolSel.value = defaultSchool;
       }
 
       if (currentBatchSchool) {
@@ -3120,7 +3119,7 @@
         
         if (masterChk) {
           masterChk.checked = (typeof isQuickBanMode !== 'undefined' && isQuickBanMode) || 
-                              (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) ||
+                              (typeof isQuickUnbanMode !== 'undefined' && isQuickUnbanMode) || 
                               (typeof isBatchCoinMode !== 'undefined' && isBatchCoinMode);
         }
         
@@ -3521,7 +3520,7 @@
         currentLogPage = 1;
         renderLoginHistory();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:color:red;">Lỗi kết nối máy chủ!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối máy chủ!</td></tr>`;
       }
     }
 
@@ -4001,13 +4000,8 @@
       }
     }
 
-    loadSchools().then(() => {
-      restoreFilterAndStudents();
-      fetchPendingRewardRequests();
-    });
-
     /* ========================================================
-       LOGIC QUẢN LÝ ĐIỂM DANH THEO THỨ, KHÓA/MỞ VÀ SẮP XẾP TÊN
+       LOGIC QUẢN LÝ ĐIỂM DANH THEO THỨ, KHÓA/MỞ, SỬA/XÓA VÀ SẮP XẾP TÊN
        ======================================================== */
     const DAY_NAMES = { 1: "Thứ 2", 2: "Thứ 3", 3: "Thứ 4", 4: "Thứ 5", 5: "Thứ 6", 6: "Thứ 7", 0: "Chủ nhật" };
     let currentClassAttendanceRecords = [];
@@ -4053,8 +4047,11 @@
                 ${item.is_locked ? '🔒 Đang khóa' : '🔓 Đang mở'}
               </button>
             </td>
-            <td>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="editScheduleFill('${item.class_name}', ${JSON.stringify(item.schedule_days || [])})">Sửa</button>
+            <td style="text-align: center;">
+              <div style="display: inline-flex; gap: 6px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="editScheduleFill('${item.class_name}', ${JSON.stringify(item.schedule_days || [])})">Sửa</button>
+                <button type="button" class="btn btn-sm" style="background: #ef4444; color: #fff; border: 1px solid #ef4444;" onclick="deleteClassSchedule('${item.class_name}')">Xóa</button>
+              </div>
             </td>
           `;
           tbody.appendChild(tr);
@@ -4065,11 +4062,40 @@
     }
 
     function editScheduleFill(className, days) {
+      // Mở thẻ card cài đặt lịch nếu đang bị thu gọn[cite: 19]
+      const bodyEl = document.getElementById('schedule-manage-body');
+      const iconEl = document.getElementById('schedule-manage-toggle-icon');
+      if (bodyEl.classList.contains('collapsed')) {
+        bodyEl.classList.remove('collapsed');
+        iconEl.textContent = '▼';
+      }
+
       document.getElementById("sched-class-input").value = className;
       document.querySelectorAll('input[name="sched_day"]').forEach(chk => {
         chk.checked = days.includes(Number(chk.value));
       });
-      window.scrollTo({ top: document.getElementById('sched-class-input').offsetTop - 100, behavior: 'smooth' });
+      window.scrollTo({ top: document.getElementById('sched-class-input').offsetTop - 120, behavior: 'smooth' });
+    }
+
+    async function deleteClassSchedule(className) {
+      const school = document.getElementById("sched-school-select").value;
+      if (!confirm(`Bạn có chắc chắn muốn xóa hoàn toàn lịch điểm danh của lớp ${className}?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/.netlify/functions/attendance', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ school, class_name: className })
+        });
+        const result = await res.json();
+        alert(result.message);
+        loadClassSchedules();
+        fetchActiveClassesForDate();
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ khi xóa lịch!");
+      }
     }
 
     async function saveClassSchedule() {
@@ -4199,7 +4225,7 @@
 
         const tr = document.createElement("tr");
         if (!isPresent) {
-          tr.style.backgroundColor = "#fee2e2"; // Tô nền đỏ nhạt nếu vắng
+          tr.style.backgroundColor = "#fee2e2";
         }
 
         tr.innerHTML = `
@@ -4248,6 +4274,18 @@
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Lỗi tải dữ liệu chi tiết điểm danh!</td></tr>`;
       }
     }
+
+    // TỰ ĐỘNG NẠP DỮ LIỆU ĐIỂM DANH KHI TẢI LẠI TRANG
+    loadSchools().then(() => {
+      restoreFilterAndStudents();
+      fetchPendingRewardRequests();
+
+      const currentActiveTab = sessionStorage.getItem("teacher_active_tab");
+      if (currentActiveTab === "tab-attendance") {
+        loadClassSchedules();
+        fetchActiveClassesForDate();
+      }
+    });
   </script>
 </body>
 </html>

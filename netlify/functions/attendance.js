@@ -30,15 +30,19 @@ exports.handler = async (event) => {
         .eq('class_name', class_name)
         .maybeSingle();
 
-      if (schedule) {
-        if (schedule.is_locked) {
-          return { statusCode: 403, body: JSON.stringify({ message: "Lớp học hiện đang bị KHÓA điểm danh!" }) };
-        }
-        if (schedule.schedule_days && schedule.schedule_days.length > 0) {
-          if (!schedule.schedule_days.includes(currentDayOfWeek)) {
-            return { statusCode: 403, body: JSON.stringify({ message: "Hôm nay không phải ngày điểm danh theo lịch của lớp bạn!" }) };
-          }
-        }
+      // NẾU LỚP CHƯA ĐƯỢC ĐẶT LỊCH HOẶC KHÔNG CÓ NGÀY HỌC NÀO
+      if (!schedule || !schedule.schedule_days || schedule.schedule_days.length === 0) {
+        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
+      }
+
+      // NẾU ĐANG BỊ KHÓA THỦ CÔNG
+      if (schedule.is_locked) {
+        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
+      }
+
+      // NẾU HÔM NAY KHÔNG PHẢI THỨ ĐƯỢC ĐẶT
+      if (!schedule.schedule_days.includes(currentDayOfWeek)) {
+        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
       }
 
       const { data, error } = await supabase
@@ -72,7 +76,6 @@ exports.handler = async (event) => {
     const action = params.action;
 
     try {
-      // 2.1 Lấy danh sách cấu hình lịch học của các lớp theo trường
       if (action === 'get_schedules') {
         const { school } = params;
         const { data, error } = await supabase
@@ -83,11 +86,10 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify({ schedules: data || [] }) };
       }
 
-      // 2.2 Lấy các lớp có lịch học theo Thứ (dựa trên ngày chọn)
       if (action === 'get_active_classes_by_date') {
         const { school, date } = params;
         const selectedDate = new Date(date + "T00:00:00");
-        const dayOfWeek = selectedDate.getDay(); // 0: Chủ nhật, 1: T2, ...
+        const dayOfWeek = selectedDate.getDay();
 
         const { data, error } = await supabase
           .from('class_schedules')
@@ -96,7 +98,6 @@ exports.handler = async (event) => {
 
         if (error) throw error;
 
-        // Lọc các lớp có cấu hình thứ này và không bị khóa
         const availableClasses = (data || []).filter(item => {
           const days = item.schedule_days || [];
           return days.includes(dayOfWeek);
@@ -105,12 +106,9 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify({ classes: availableClasses, dayOfWeek }) };
       }
 
-      // 2.3 Xem chi tiết điểm danh của 1 lớp: đối chiếu toàn bộ học sinh
-      // 2.3 Xem chi tiết điểm danh của 1 lớp: đối chiếu toàn bộ học sinh
       if (action === 'get_class_attendance') {
         const { school, className, date } = params;
 
-        // Lấy tất cả học sinh trong lớp
         const { data: allStudents, error: errStudents } = await supabase
           .from('students')
           .select('id, username, full_name, last_name, first_name')
@@ -118,7 +116,6 @@ exports.handler = async (event) => {
           .eq('class_name', className);
         if (errStudents) throw errStudents;
 
-        // Lấy bản ghi đã điểm danh trong ngày
         const { data: attended, error: errAtt } = await supabase
           .from('attendance')
           .select('student_id, student_name, checkin_time, status')
@@ -139,7 +136,7 @@ exports.handler = async (event) => {
             student_id: stu.id,
             username: stu.username,
             student_name: name,
-            last_name: stu.last_name || '', // Thêm trường last_name
+            last_name: stu.last_name || '',
             first_name: stu.first_name || '',
             status: att ? 'Có mặt' : 'Vắng',
             checkin_time: att ? att.checkin_time : null
@@ -163,7 +160,7 @@ exports.handler = async (event) => {
     }
   }
 
-  // 3. GIÁO VIÊN LƯU LỊCH / KHÓA ĐIỂM DANH (PUT)
+  // 3. GIÁO VIÊN LƯU / SỬA / KHÓA LỊCH (PUT)
   if (method === 'PUT') {
     try {
       const { action, school, class_name, schedule_days, is_locked } = JSON.parse(event.body);
@@ -194,6 +191,23 @@ exports.handler = async (event) => {
       }
 
       return { statusCode: 400, body: JSON.stringify({ message: "Hành động không hợp lệ" }) };
+    } catch (err) {
+      return { statusCode: 500, body: JSON.stringify({ message: err.message }) };
+    }
+  }
+
+  // 4. GIÁO VIÊN XÓA LỊCH ĐÃ ĐẶT (DELETE)
+  if (method === 'DELETE') {
+    try {
+      const { school, class_name } = JSON.parse(event.body);
+      const { error } = await supabase
+        .from('class_schedules')
+        .delete()
+        .eq('school', school)
+        .eq('class_name', class_name);
+
+      if (error) throw error;
+      return { statusCode: 200, body: JSON.stringify({ message: `Đã xóa lịch của lớp ${class_name} thành công!` }) };
     } catch (err) {
       return { statusCode: 500, body: JSON.stringify({ message: err.message }) };
     }
