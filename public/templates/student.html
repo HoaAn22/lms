@@ -1169,7 +1169,22 @@
       const coinsEl = document.getElementById("user-coins");
       const spentEl = document.getElementById("user-spent-coins");
       const pendingEl = document.getElementById("user-pending-coins-display");
-      if (coinsEl) coinsEl.textContent = studentCoins;
+      if (coinsEl) {
+        coinsEl.textContent = studentCoins;
+        // Bổ sung code đổi màu đỏ khi xu âm
+        const parentPill = coinsEl.closest('.gacha-stat-pill');
+        if (parentPill) {
+          if (Number(studentCoins) < 0) {
+            parentPill.style.background = '#fee2e2';
+            parentPill.style.borderColor = '#fecaca';
+            parentPill.style.color = '#991b1b';
+          } else {
+            parentPill.style.background = '';
+            parentPill.style.borderColor = '';
+            parentPill.style.color = '';
+          }
+        }
+      }
       if (spentEl) spentEl.textContent = studentSpentCoins;
       if (pendingEl) pendingEl.textContent = studentPendingCoins;
     }
@@ -1891,7 +1906,7 @@
         msgEl.textContent = "Đang xử lý thông tin...";
         msgEl.style.color = "#2563eb";
 
-        const session = typeof getSession === 'function' ? getSession() : null; //[cite: 8]
+        const session = typeof getSession === 'function' ? getSession() : null; 
         
         if (!session || !session.id) {
             msgEl.textContent = "Lỗi: Không tìm thấy phiên đăng nhập.";
@@ -1905,10 +1920,10 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    student_id: session.id, //[cite: 8]
-                    student_name: session.fullName || session.username, //[cite: 8]
-                    school: session.school, //[cite: 8]
-                    class_name: session.className //[cite: 8]
+                    student_id: session.id, 
+                    student_name: session.fullName || session.username, 
+                    school: session.school, 
+                    class_name: session.className 
                 })
             });
             

@@ -1061,10 +1061,10 @@ exports.handler = async (event) => {
         let curTotal = itemData && itemData.total_coins !== undefined ? Number(itemData.total_coins) : curCoins;
 
         let newCoins = curCoins + delta;
-        if (newCoins < 0) newCoins = 0;
+        // if (newCoins < 0) newCoins = 0; // Cho phép xu âm
 
         let newTotal = curTotal + delta;
-        if (newTotal < 0) newTotal = 0;
+        // if (newTotal < 0) newTotal = 0; // Cho phép xu âm
 
         await supabase
           .from('items')
@@ -1111,10 +1111,10 @@ exports.handler = async (event) => {
         let curTotal = it && it.total_coins !== undefined ? Number(it.total_coins) : curCoins;
 
         let newCoins = curCoins + delta;
-        if (newCoins < 0) newCoins = 0;
+        // if (newCoins < 0) newCoins = 0; // Cho phép xu âm
         
         let newTotal = curTotal + delta;
-        if (newTotal < 0) newTotal = 0;
+        // if (newTotal < 0) newTotal = 0; // Cho phép xu âm
 
         return supabase
           .from('items')
