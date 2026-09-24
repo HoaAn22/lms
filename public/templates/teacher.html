@@ -871,7 +871,7 @@
         <!-- TAB: QUẢN LÝ ĐIỂM DANH & LỊCH HỌC CÁC LỚP -->
         <div id="tab-attendance" class="tab-panel">
           
-          <!-- KHỐI 1: CÀI ĐẶT LỊCH THEO THỨ VÀ KHÓA ĐIỂM DANH (MẶC ĐỊNH THU GỌN)[cite: 19] -->
+          <!-- KHỐI 1: CÀI ĐẶT LỊCH THEO THỨ VÀ KHÓA ĐIỂM DANH (MẶC ĐỊNH THU GỌN) -->
           <div class="card form-container mb-4">
             <div class="card-header-collapse" onclick="toggleCardBody('schedule-manage-body', 'schedule-manage-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">📅 Cài đặt Lịch theo thứ & Khóa điểm danh lớp</h3>
@@ -905,9 +905,21 @@
                 </div>
               </div>
 
-              <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-primary" onclick="saveClassSchedule()">💾 Lưu Lịch Lớp</button>
-                <button type="button" class="btn btn-secondary" onclick="resetScheduleForm()">Làm mới form</button>
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-primary" onclick="saveClassSchedule()">💾 Lưu Lịch Lớp</button>
+                  <button type="button" class="btn btn-secondary" onclick="resetScheduleForm()">Làm mới form</button>
+                </div>
+                <!-- Dropdown sắp xếp -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <label for="schedule-sort-select" style="font-size: 13px; font-weight: 600; color: #475569;">Sắp xếp:</label>
+                  <select id="schedule-sort-select" onchange="sortAndRenderSchedules()" style="padding: 6px 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1e293b; font-weight: 500;">
+                    <option value="class_asc">Tên lớp (A → Z)</option>
+                    <option value="class_desc">Tên lớp (Z → A)</option>
+                    <option value="day_asc">Thứ trong tuần (Tăng dần)</option>
+                    <option value="day_desc">Thứ trong tuần (Giảm dần)</option>
+                  </select>
+                </div>
               </div>
 
               <div style="margin-top: 16px; overflow-x: auto;">
@@ -957,9 +969,9 @@
 
             <!-- BẢNG CHI TIẾT TOÀN BỘ DANH SÁCH LỚP -->
             <div id="class-detail-container" style="display: none; margin-top: 20px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                 
-                <!-- TIÊU ĐỀ KÈM Ô SẮP XẾP THEO TÊN (A-Z, Z-A)[cite: 13, 15] -->
+                <!-- TIÊU ĐỀ KÈM Ô SẮP XẾP THEO TÊN (A-Z, Z-A) -->
                 <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
                   <h4 style="margin: 0; font-size: 16px; color: #1e293b;">
                     Chi tiết điểm danh lớp: <strong id="current-viewing-class" style="color: #2563eb;">---</strong>
@@ -973,10 +985,19 @@
                   </div>
                 </div>
 
-                <div style="display: flex; gap: 12px;">
-                  <span style="background: #eff6ff; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #1d4ed8;">Sĩ số: <strong id="stat-class-total">0</strong></span>
-                  <span style="background: #dcfce7; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #166534;">Có mặt: <strong id="stat-class-present">0</strong></span>
-                  <span style="background: #fee2e2; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #991b1b;">Vắng: <strong id="stat-class-absent">0</strong></span>
+                <!-- CĂN PHẢI: NÚT ĐIỂM DANH VÀ THỐNG KÊ SĨ SỐ -->
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                  <!-- Nút điểm danh hàng loạt -->
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" onclick="markAllPresent()" class="btn btn-sm" style="background: #10b981; color: #fff; border: none; font-weight: 500; padding: 4px 10px; cursor: pointer; border-radius: 4px;">✅ Điểm danh cả lớp</button>
+                    <button type="button" onclick="cancelAllAttendance()" class="btn btn-sm" style="background: #ef4444; color: #fff; border: none; font-weight: 500; padding: 4px 10px; cursor: pointer; border-radius: 4px;">❌ Hủy điểm danh</button>
+                  </div>
+                  <!-- Thống kê -->
+                  <div style="display: flex; gap: 12px;">
+                    <span style="background: #eff6ff; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #1d4ed8;">Sĩ số: <strong id="stat-class-total">0</strong></span>
+                    <span style="background: #dcfce7; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #166534;">Có mặt: <strong id="stat-class-present">0</strong></span>
+                    <span style="background: #fee2e2; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #991b1b;">Vắng: <strong id="stat-class-absent">0</strong></span>
+                  </div>
                 </div>
               </div>
 
@@ -989,6 +1010,7 @@
                       <th>Tên</th>
                       <th>Trạng thái</th>
                       <th style="text-align: right; width: 150px;">Thời gian</th>
+                      <th style="text-align: center; width: 120px;">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="class-attendance-tbody"></tbody>
@@ -1559,7 +1581,7 @@
 
     function hasVietnameseTone(text) {
       if (!text || typeof text !== 'string') return false;
-      const vnToneRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      const vnToneRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúúúụủũưừứựửữỳýỵỷỹđĐ]/i;
       return vnToneRegex.test(text);
     }
 
@@ -4005,6 +4027,7 @@
        ======================================================== */
     const DAY_NAMES = { 1: "Thứ 2", 2: "Thứ 3", 3: "Thứ 4", 4: "Thứ 5", 5: "Thứ 6", 6: "Thứ 7", 0: "Chủ nhật" };
     let currentClassAttendanceRecords = [];
+    let currentSchedules = []; // Thêm dòng này để lưu dữ liệu lịch lớp
 
     document.addEventListener("DOMContentLoaded", () => {
       const picker = document.getElementById("view-att-date-picker");
@@ -4028,15 +4051,52 @@
       try {
         const res = await fetch(`/.netlify/functions/attendance?action=get_schedules&school=${encodeURIComponent(school)}`);
         const data = await res.json();
-        const list = data.schedules || [];
+        
+        currentSchedules = data.schedules || []; // Lưu dữ liệu vào mảng
 
-        if (list.length === 0) {
+        if (currentSchedules.length === 0) {
           tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b;">Chưa có cấu hình lịch cho lớp nào thuộc trường này.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = "";
-        list.forEach(item => {
+        // Gọi hàm sắp xếp và hiển thị
+        sortAndRenderSchedules();
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Lỗi tải cấu hình lịch!</td></tr>`;
+      }
+    }
+
+    function sortAndRenderSchedules() {
+      const tbody = document.getElementById("sched-table-body");
+      if (!tbody || currentSchedules.length === 0) return;
+
+      const sortMode = document.getElementById("schedule-sort-select")?.value || "class_asc";
+
+      let sorted = [...currentSchedules].sort((a, b) => {
+        if (sortMode === "class_asc" || sortMode === "class_desc") {
+           // numeric: true giúp các chuỗi có số như 7B12 được xếp sau 7B5 
+           const cmp = (a.class_name || "").localeCompare(b.class_name || "", undefined, { numeric: true, sensitivity: 'base' });
+           return sortMode === "class_asc" ? cmp : -cmp;
+        } else {
+           // Xếp theo Thứ (Quy ước Chủ nhật là 7 để xếp cuối)
+           const getMinDay = (days) => {
+               if (!days || days.length === 0) return 999;
+               return Math.min(...days.map(d => d === 0 ? 7 : d));
+           };
+           const minA = getMinDay(a.schedule_days);
+           const minB = getMinDay(b.schedule_days);
+           
+           if (minA !== minB) {
+              return sortMode === "day_asc" ? minA - minB : minB - minA;
+           } else {
+              // Nếu trùng thứ, xếp theo tên lớp (với thứ tự tự nhiên)
+              return (a.class_name || "").localeCompare(b.class_name || "", undefined, { numeric: true, sensitivity: 'base' });
+           }
+        }
+      });
+
+      tbody.innerHTML = "";
+      sorted.forEach(item => {
           const daysStr = (item.schedule_days || []).map(d => DAY_NAMES[d]).join(', ') || 'Chưa thiết lập';
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -4055,14 +4115,10 @@
             </td>
           `;
           tbody.appendChild(tr);
-        });
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Lỗi tải cấu hình lịch!</td></tr>`;
-      }
+      });
     }
 
     function editScheduleFill(className, days) {
-      // Mở thẻ card cài đặt lịch nếu đang bị thu gọn[cite: 19]
       const bodyEl = document.getElementById('schedule-manage-body');
       const iconEl = document.getElementById('schedule-manage-toggle-icon');
       if (bodyEl.classList.contains('collapsed')) {
@@ -4228,6 +4284,10 @@
           tr.style.backgroundColor = "#fee2e2";
         }
 
+        const actionBtn = isPresent
+          ? `<button type="button" class="btn btn-sm" style="background: #ef4444; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="cancelSingleAttendance('${stu.student_id}')">Hủy Đ.Danh</button>`
+          : `<button type="button" class="btn btn-sm" style="background: #10b981; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="markSingleAttendance('${stu.student_id}', '${(stu.student_name || '').replace(/'/g, "\\'")}')">Điểm danh</button>`;
+
         tr.innerHTML = `
           <td style="color: #64748b; font-weight: 600;">${idx + 1}</td>
           <td>${stu.last_name || '---'}</td>
@@ -4240,6 +4300,9 @@
           <td style="text-align: right; font-family: monospace; color: #475569; font-weight: 600;">
             ${timeDisplay}
           </td>
+          <td style="text-align: center;">
+            ${actionBtn}
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -4251,7 +4314,7 @@
       document.getElementById("current-viewing-class").textContent = className;
       detailBox.style.display = "block";
 
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 24px;">Đang tải danh sách học sinh... ⏳</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 24px;">Đang tải danh sách học sinh... ⏳</td></tr>`;
 
       try {
         const res = await fetch(`/.netlify/functions/attendance?action=get_class_attendance&school=${encodeURIComponent(school)}&className=${encodeURIComponent(className)}&date=${date}`);
@@ -4262,7 +4325,7 @@
         document.getElementById("stat-class-absent").textContent = result.absent || 0;
 
         if (!result.records || result.records.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Lớp này chưa có học sinh nào trong cơ sở dữ liệu.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 20px;">Lớp này chưa có học sinh nào trong cơ sở dữ liệu.</td></tr>`;
           currentClassAttendanceRecords = [];
           return;
         }
@@ -4271,7 +4334,143 @@
         sortAndRenderClassAttendance();
 
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Lỗi tải dữ liệu chi tiết điểm danh!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Lỗi tải dữ liệu chi tiết điểm danh!</td></tr>`;
+      }
+    }
+    
+    async function markAllPresent() {
+      const school = document.getElementById("view-att-school-select").value;
+      const date = document.getElementById("view-att-date-picker").value;
+      const className = document.getElementById("current-viewing-class").textContent;
+
+      if (!school || !date || className === "---" || currentClassAttendanceRecords.length === 0) {
+        alert("Dữ liệu không hợp lệ hoặc lớp hiện tại chưa có học sinh!");
+        return;
+      }
+
+      if (!confirm(`Bạn có chắc chắn muốn đánh dấu CÓ MẶT cho toàn bộ học sinh lớp ${className} trong ngày ${date}?`)) return;
+
+      const studentsToMark = currentClassAttendanceRecords.map(stu => ({
+        student_id: stu.student_id,
+        student_name: stu.student_name
+      }));
+
+      try {
+        const res = await fetch("/.netlify/functions/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_attendance",
+            school: school,
+            class_name: className,
+            date: date,
+            students: studentsToMark
+          })
+        });
+        const result = await res.json();
+        
+        if (res.ok && result.success) {
+          alert(result.message || "Đã đánh dấu có mặt cho toàn bộ lớp!");
+          loadClassAttendanceDetail(school, className, date);
+        } else {
+          alert(result.message || "Lỗi khi điểm danh cả lớp!");
+        }
+      } catch (e) {
+        alert("Lỗi kết nối đến máy chủ!");
+      }
+    }
+
+    async function cancelAllAttendance() {
+      const school = document.getElementById("view-att-school-select").value;
+      const date = document.getElementById("view-att-date-picker").value;
+      const className = document.getElementById("current-viewing-class").textContent;
+
+      if (!school || !date || className === "---") return;
+
+      if (!confirm(`⚠️ Bạn có chắc chắn muốn HỦY điểm danh toàn bộ lớp ${className} trong ngày ${date} (chuyển tất cả thành Vắng)?`)) return;
+
+      try {
+        const res = await fetch("/.netlify/functions/attendance", {
+          method: "POST", 
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "batch_cancel_attendance",
+            school: school,
+            class_name: className,
+            date: date
+          })
+        });
+        const result = await res.json();
+        
+        if (res.ok && result.success) {
+          alert(result.message || "Đã hủy điểm danh cả lớp (Chuyển thành Vắng)!");
+          loadClassAttendanceDetail(school, className, date);
+        } else {
+          alert(result.message || "Lỗi khi hủy điểm danh!");
+        }
+      } catch (e) {
+        alert("Lỗi kết nối đến máy chủ!");
+      }
+    }
+
+    async function markSingleAttendance(studentId, studentName) {
+      const school = document.getElementById("view-att-school-select").value;
+      const date = document.getElementById("view-att-date-picker").value;
+      const className = document.getElementById("current-viewing-class").textContent;
+
+      if (!school || !date || className === "---") return;
+
+      try {
+        const res = await fetch("/.netlify/functions/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "teacher_mark_single", 
+            school: school,
+            class_name: className,
+            date: date,
+            student_id: studentId,
+            student_name: studentName
+          })
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          loadClassAttendanceDetail(school, className, date);
+        } else {
+          alert(result.message || "Lỗi khi điểm danh!");
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    async function cancelSingleAttendance(studentId) {
+      const school = document.getElementById("view-att-school-select").value;
+      const date = document.getElementById("view-att-date-picker").value;
+      const className = document.getElementById("current-viewing-class").textContent;
+
+      if (!school || !date || className === "---") return;
+
+      try {
+        const res = await fetch("/.netlify/functions/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "cancel_single_attendance", 
+            school: school,
+            class_name: className,
+            date: date,
+            student_id: studentId
+          })
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          loadClassAttendanceDetail(school, className, date);
+        } else {
+          alert(result.message || "Lỗi khi hủy điểm danh!");
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
       }
     }
 

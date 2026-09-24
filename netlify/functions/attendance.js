@@ -14,15 +14,77 @@ exports.handler = async (event) => {
 
   const method = event.httpMethod;
 
-  // 1. HỌC SINH ĐIỂM DANH (POST)
+  // 1. XỬ LÝ GHI NHẬN ĐIỂM DANH (POST)
   if (method === 'POST') {
     try {
-      const { student_id, student_name, school, class_name } = JSON.parse(event.body);
+      const bodyObj = JSON.parse(event.body);
+      const action = bodyObj.action;
+
+      // --- A1. GIÁO VIÊN ĐIỂM DANH CẢ LỚP (Bỏ qua lịch hạn chế) ---
+      if (action === 'batch_attendance') {
+        const { school, class_name, date, students } = bodyObj;
+        const nowTime = new Date().toISOString();
+        
+        await supabase.from('attendance').delete()
+          .eq('school', school).eq('class_name', class_name).eq('date', date);
+
+        const insertData = students.map(stu => ({
+          student_id: stu.student_id,
+          student_name: stu.student_name,
+          school,
+          class_name,
+          date,
+          checkin_time: nowTime
+        }));
+
+        const { error } = await supabase.from('attendance').insert(insertData);
+        if (error) throw error;
+        
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Đã đánh dấu có mặt cho toàn bộ lớp!" }) };
+      }
+
+      // --- A2. GIÁO VIÊN HỦY ĐIỂM DANH CẢ LỚP ---
+      if (action === 'batch_cancel_attendance') {
+        const { school, class_name, date } = bodyObj;
+        const { error } = await supabase.from('attendance').delete()
+          .eq('school', school).eq('class_name', class_name).eq('date', date);
+        
+        if (error) throw error;
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Đã hủy điểm danh cả lớp (Chuyển thành Vắng)!" }) };
+      }
+
+      // --- A3. GIÁO VIÊN ĐIỂM DANH TỪNG HỌC SINH (Bỏ qua lịch hạn chế) ---
+      if (action === 'teacher_mark_single') {
+        const { school, class_name, date, student_id, student_name } = bodyObj;
+        const { error } = await supabase.from('attendance').insert([{ 
+          student_id, 
+          student_name, 
+          school, 
+          class_name, 
+          date, 
+          checkin_time: new Date().toISOString() 
+        }]);
+        
+        if (error && error.code !== '23505') throw error; 
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Đã đánh dấu có mặt!" }) };
+      }
+
+      // --- A4. GIÁO VIÊN HỦY ĐIỂM DANH TỪNG HỌC SINH ---
+      if (action === 'cancel_single_attendance') {
+        const { school, class_name, date, student_id } = bodyObj;
+        const { error } = await supabase.from('attendance').delete()
+          .eq('school', school).eq('class_name', class_name).eq('date', date).eq('student_id', student_id);
+        
+        if (error) throw error;
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Đã hủy điểm danh!" }) };
+      }
+
+      // --- B. HỌC SINH TỰ ĐIỂM DANH (CÓ KIỂM TRA LỊCH) ---
+      const { student_id, student_name, school, class_name } = bodyObj;
       const now = new Date();
       const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       const currentDayOfWeek = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })).getDay();
 
-      // Kiểm tra lịch học của lớp
       const { data: schedule } = await supabase
         .from('class_schedules')
         .select('*')
@@ -30,19 +92,12 @@ exports.handler = async (event) => {
         .eq('class_name', class_name)
         .maybeSingle();
 
-      // NẾU LỚP CHƯA ĐƯỢC ĐẶT LỊCH HOẶC KHÔNG CÓ NGÀY HỌC NÀO
       if (!schedule || !schedule.schedule_days || schedule.schedule_days.length === 0) {
-        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
+        return { statusCode: 403, body: JSON.stringify({ success: false, message: "GV chưa cho phép điểm danh" }) };
       }
 
-      // NẾU ĐANG BỊ KHÓA THỦ CÔNG
-      if (schedule.is_locked) {
-        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
-      }
-
-      // NẾU HÔM NAY KHÔNG PHẢI THỨ ĐƯỢC ĐẶT
-      if (!schedule.schedule_days.includes(currentDayOfWeek)) {
-        return { statusCode: 403, body: JSON.stringify({ message: "GV chưa cho phép điểm danh" }) };
+      if (schedule.is_locked || !schedule.schedule_days.includes(currentDayOfWeek)) {
+        return { statusCode: 403, body: JSON.stringify({ success: false, message: "GV chưa cho phép điểm danh" }) };
       }
 
       const { data, error } = await supabase
@@ -59,14 +114,14 @@ exports.handler = async (event) => {
 
       if (error) {
         if (error.code === '23505') {
-          return { statusCode: 400, body: JSON.stringify({ message: "Bạn đã điểm danh buổi học hôm nay rồi!" }) };
+          return { statusCode: 400, body: JSON.stringify({ success: false, message: "Bạn đã điểm danh buổi học hôm nay rồi!" }) };
         }
         throw error;
       }
 
-      return { statusCode: 200, body: JSON.stringify({ message: "Điểm danh thành công!", data }) };
+      return { statusCode: 200, body: JSON.stringify({ success: true, message: "Điểm danh thành công!", data }) };
     } catch (err) {
-      return { statusCode: 500, body: JSON.stringify({ message: err.message }) };
+      return { statusCode: 500, body: JSON.stringify({ success: false, message: err.message }) };
     }
   }
 
