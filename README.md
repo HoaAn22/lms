@@ -5,6 +5,7 @@ npm run dev
 *Cài đặt môi trường (local)*
 - npm install
 - npm install googleapis
+- npm install @aws-sdk/client-s3
 2. Tạo file lưu biến môi trường `.env`
 
 sessionStorage
