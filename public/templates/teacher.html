@@ -1030,30 +1030,56 @@
         <!-- TAB 3: BỘ SƯU TẬP MEME -->
         <div id="tab-collection" class="tab-panel">
           
-          <!-- KHỐI 1: MEME ĐANG CHỜ TỪ GOOGLE DRIVE -->
-          <div class="card form-container mb-4" style="background: #fffbeb; border: 1px solid #fde047;">
-            <div class="card-header-collapse" onclick="toggleCardBody('pending-drive-memes-body', 'pending-drive-toggle-icon')">
-              <h3 style="margin: 0; font-size: 16px; color: #854d0e; display: flex; align-items: center; gap: 6px;">
+          <!-- KHỐI 1: THÊM MEME MỚI (TẢI LÊN CLOUDFLARE R2) -->
+          <div class="card form-container mb-4" style="background: #f0fdf4; border: 1px solid #86efac;">
+            <div class="card-header-collapse" onclick="toggleCardBody('add-new-meme-body', 'add-new-meme-toggle-icon')">
+              <h3 style="margin: 0; font-size: 16px; color: #166534; display: flex; align-items: center; gap: 6px;">
                 <img src="img/plus.png" alt="Icon" style="width: 18px; height: 18px; object-fit: contain;">
-                Meme đang chờ (Từ Google Drive)
+                Thêm Thẻ Meme Mới
               </h3>
-              <span id="pending-drive-toggle-icon" style="font-size: 18px; font-weight: bold; color: #ca8a04;">▼</span>
+              <span id="add-new-meme-toggle-icon" style="font-size: 18px; font-weight: bold; color: #15803d;">▼</span>
             </div>
 
-            <div id="pending-drive-memes-body" class="card-body-collapsible" style="margin-top: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span style="font-size: 13px; color: #a16207;">Hệ thống sẽ quét các ảnh đã tải lên Drive nhưng chưa có dữ liệu Slogan.</span>
-                <button type="button" class="btn btn-primary" onclick="scanPendingDriveMemes()" style="background: #ca8a04; border-color: #a16207;">
-                  🔄 Quét Google Drive
-                </button>
-              </div>
-              
-              <div id="pending-drive-status" style="font-size: 13px; color: #b45309; margin-bottom: 12px; font-weight: bold;"></div>
+            <div id="add-new-meme-body" class="card-body-collapsible" style="margin-top: 16px;">
+              <form id="add-new-meme-form" onsubmit="submitNewMeme(event)">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label style="font-weight: 600; color: #1e293b;">Kéo thả hoặc chọn ảnh:</label>
+                    <div id="file-drop-area" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+                      <span id="file-drop-text" style="color: #64748b; font-size: 14px;">🖱️ Click để chọn hoặc kéo thả ảnh vào đây</span>
+                      <input type="file" id="new-meme-file" accept="image/*" style="display: none;">
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                      <img id="new-meme-preview" src="" style="max-height: 150px; border-radius: 6px; display: none; object-fit: contain; margin: 0 auto; border: 1px solid #e2e8f0;">
+                    </div>
+                  </div>
 
-              <!-- Lưới hiển thị các meme đang chờ -->
-              <div class="admin-meme-grid" id="pending-memes-grid-container" style="background: #fefce8; padding: 12px; border-radius: 8px; border: 1px dashed #fde047; min-height: 100px;">
-                <div style="grid-column: span 3; text-align: center; color: #a16207; font-size: 13px;">Hãy bấm "Quét Google Drive" để tìm ảnh mới.</div>
-              </div>
+                  <div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                      <label for="new-meme-slogan">Slogan text / Caption:</label>
+                      <input type="text" id="new-meme-slogan" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;" autocomplete="off" placeholder="Nhập câu nói cho meme...">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                      <label for="new-meme-rarity">Độ hiếm:</label>
+                      <select id="new-meme-rarity" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <option value="C">C (Phổ biến)</option>
+                        <option value="B">B (Khá)</option>
+                        <option value="A">A (Hiếm)</option>
+                        <option value="S">S (Cực hiếm)</option>
+                        <option value="SS">SS (Huyền thoại)</option>
+                      </select>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                      <button type="submit" id="btn-save-new-meme" class="btn btn-primary" style="background: #16a34a; border-color: #15803d; padding: 10px 16px;">
+                        💾 Tải lên & Lưu hệ thống
+                      </button>
+                    </div>
+                    <p id="new-meme-submit-status" class="status-msg mt-2"></p>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
 
@@ -1193,47 +1219,6 @@
           </div>
         </div>
       </section>
-
-      <!-- MODAL THÊM THÔNG TIN CHO MEME CHỜ TỪ GOOGLE DRIVE -->
-      <div id="add-pending-meme-modal" class="modal-backdrop">
-        <div class="modal-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">✨ Thêm thông tin thẻ Meme</h3>
-            <button onclick="closePendingMemeModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
-          </div>
-
-          <div style="text-align: center; margin-bottom: 16px; background: #f1f5f9; padding: 10px; border-radius: 8px;">
-            <span id="pending-file-name" style="display: block; font-size: 12px; color: #475569; margin-bottom: 6px; font-weight: bold;">Tên file: ---</span>
-            <img id="pending-meme-preview" src="" alt="Preview" style="max-height: 120px; border-radius: 6px; object-fit: contain;">
-          </div>
-
-          <form id="add-pending-meme-form" onsubmit="submitPendingMeme(event)">
-            <input type="hidden" id="pending-meme-direct-url">
-            
-            <div class="form-group" style="margin-bottom: 12px;">
-              <label for="pending-meme-slogan">Slogan text / Caption:</label>
-              <input type="text" id="pending-meme-slogan" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;" autocomplete="off">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-              <label for="pending-meme-rarity">Độ hiếm:</label>
-              <select id="pending-meme-rarity" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-                <option value="C">C (Phổ biến)</option>
-                <option value="B">B (Khá)</option>
-                <option value="A">A (Hiếm)</option>
-                <option value="S">S (Cực hiếm)</option>
-                <option value="SS">SS (Huyền thoại)</option>
-              </select>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-              <button type="button" onclick="closePendingMemeModal()" class="btn btn-secondary">Hủy</button>
-              <button type="submit" id="btn-save-pending-meme" class="btn btn-primary">💾 Lưu vào hệ thống</button>
-            </div>
-          </form>
-          <p id="pending-meme-submit-status" class="status-msg mt-2"></p>
-        </div>
-      </div>
 
       <!-- Modal Chỉnh sửa / Xóa Meme -->
       <div id="edit-meme-modal" class="modal-backdrop">
@@ -2005,7 +1990,6 @@
       if (tabId === 'tab-student-manage') {
         fetchPendingRewardRequests();
       } else if (tabId === 'tab-collection') {
-        scanPendingDriveMemes();
         loadAdminMemeCollection();
       } else if (tabId === 'tab-login-history') {
         loadLoginHistory();
@@ -4476,98 +4460,75 @@
     }
 
     /* ========================================================
-       LOGIC XỬ LÝ MEME ĐANG CHỜ TỪ GOOGLE DRIVE
+       LOGIC KÉO THẢ VÀ TẢI MEME TRỰC TIẾP LÊN HỆ THỐNG
        ======================================================== */
-    let pendingDriveMemesCache = [];
+    const fileDropArea = document.getElementById('file-drop-area');
+    const fileInput = document.getElementById('new-meme-file');
+    const filePreview = document.getElementById('new-meme-preview');
+    const fileDropText = document.getElementById('file-drop-text');
+    let currentBase64Image = null;
 
-    async function scanPendingDriveMemes() {
-      const container = document.getElementById("pending-memes-grid-container");
-      const statusEl = document.getElementById("pending-drive-status");
-      
-      statusEl.textContent = "Đang quét Google Drive để tìm ảnh mới... ⏳";
-      container.innerHTML = "";
-
-      try {
-        const res = await fetch("/.netlify/functions/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "scan_pending_memes" })
-        });
-        const result = await res.json();
-
-        if (!result.success) {
-          statusEl.textContent = "Lỗi: " + (result.message || "Không thể quét thư mục");
-          statusEl.style.color = "#ef4444";
-          return;
+    if (fileDropArea) {
+      fileDropArea.addEventListener('click', () => fileInput.click());
+      fileDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropArea.style.background = '#e2e8f0';
+      });
+      fileDropArea.addEventListener('dragleave', () => {
+        fileDropArea.style.background = '#f8fafc';
+      });
+      fileDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropArea.style.background = '#f8fafc';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleFileSelect(e.dataTransfer.files[0]);
         }
+      });
+      fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) handleFileSelect(this.files[0]);
+      });
+    }
 
-        pendingDriveMemesCache = result.data.pendingMemes || [];
-        
-        if (pendingDriveMemesCache.length === 0) {
-          statusEl.textContent = "✅ Đã quét xong. Không có ảnh nào đang chờ trên Drive.";
-          statusEl.style.color = "#16a34a";
-          container.innerHTML = `<div style="grid-column: span 3; text-align: center; color: #a16207; font-size: 13px;">Tất cả ảnh trên Drive đã được đưa vào hệ thống.</div>`;
-          return;
-        }
-
-        statusEl.textContent = `Phát hiện ${pendingDriveMemesCache.length} ảnh mới chưa có thông tin.`;
-        statusEl.style.color = "#d97706";
-
-        pendingDriveMemesCache.forEach((file) => {
-          const card = document.createElement("div");
-          card.className = "admin-meme-card";
-          card.style.background = "#fff";
-          card.onclick = () => openPendingMemeModal(file);
-          card.innerHTML = `
-            <div>
-              <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#ef4444; margin-bottom:4px;">Cần thông tin</span>
-              <img src="${file.directUrl}" alt="Preview">
-            </div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px; font-family: monospace;">📄 ${file.fileName}</div>
-          `;
-          container.appendChild(card);
-        });
-
-      } catch (err) {
-        statusEl.textContent = "Lỗi kết nối máy chủ khi quét Drive!";
-        statusEl.style.color = "#ef4444";
+    function handleFileSelect(file) {
+      if (!file.type.match('image.*')) {
+        alert("Vui lòng chọn file hình ảnh hợp lệ!");
+        return;
       }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentBase64Image = e.target.result;
+        filePreview.src = currentBase64Image;
+        filePreview.style.display = 'block';
+        fileDropText.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
     }
 
-    function openPendingMemeModal(file) {
-      document.getElementById("pending-meme-direct-url").value = file.directUrl;
-      document.getElementById("pending-file-name").textContent = `Tên file trên Drive: ${file.fileName}`;
-      document.getElementById("pending-meme-preview").src = file.directUrl;
-      document.getElementById("pending-meme-slogan").value = "";
-      document.getElementById("pending-meme-rarity").value = "C";
-      document.getElementById("pending-meme-submit-status").textContent = "";
-      document.getElementById("add-pending-meme-modal").classList.add("show");
-    }
-
-    function closePendingMemeModal() {
-      document.getElementById("add-pending-meme-modal").classList.remove("show");
-    }
-
-    async function submitPendingMeme(e) {
+    async function submitNewMeme(e) {
       e.preventDefault();
-      const statusEl = document.getElementById("pending-meme-submit-status");
-      const btnSave = document.getElementById("btn-save-pending-meme");
+      const statusEl = document.getElementById("new-meme-submit-status");
+      const btnSave = document.getElementById("btn-save-new-meme");
       
-      const directUrl = document.getElementById("pending-meme-direct-url").value;
-      const slogan = document.getElementById("pending-meme-slogan").value.trim();
-      const rarity = document.getElementById("pending-meme-rarity").value;
+      if (!currentBase64Image) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = "Vui lòng chọn hoặc kéo thả ảnh!";
+        return;
+      }
+
+      const slogan = document.getElementById("new-meme-slogan").value.trim();
+      const rarity = document.getElementById("new-meme-rarity").value;
 
       btnSave.disabled = true;
       statusEl.className = "status-msg";
-      statusEl.textContent = "Đang lưu vào hệ thống...";
+      statusEl.textContent = "Đang tải ảnh lên Cloudflare R2... ⏳";
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "add_meme_from_drive",
-            image_url: directUrl,
+            action: "add_meme_from_drive", 
+            image_url: currentBase64Image,
             slogan: slogan,
             rarity: rarity
           })
@@ -4581,9 +4542,17 @@
           return;
         }
 
-        alert("Thêm Meme vào hệ thống thành công!");
-        closePendingMemeModal();
-        scanPendingDriveMemes(); 
+        statusEl.className = "status-msg status-success";
+        statusEl.textContent = "✅ Thêm Meme thành công!";
+        
+        // Khôi phục UI form
+        document.getElementById("new-meme-slogan").value = "";
+        document.getElementById("new-meme-rarity").value = "C";
+        currentBase64Image = null;
+        filePreview.src = "";
+        filePreview.style.display = "none";
+        fileDropText.style.display = "block";
+        
         loadAdminMemeCollection(); 
       } catch (err) {
         statusEl.className = "status-msg status-error";

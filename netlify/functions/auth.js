@@ -1,25 +1,24 @@
 const { createClient } = require('@supabase/supabase-js');
-const { google } = require('googleapis');
+const { S3Client, ListObjectsV2Command, PutObjectCommand } = require('@aws-sdk/client-s3');
+const sharp = require('sharp'); // Thư viện nén và chuyển đổi ảnh WebP
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// ===== CẤU HÌNH GOOGLE DRIVE API ĐỂ QUÉT ẢNH =====
-const GOOGLE_DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '11Xq62s2eTNgi1AGmiWKf4R8Or_x1Qf6O'; 
-
-const getDriveClient = () => {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'), 
-    },
-    scopes: ['https://www.googleapis.com/auth/drive.readonly']
-  });
-  return google.drive({ version: 'v3', auth });
-};
-// ==================================================
+// ===== CẤU HÌNH CLOUDFLARE R2 API =====
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+const BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const PUBLIC_URL = process.env.R2_PUBLIC_URL; // VD: https://pub-xxxxxx.r2.dev
+// ======================================
 
 const createResponse = (success, data, message = "") => {
   return {
@@ -82,7 +81,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const action = body.action || "login";
 
-    /* ĐĂNG NHẬP VÀ KIỂM TRA IP/TÀI KHOẢN BỊ KHÓA */
+    /* CÁC ACTION ĐĂNG NHẬP, QUẢN LÝ LỊCH SỬ, ĐIỂM, HỌC SINH ĐƯỢC GIỮ NGUYÊN BẢN VÁ EGRESS */
     if (action === "login") {
       const username = body.username.trim();
       const password = body.password.trim();
@@ -273,7 +272,6 @@ exports.handler = async (event) => {
       return createResponse(true, { students });
     }
 
-    /* Các tính năng Create, Update, Delete học sinh, tạo trường... giữ nguyên */
     if (action === "update_student") {
       const formattedLastName = capitalizeWords(body.lastName);
       const formattedFirstName = capitalizeWords(body.firstName);
@@ -329,6 +327,228 @@ exports.handler = async (event) => {
       await supabase.from('students').delete().in('id', body.student_ids);
       return createResponse(true, null, "Đã xóa.");
     }
+
+    if (action === "batch_create_students") {
+      const { school, className, grade, students } = body;
+
+      if (!school || !className || !Array.isArray(students) || students.length === 0) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ thông tin lớp, trường và danh sách học sinh!");
+      }
+
+      const { data: existSchool } = await supabase.from('schools').select('name').eq('name', school).single();
+      if (!existSchool) {
+        await supabase.from('schools').insert([{ name: school, is_hidden: false, is_exam_locked: false }]);
+      }
+
+      const { data: existingStudents } = await supabase.from('students').select('username');
+      const { data: existingAdmins } = await supabase.from('admins').select('username');
+
+      const usedUsernames = new Set([
+        ...(existingStudents || []).map(s => (s.username || '').toLowerCase()),
+        ...(existingAdmins || []).map(a => (a.username || '').toLowerCase())
+      ]);
+
+      const insertedStudents = [];
+
+      for (const stu of students) {
+        const lastName = capitalizeWords(stu.lastName || "");
+        const firstName = capitalizeWords(stu.firstName || "");
+        const fullName = `${lastName} ${firstName}`.trim();
+
+        let base = stu.usernameBase || stu.username;
+        let finalUsername = stu.username || base;
+        let counter = 1;
+
+        while (usedUsernames.has(finalUsername.toLowerCase())) {
+          finalUsername = `${base}${counter}`;
+          counter++;
+        }
+        usedUsernames.add(finalUsername.toLowerCase());
+
+        const startingCoins = stu.coins !== undefined ? Number(stu.coins) : 100;
+
+        const { data: newUser, error: userErr } = await supabase.from('students').insert([{
+          username: finalUsername,
+          password: stu.password || "123",
+          full_name: fullName,
+          last_name: lastName,
+          first_name: firstName,
+          class_name: className.trim().toUpperCase(),
+          school: school,
+          grade: grade || '7',
+          username_change_limit: 2,
+          is_highlighted: null
+        }]).select().single();
+
+        if (userErr) throw userErr;
+
+        await supabase.from('scores').insert([{ student_id: newUser.id, feedback: "" }]);
+        await supabase.from('items').insert([{
+          student_id: newUser.id,
+          coins: startingCoins,
+          total_coins: startingCoins,
+          spent_coins: 0,
+          pending_coins: 0,
+          reward_notice: null,
+          reward_status: null,
+          meme_id_list: []
+        }]);
+
+        insertedStudents.push(newUser);
+      }
+
+      return createResponse(true, { count: insertedStudents.length }, `Đã tạo thành công ${insertedStudents.length} tài khoản học sinh!`);
+    }
+
+    if (action === "create_student") {
+      const { school } = body;
+      const lastName = capitalizeWords(body.lastName);
+      const firstName = capitalizeWords(body.firstName);
+      const className = body.className ? body.className.trim().toUpperCase() : "";
+      const username = body.username ? body.username.trim() : "";
+      const password = body.password ? body.password.trim() : "";
+      const fullName = `${lastName} ${firstName}`.trim();
+      
+      const matchGrade = className.match(/\d/);
+      const grade = body.grade || (matchGrade ? matchGrade[0] : '7');
+
+      const { data: existAdmin } = await supabase
+        .from('admins')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (existAdmin) {
+        return createResponse(false, null, "Tài khoản đã tồn tại trong hệ thống!");
+      }
+
+      const { data: existSchool } = await supabase.from('schools').select('name').eq('name', school).single();
+      if (!existSchool) {
+        await supabase.from('schools').insert([{ name: school, is_hidden: false, is_exam_locked: false }]);
+      }
+
+      const { data: newUser, error: userErr } = await supabase.from('students').insert([{
+        username, password, full_name: fullName, 
+        last_name: lastName, first_name: firstName, class_name: className, school,
+        grade: grade,
+        username_change_limit: 2,
+        is_highlighted: null
+      }]).select().single();
+
+      if (userErr) {
+        if (userErr.code === '23505') return createResponse(false, null, "Tài khoản đã tồn tại trong hệ thống!");
+        throw userErr;
+      }
+
+      await supabase.from('scores').insert([{ student_id: newUser.id, feedback: "" }]);
+      await supabase.from('items').insert([{
+        student_id: newUser.id,
+        coins: 100,
+        total_coins: 100,
+        spent_coins: 0,
+        pending_coins: 0,
+        reward_notice: null,
+        reward_status: null,
+        meme_id_list: []
+      }]);
+
+      return createResponse(true, {
+        id: newUser.id, fullName: newUser.full_name, lastName: newUser.last_name,
+        firstName: newUser.first_name, className: newUser.className,
+        username: newUser.username, school: newUser.school,
+        grade: newUser.grade || grade,
+        username_change_limit: 2
+      }, `Tạo thành công học sinh ${fullName}!`);
+    }
+
+    if (action === "create_school") {
+      const schoolName = body.school ? body.school.trim() : "";
+      if (!schoolName) return createResponse(false, null, "Tên trường không được để trống!");
+
+      const { error } = await supabase.from('schools').insert([{ name: schoolName, is_hidden: false, is_exam_locked: false }]);
+      if (error) {
+        if (error.code === '23505') return createResponse(false, null, "Trường này đã tồn tại trong hệ thống!");
+        throw error;
+      }
+      return createResponse(true, null, "Tạo trường thành công!");
+    }
+
+    if (action === "delete_school") {
+      const { school, teacher_username, password } = body;
+      
+      const { data: adminData, error: adminErr } = await supabase
+        .from('admins')
+        .select('id') 
+        .eq('username', teacher_username)
+        .eq('password', password)
+        .single();
+
+      if (adminErr || !adminData) {
+        return createResponse(false, null, "Mật khẩu xác nhận không chính xác!");
+      }
+
+      const { error: deleteErr } = await supabase
+        .from('schools')
+        .delete()
+        .eq('name', school);
+
+      if (deleteErr) return createResponse(false, null, "Lỗi khi xóa trường học.");
+      return createResponse(true, null, `Đã xóa thành công trường "${school}"!`);
+    }
+
+    if (action === "save_score") {
+      const { data: schoolData, error: schoolErr } = await supabase
+        .from('schools')
+        .select('is_exam_locked')
+        .eq('name', body.school)
+        .single();
+
+      if (schoolErr || !schoolData) {
+        return createResponse(false, null, "Không thể xác thực trạng thái trường học.");
+      }
+
+      if (schoolData.is_exam_locked) {
+        return createResponse(false, null, "Bài thi đã đóng. Không thể nộp bài vào lúc này!");
+      }
+
+      const colName = `score_${body.scoreColumn}`;
+      const { error } = await supabase.from('scores').update({ [colName]: body.score }).eq('student_id', body.id);
+      if (error) return createResponse(false, null, "Lỗi cập nhật điểm.");
+      return createResponse(true, null, "Cập nhật điểm thành công!");
+    }
+
+    if (action === "toggle_school") {
+      const { error } = await supabase
+        .from('schools')
+        .update({ is_hidden: body.is_hidden })
+        .eq('name', body.school);
+
+      if (error) return createResponse(false, null, "Lỗi cập nhật trạng thái trường.");
+      return createResponse(true, null, "Cập nhật trạng thái thành công!");
+    }
+
+    if (action === "toggle_school_exam_lock") {
+      const { school, is_exam_locked } = body;
+      const { error } = await supabase
+        .from('schools')
+        .update({ is_exam_locked })
+        .eq('name', school);
+
+      if (error) return createResponse(false, null, "Lỗi cập nhật trạng thái khóa bài thi của trường.");
+      return createResponse(true, null, "Cập nhật thành công!");
+    }
+
+    if (action === "get_school_exam_status") {
+      const { school } = body;
+      const { data, error } = await supabase
+        .from('schools')
+        .select('is_exam_locked')
+        .eq('name', school)
+        .single();
+
+      if (error || !data) return createResponse(true, { is_exam_locked: false });
+      return createResponse(true, { is_exam_locked: data.is_exam_locked || false });
+    }
     
     if (action === "student_change_password") {
       const { student_id, old_password, new_password } = body;
@@ -358,53 +578,86 @@ exports.handler = async (event) => {
     }
 
     /*========================================================================*/
-    /*                 XỬ LÝ MEME VÀ QUÉT GOOGLE DRIVE                        */
+    /*                 XỬ LÝ MEME VÀ QUÉT CLOUDFLARE R2 BUCKET                */
     /*========================================================================*/
 
-    // 1. Quét Drive tìm ảnh chưa có thông tin
+    // 1. Quét R2 tìm ảnh chưa có thông tin
     if (action === "scan_pending_memes") {
-      const drive = getDriveClient();
-      
-      // BỔ SUNG LẤY "thumbnailLink" TỪ GOOGLE DRIVE API
-      const driveRes = await drive.files.list({
-        q: `'${GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed=false and mimeType contains 'image/'`,
-        fields: 'files(id, name, thumbnailLink)'
-      });
-      const driveFiles = driveRes.data.files || [];
-
-      // Lấy danh sách link ảnh đã được lưu trong Supabase
-      const { data: dbMemes } = await supabase.from('meme').select('image');
-      const dbUrls = (dbMemes || []).map(m => m.image || '');
-
-      // Lọc ra các file Drive mà ID của nó CHƯA tồn tại trong Supabase
-      const pendingMemes = driveFiles.filter(file => {
-        return !dbUrls.some(url => url.includes(file.id));
-      }).map(file => {
+      try {
+        // Lấy danh sách file trong R2 Bucket
+        const data = await s3Client.send(new ListObjectsV2Command({
+          Bucket: BUCKET_NAME
+        }));
         
-        // THỦ THUẬT VƯỢT LỖI HIỂN THỊ CỦA GOOGLE DRIVE:
-        // Dùng thumbnailLink thay vì link gốc. Replace =s220 thành =s1000 để nét hơn.
-        let safeUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
-        if (file.thumbnailLink) {
-          safeUrl = file.thumbnailLink.replace(/=s\d+/, '=s1000');
-        }
+        const r2Files = data.Contents || [];
 
-        return {
-          driveId: file.id,
-          fileName: file.name,
-          directUrl: safeUrl 
-        };
-      });
+        // Lấy danh sách link ảnh đã được lưu trong Supabase
+        const { data: dbMemes } = await supabase.from('meme').select('image');
+        const dbUrls = (dbMemes || []).map(m => m.image || '');
 
-      return createResponse(true, { pendingMemes }, "Quét thành công.");
+        // Lọc ra các file R2 mà tên file (Key) CHƯA tồn tại trong Supabase
+        const pendingMemes = r2Files.filter(file => {
+          // Chỉ lấy file ảnh (bỏ qua thư mục hoặc file khác định dạng)
+          if (!file.Key.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return false;
+          
+          return !dbUrls.some(url => url.includes(file.Key));
+        }).map(file => {
+          // Bỏ dấu "/" ở cuối URL gốc nếu có để tránh trùng lặp gạch chéo
+          const baseUrl = PUBLIC_URL.replace(/\/$/, "");
+          let safeUrl = `${baseUrl}/${file.Key}`;
+
+          return {
+            driveId: file.Key, // Giữ nguyên key driveId để giao diện Frontend không phải sửa lại code
+            fileName: file.Key,
+            directUrl: safeUrl 
+          };
+        });
+
+        return createResponse(true, { pendingMemes }, "Quét thành công.");
+      } catch (err) {
+        return createResponse(false, null, "Lỗi kết nối R2: " + err.message);
+      }
     }
 
-    // 2. Thêm Meme mới từ ảnh quét được
+    // 2. Thêm Meme mới (Nén WebP và tự động đẩy file lên R2)
     if (action === "add_meme_from_drive") {
       const { image_url, slogan, rarity } = body;
       if (!image_url || !slogan) return createResponse(false, null, "Thiếu thông tin!");
 
+      let finalImageUrl = image_url;
+
+      // Nếu dữ liệu là dạng Base64 từ giao diện kéo thả, chuyển sang WebP và tải lên R2
+      if (image_url.startsWith('data:image')) {
+        try {
+          const matches = image_url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (!matches || matches.length !== 3) throw new Error('Dữ liệu ảnh không hợp lệ');
+          
+          const buffer = Buffer.from(matches[2], 'base64');
+          const fileName = `meme_${Date.now()}.webp`; // Lưu ảnh dưới dạng .webp
+
+          // Sử dụng sharp để chuyển đổi và nén ảnh (Chất lượng 80%)
+          const webpBuffer = await sharp(buffer)
+            .webp({ quality: 80 }) 
+            .toBuffer();
+
+          await s3Client.send(new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: fileName,
+            Body: webpBuffer,
+            ContentType: 'image/webp' // Đặt Content-Type là webp
+          }));
+
+          // Tạo URL cuối cùng để lưu vào Database
+          const baseUrl = PUBLIC_URL.replace(/\/$/, "");
+          finalImageUrl = `${baseUrl}/${fileName}`;
+        } catch (err) {
+          return createResponse(false, null, "Lỗi xử lý hoặc upload ảnh lên Cloudflare R2: " + err.message);
+        }
+      }
+
+      // Lưu URL chuẩn của Cloudflare R2 vào cơ sở dữ liệu Supabase
       const { error } = await supabase.from('meme').insert([{ 
-        image: image_url, 
+        image: finalImageUrl, 
         slogan: slogan.trim(), 
         rarity: rarity || "C" 
       }]);
