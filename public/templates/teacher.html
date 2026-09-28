@@ -1043,40 +1043,50 @@
             <div id="add-new-meme-body" class="card-body-collapsible" style="margin-top: 16px;">
               <form id="add-new-meme-form" onsubmit="submitNewMeme(event)">
                 <div class="grid-2">
-                  <div class="form-group">
-                    <label style="font-weight: 600; color: #1e293b;">Kéo thả hoặc chọn ảnh:</label>
-                    <div id="file-drop-area" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+                  
+                  <!-- Cột trái: Vùng Drop / Xem trước ảnh -->
+                  <div class="form-group" style="display: flex; flex-direction: column; height: 100%; margin-bottom: 0;">
+                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 6px;">Kéo thả hoặc chọn ảnh:</label>
+                    
+                    <div id="file-drop-area" style="flex: 1; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #f8fafc; transition: all 0.2s; min-height: 125px;">
                       <span id="file-drop-text" style="color: #64748b; font-size: 14px;">🖱️ Click để chọn hoặc kéo thả ảnh vào đây</span>
                       <input type="file" id="new-meme-file" accept="image/*" style="display: none;">
                     </div>
-                    <div style="text-align: center; margin-top: 10px;">
-                      <img id="new-meme-preview" src="" style="max-height: 150px; border-radius: 6px; display: none; object-fit: contain; margin: 0 auto; border: 1px solid #e2e8f0;">
+                    
+                    <div id="preview-container" style="position: relative; display: none; flex: 1; align-items: center; justify-content: center; border: 1px solid #e2e8f0; border-radius: 8px; background: #f1f5f9; padding: 10px; cursor: pointer;" onclick="document.getElementById('new-meme-file').click()" title="Click để đổi ảnh khác">
+                      <!-- Nút Xóa Ảnh mới thêm -->
+                      <button type="button" onclick="removeSelectedImage(event)" style="position: absolute; top: 6px; right: 6px; background: rgba(239, 68, 68, 0.9); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;" title="Xóa ảnh">✕</button>
+                      <img id="new-meme-preview" src="" style="max-height: 140px; border-radius: 6px; object-fit: contain; width: 100%;">
                     </div>
                   </div>
 
-                  <div>
-                    <div class="form-group" style="margin-bottom: 12px;">
-                      <label for="new-meme-slogan">Slogan text / Caption:</label>
-                      <input type="text" id="new-meme-slogan" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;" autocomplete="off" placeholder="Nhập câu nói cho meme...">
+                  <!-- Cột phải: Thông tin văn bản và Nút bấm -->
+                  <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                    <div>
+                      <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="new-meme-slogan">Slogan text / Caption:</label>
+                        <input type="text" id="new-meme-slogan" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;" autocomplete="off" placeholder="Nhập câu nói cho meme...">
+                      </div>
+
+                      <div class="form-group" style="margin-bottom: 0;">
+                        <label for="new-meme-rarity">Độ hiếm:</label>
+                        <select id="new-meme-rarity" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                          <option value="C">C (Phổ biến)</option>
+                          <option value="B">B (Khá)</option>
+                          <option value="A">A (Hiếm)</option>
+                          <option value="S">S (Cực hiếm)</option>
+                          <option value="SS">SS (Huyền thoại)</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 16px;">
-                      <label for="new-meme-rarity">Độ hiếm:</label>
-                      <select id="new-meme-rarity" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-                        <option value="C">C (Phổ biến)</option>
-                        <option value="B">B (Khá)</option>
-                        <option value="A">A (Hiếm)</option>
-                        <option value="S">S (Cực hiếm)</option>
-                        <option value="SS">SS (Huyền thoại)</option>
-                      </select>
-                    </div>
-
-                    <div style="display: flex; justify-content: flex-end;">
-                      <button type="submit" id="btn-save-new-meme" class="btn btn-primary" style="background: #16a34a; border-color: #15803d; padding: 10px 16px;">
+                    <div style="display: flex; justify-content: center; margin-top: 16px;">
+                      <button type="submit" id="btn-save-new-meme" class="btn btn-primary" style="background: #16a34a; border-color: #15803d; padding: 10px 20px;">
                         💾 Tải lên & Lưu hệ thống
                       </button>
                     </div>
-                    <p id="new-meme-submit-status" class="status-msg mt-2"></p>
+                    <!-- Đã căn giữa text -->
+                    <p id="new-meme-submit-status" class="status-msg mt-2" style="text-align: center;"></p>
                   </div>
                 </div>
               </form>
@@ -4465,6 +4475,7 @@
     const fileDropArea = document.getElementById('file-drop-area');
     const fileInput = document.getElementById('new-meme-file');
     const filePreview = document.getElementById('new-meme-preview');
+    const previewContainer = document.getElementById('preview-container');
     const fileDropText = document.getElementById('file-drop-text');
     let currentBase64Image = null;
 
@@ -4497,11 +4508,23 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         currentBase64Image = e.target.result;
+        
+        // Hiện preview ảnh, ẩn vùng kéo thả
         filePreview.src = currentBase64Image;
-        filePreview.style.display = 'block';
-        fileDropText.style.display = 'none';
+        previewContainer.style.display = 'flex';
+        fileDropArea.style.display = 'none';
       };
       reader.readAsDataURL(file);
+    }
+
+    // Hàm xóa ảnh đã chọn để tải lại vùng kéo thả
+    function removeSelectedImage(e) {
+      if (e) e.stopPropagation(); // Ngăn sự kiện click của div cha (tránh mở popup chọn file)
+      currentBase64Image = null;
+      fileInput.value = "";
+      filePreview.src = "";
+      previewContainer.style.display = 'none';
+      fileDropArea.style.display = 'flex';
     }
 
     async function submitNewMeme(e) {
@@ -4548,10 +4571,7 @@
         // Khôi phục UI form
         document.getElementById("new-meme-slogan").value = "";
         document.getElementById("new-meme-rarity").value = "C";
-        currentBase64Image = null;
-        filePreview.src = "";
-        filePreview.style.display = "none";
-        fileDropText.style.display = "block";
+        removeSelectedImage(); // Gọi hàm xóa ảnh để phục hồi lại giao diện Drop
         
         loadAdminMemeCollection(); 
       } catch (err) {
