@@ -84,15 +84,93 @@
     .badge-locked { background: #e2e8f0; color: #64748b; }
     .reward-hint { font-size: 13px; color: #d97706; font-weight: 600; margin-top: 6px; }
 
-    .gacha-stage { padding: 40px; text-align: center; }
-    .gacha-box-animation { font-size: 72px; display: inline-block; transition: transform 0.3s; }
-    .shake { animation: shake 0.5s infinite; }
-    @keyframes shake {
-      0% { transform: translate(1px, 1px) rotate(0deg); }
-      25% { transform: translate(-2px, -2px) rotate(-5deg); }
-      50% { transform: translate(2px, 0px) rotate(5deg); }
-      75% { transform: translate(-1px, 2px) rotate(-3deg); }
-      100% { transform: translate(1px, -1px) rotate(0deg); }
+    /* --- KHU VỰC GACHA (HIỆU ỨNG HOẠT HÌNH) --- */
+    .gacha-stage {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 220px;
+      margin: 16px 0;
+      position: relative;
+      overflow: visible;
+    }
+
+    /* Hào quang tỏa sáng phía sau (Chỉ hiện khi mở quà) */
+    .gacha-stage::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(253,224,71,0.8) 0%, rgba(251,191,36,0.4) 40%, rgba(255,255,255,0) 70%);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      z-index: 1;
+      opacity: 0;
+      transition: all 0.3s ease-in;
+    }
+
+    .gacha-stage.burst-active::before {
+      width: 350px;
+      height: 350px;
+      opacity: 1;
+      animation: rotateAura 4s linear infinite;
+    }
+
+    /* Hộp quà - Trạng thái mặc định lơ lửng */
+    .gacha-box-animation {
+      font-size: 85px;
+      user-select: none;
+      display: inline-block;
+      transform-origin: bottom center; /* Trọng tâm ở đáy để nén/giãn chân thực */
+      animation: floatIdle 2.5s ease-in-out infinite;
+      position: relative;
+      z-index: 10;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));
+    }
+
+    /* Trạng thái rung lắc bạo lực */
+    .gacha-box-animation.shaking {
+      animation: cartoonStruggle 0.4s infinite;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25));
+    }
+
+    /* Trạng thái nổ tung mở quà */
+    .gacha-box-animation.glow {
+      animation: cartoonBurst 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* --- KEYFRAMES VẬT LÝ HOẠT HÌNH --- */
+
+    /* Thở và lơ lửng */
+    @keyframes floatIdle {
+      0%, 100% { transform: translateY(0) scale(1, 1); }
+      50% { transform: translateY(-12px) scale(0.96, 1.04); }
+    }
+
+    /* Vùng vẫy, ép dẹt và kéo dài liên tục */
+    @keyframes cartoonStruggle {
+      0% { transform: translate(0, 0) scale(1.1, 0.9) rotate(0deg); }
+      25% { transform: translate(-6px, -12px) scale(0.9, 1.1) rotate(-15deg); }
+      50% { transform: translate(0, 0) scale(1.15, 0.85) rotate(0deg); }
+      75% { transform: translate(6px, -12px) scale(0.9, 1.1) rotate(15deg); }
+      100% { transform: translate(0, 0) scale(1.1, 0.9) rotate(0deg); }
+    }
+
+    /* Lấy đà (ép xuống) rồi bung lớn, phát sáng */
+    @keyframes cartoonBurst {
+      0% { transform: scale(1, 1); filter: brightness(1); }
+      20% { transform: scale(1.3, 0.7) translateY(10px); filter: brightness(1); }
+      50% { transform: scale(0.8, 1.4) translateY(-30px); filter: brightness(1.5); }
+      80% { transform: scale(1.2, 1.2) translateY(-10px); filter: brightness(2) drop-shadow(0 0 50px #fbbf24); }
+      100% { transform: scale(1, 1) translateY(0); filter: brightness(1) drop-shadow(0 0 10px #fbbf24); }
+    }
+
+    /* Xoay hào quang */
+    @keyframes rotateAura {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
     .meme-collection-grid {
@@ -223,35 +301,6 @@
       background: #fee2e2;
       border: 1px solid #fecaca;
       color: #b91c1c;
-    }
-    .gacha-stage {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 180px;
-      margin: 16px 0;
-      position: relative;
-    }
-    .gacha-box-animation {
-      font-size: 72px;
-      user-select: none;
-      transition: transform 0.2s ease;
-      cursor: default;
-      display: inline-block;
-    }
-    .gacha-box-animation.shaking {
-      animation: gachaShake 0.4s infinite cubic-bezier(.36,.07,.19,.97) both, gachaGlow 0.8s infinite alternate;
-    }
-    @keyframes gachaShake {
-      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1.1); }
-      20% { transform: translate3d(-6px, -4px, 0) rotate(-12deg) scale(1.15); }
-      40% { transform: translate3d(6px, 4px, 0) rotate(12deg) scale(1.15); }
-      60% { transform: translate3d(-4px, 2px, 0) rotate(-8deg) scale(1.18); }
-      80% { transform: translate3d(4px, -2px, 0) rotate(8deg) scale(1.18); }
-    }
-    @keyframes gachaGlow {
-      from { filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.4)); }
-      to { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.9)); }
     }
 
     .gacha-history-box {
@@ -753,7 +802,6 @@
               <h4>Bài Kiểm Tra Định Kỳ 1</h4>
               <p>Thời gian: Không giới hạn | 5 câu hỏi</p>
               <p class="reward-hint">Thưởng: Lên tới +50 🪙</p>
-              <!-- THAY ĐỔI: Sử dụng button gọi API kiểm tra thay vì the <a> trực tiếp -->
               <button id="btn-do-quiz" onclick="goToQuiz(event)" class="btn btn-primary btn-block mt-2">Vào Làm Bài</button>
             </div>
 
@@ -962,6 +1010,18 @@
       </div>
     </div>
 
+    <!-- MODAL HIỂN THỊ KẾT QUẢ GACHA -->
+    <div id="gacha-result-modal" class="modal-backdrop" onclick="closeGachaResultModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close-btn" onclick="closeGachaResultModal()">✕</button>
+        <h3 style="margin: 0 0 12px 0; color: #1e293b; font-size: 20px;">🎉 Chúc Mừng! 🎉</h3>
+        <p style="font-size: 14px; color: #475569; margin-bottom: 16px;">Bạn vừa nhận được 1 thẻ meme mới</p>
+        <span id="gacha-result-rarity" class="rarity-tag" style="font-size: 14px; padding: 4px 14px;"></span>
+        <img id="gacha-result-img" class="view-meme-img" src="" alt="Meme Image" style="margin-top: 12px; border: 2px solid #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);">
+        <h3 id="gacha-result-slogan" style="margin: 12px 0 0 0; color: #1e293b; font-size: 18px; word-break: break-word;"></h3>
+      </div>
+    </div>
+
     <div id="view-meme-modal" class="modal-backdrop" onclick="closeMemeViewModal(event)">
       <div class="modal-card" onclick="event.stopPropagation()">
         <button class="modal-close-btn" onclick="closeMemeViewModal()">✕</button>
@@ -1150,7 +1210,7 @@
 
           if (result.data.reward_status === 'approved') {
             if (navDot) {
-              navDot.className = "nav-status-dot approved"; // Chấm xanh lá
+              navDot.className = "nav-status-dot approved";
             }
             if (noticeBox && noticeText) {
               noticeBox.className = "rejection-notice-box approved";
@@ -1160,7 +1220,7 @@
             }
           } else if (result.data.reward_status === 'rejected') {
             if (navDot) {
-              navDot.className = "nav-status-dot rejected"; // Chấm đỏ
+              navDot.className = "nav-status-dot rejected";
             }
             if (noticeBox && noticeText) {
               noticeBox.className = "rejection-notice-box rejected";
@@ -1569,6 +1629,7 @@
       renderGachaHistory();
     }
 
+    // --- HÀM PULL GACHA HOẠT HÌNH (SQUASH & STRETCH) ---
     async function pullGacha() {
       const session = getSession();
       const cost = 30;
@@ -1582,10 +1643,11 @@
 
       const btnPull = document.getElementById("btn-pull-gacha");
       const gachaBox = document.getElementById("gacha-box");
+      const gachaStage = document.querySelector(".gacha-stage");
       
       btnPull.disabled = true;
       gachaBox.classList.add("shaking");
-      notice.textContent = "✨ Đang mở hộp quà bí ẩn... ⏳";
+      notice.innerHTML = "✨ Thẻ bài đang phản ứng... ⏳";
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -1595,42 +1657,68 @@
         });
         const result = await res.json();
 
+        // 1. Kéo dài thời gian rung lắc (Struggle) lên 1.5 giây để tăng kịch tính
         setTimeout(() => {
           gachaBox.classList.remove("shaking");
-          btnPull.disabled = false;
 
           if (!res.ok || !result.success) {
+            btnPull.disabled = false;
             notice.textContent = result.message || "Lỗi quay Gacha!";
             return;
           }
 
-          studentCoins = Number(result.data.coins);
-          studentSpentCoins = Number(result.data.spent_coins !== undefined ? result.data.spent_coins : studentSpentCoins + cost);
-          studentTotalCoins = Number(result.data.total_coins !== undefined ? result.data.total_coins : studentTotalCoins);
-          
-          studentMemeIds = Array.isArray(result.data.meme_id_list) 
-            ? result.data.meme_id_list.map(Number) 
-            : [];
-          
-          updateCoinsDisplay();
-          
-          if (currentMemesList.length === 0) {
-             loadStudentCollection();
-          } else {
-             renderStudentCollection();
-          }
+          // 2. Chuyển sang trạng thái nổ tung (Burst) và bật Hào quang (Aura)
+          gachaBox.classList.add("glow");
+          if (gachaStage) gachaStage.classList.add("burst-active");
 
-          const won = result.data.wonMeme;
-          notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
+          // 3. Đợi animation nổ hoàn tất (0.8 giây) rồi hiển thị Popup
+          setTimeout(() => {
+            gachaBox.classList.remove("glow");
+            if (gachaStage) gachaStage.classList.remove("burst-active");
+            btnPull.disabled = false;
 
-          addGachaHistoryItem(won);
-        }, 1200);
+            // Cập nhật lại xu
+            studentCoins = Number(result.data.coins);
+            studentSpentCoins = Number(result.data.spent_coins !== undefined ? result.data.spent_coins : studentSpentCoins + cost);
+            studentTotalCoins = Number(result.data.total_coins !== undefined ? result.data.total_coins : studentTotalCoins);
+            
+            studentMemeIds = Array.isArray(result.data.meme_id_list) 
+              ? result.data.meme_id_list.map(Number) 
+              : [];
+            
+            updateCoinsDisplay();
+            
+            if (currentMemesList.length === 0) {
+               loadStudentCollection();
+            } else {
+               renderStudentCollection();
+            }
+
+            const won = result.data.wonMeme;
+            notice.innerHTML = `🎉 Chúc mừng! Bạn nhận được meme [${won.rarity}]: <strong>${won.slogan}</strong>`;
+
+            // Đổ dữ liệu vào Modal kết quả
+            document.getElementById("gacha-result-rarity").textContent = won.rarity;
+            document.getElementById("gacha-result-img").src = won.image;
+            document.getElementById("gacha-result-slogan").textContent = won.slogan;
+            document.getElementById("gacha-result-modal").classList.add("show");
+
+            addGachaHistoryItem(won);
+          }, 800); // Khớp với 0.8s của cartoonBurst
+
+        }, 1500); // Rung lắc trong 1.5s
 
       } catch (err) {
         gachaBox.classList.remove("shaking");
         btnPull.disabled = false;
         notice.textContent = "Lỗi kết nối máy chủ!";
       }
+    }
+
+    // --- HÀM ĐÓNG MODAL KẾT QUẢ GACHA ---
+    function closeGachaResultModal(e) {
+      const modal = document.getElementById("gacha-result-modal");
+      if (modal) modal.classList.remove("show");
     }
 
     async function loadStudentCollection() {
@@ -1704,7 +1792,6 @@
 
         if (isUnlocked) {
           card.onclick = () => openMemeViewModal(meme, count);
-          // ĐÃ THÊM: Dòng hiển thị ID nằm giữa, màu xám nhạt (font-size: 11px; color: #94a3b8)
           card.innerHTML = `
             <div>
               <span class="rarity-tag">${meme.rarity}</span>
@@ -1719,7 +1806,6 @@
             </div>
           `;
         } else {
-          // THẺ CHƯA MỞ KHÓA CŨNG CÓ THỂ HIỂN THỊ ID (Optional)
           card.innerHTML = `
             <div>
               <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
