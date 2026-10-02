@@ -32,7 +32,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function getUserSession() {
   try {
-    return JSON.parse(localStorage.getItem("user_session") || sessionStorage.getItem("current_user") || "null");
+    // Kiểm tra cả localStorage (cho giáo viên) và sessionStorage (cho học sinh)
+    return JSON.parse(localStorage.getItem("user_session") || sessionStorage.getItem("user_session") || sessionStorage.getItem("current_user") || "null");
   } catch (e) {
     return null;
   }
@@ -66,9 +67,13 @@ if (loginForm) {
         return;
       }
 
-      // Lưu đồng bộ dữ liệu phiên cho auth-guard
-      localStorage.setItem("user_session", JSON.stringify(result.data));
-      sessionStorage.setItem("current_user", JSON.stringify(result.data));
+      // Lưu trữ dựa trên phân quyền: teacher lưu ở localStorage, student lưu ở sessionStorage
+      if (result.data.role === "teacher") {
+        localStorage.setItem("user_session", JSON.stringify(result.data));
+      } else {
+        sessionStorage.setItem("user_session", JSON.stringify(result.data));
+      }
+      sessionStorage.setItem("current_user", JSON.stringify(result.data)); // Fallback cho UI cũ
 
       showDashboard(result.data);
 
@@ -362,7 +367,8 @@ function restartQuiz() {
 
 // 7. Đăng xuất hoàn chỉnh (Xóa session và dọn sạch lịch sử gacha)
 function logout() {
-  localStorage.removeItem("user_session");
+  localStorage.removeItem("user_session"); 
+  sessionStorage.removeItem("user_session");
   sessionStorage.removeItem("current_user");
   sessionStorage.removeItem("gacha_session_history");
   sessionStorage.removeItem("teacher_active_tab");

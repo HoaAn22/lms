@@ -1,4 +1,4 @@
-// Lấy thông tin session, ưu tiên localStorage rồi đến sessionStorage
+// Lấy thông tin session: Nếu là teacher sẽ nằm ở localStorage, student nằm ở sessionStorage
 function getSession() {
   try {
     const localData = localStorage.getItem("user_session");
@@ -13,13 +13,17 @@ function getSession() {
   }
 }
 
-// Lưu đồng bộ vào cả 2 nơi lưu trữ
+// Lưu đồng bộ: Teacher giữ nguyên ở localStorage, Student thì ở sessionStorage
 function saveSession(userData) {
   try {
     if (!userData) return;
     const str = JSON.stringify(userData);
-    localStorage.setItem("user_session", str);
-    sessionStorage.setItem("user_session", str);
+    
+    if (userData.role === "teacher") {
+      localStorage.setItem("user_session", str);
+    } else {
+      sessionStorage.setItem("user_session", str);
+    }
   } catch (e) {
     console.error("Lỗi lưu session:", e);
   }
@@ -35,7 +39,7 @@ function checkAuth(requiredRole) {
     return null;
   }
 
-  // Đảm bảo đồng bộ 2 vùng lưu trữ
+  // Đảm bảo đồng bộ lại vùng lưu trữ cho chắc chắn
   saveSession(session);
 
   // 2. Nếu trang yêu cầu quyền cụ thể và role không khớp:
@@ -54,7 +58,7 @@ function checkAuth(requiredRole) {
   return session;
 }
 
-// Hàm đăng xuất: Xóa sạch toàn bộ session và cache trên trình duyệt
+// Hàm đăng xuất: Xóa sạch toàn bộ session ở cả 2 kho lưu trữ và cache trên trình duyệt
 function logout() {
   try {
     localStorage.removeItem("user_session");

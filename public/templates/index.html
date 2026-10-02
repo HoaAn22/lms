@@ -253,7 +253,8 @@
         regStatus.textContent = "🎉 Đăng ký thành công! Đang tự động đăng nhập...";
         
         setTimeout(() => {
-          localStorage.setItem("user_session", JSON.stringify({
+          // Lưu vào sessionStorage do đây là luồng đăng ký của học sinh
+          sessionStorage.setItem("user_session", JSON.stringify({
             id: result.data.id,
             username: result.data.username,
             role: "student",
@@ -303,7 +304,13 @@
         }
 
         const userData = result.data;
-        localStorage.setItem("user_session", JSON.stringify(userData));
+
+        // Lưu vào kho chứa phù hợp theo vai trò người dùng (Giáo viên giữ đăng nhập, Học sinh thì mất khi thoát)
+        if (userData.role === "teacher") {
+          localStorage.setItem("user_session", JSON.stringify(userData));
+        } else {
+          sessionStorage.setItem("user_session", JSON.stringify(userData));
+        }
 
         if (userData.role === "teacher") {
           window.location.href = "/teacher";
