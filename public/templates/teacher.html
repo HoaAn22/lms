@@ -1649,6 +1649,44 @@
 
         <!-- TAB 3: BỘ SƯU TẬP MEME -->
         <div id="tab-collection" class="tab-panel">
+
+          <div class="card form-container mb-4" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+            <div class="card-header">
+              <h3 style="margin: 0; font-size: 16px; color: #1e3a8a;">⚙️ Quy tắc quay thưởng</h3>
+            </div>
+            <p style="font-size: 13px; color: #475569; margin: 0 0 14px;">Bật từng quy tắc và đặt số lượt quay. Để trống số lượt khi tắt quy tắc.</p>
+            <form id="gacha-settings-form" onsubmit="saveGachaSettings(event)">
+              <div class="grid-2">
+                <div style="padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #fff;">
+                  <label style="display: flex; gap: 8px; align-items: center; font-weight: 600; color: #1e293b;">
+                    <input id="gacha-target-enabled" type="checkbox" onchange="toggleGachaTargetInputs()">
+                    Mục tiêu thẻ
+                  </label>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-top: 10px;">
+                    <label for="gacha-target-limit-ss" style="font-size: 12px;">SS lượt<input id="gacha-target-limit-ss" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
+                    <label for="gacha-target-limit-s" style="font-size: 12px;">S lượt<input id="gacha-target-limit-s" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
+                    <label for="gacha-target-limit-a" style="font-size: 12px;">A lượt<input id="gacha-target-limit-a" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
+                    <label for="gacha-target-limit-b" style="font-size: 12px;">B lượt<input id="gacha-target-limit-b" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
+                    <label for="gacha-target-limit-c" style="font-size: 12px;">C lượt<input id="gacha-target-limit-c" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
+                  </div>
+                  <small style="display: block; margin-top: 6px; color: #64748b;">Nhập ngưỡng riêng cho từng độ hiếm; để trống độ hiếm không áp dụng mục tiêu. Tiến độ được giữ khi đổi thẻ hoặc nhận mục tiêu sớm.</small>
+                </div>
+                <div style="padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #fff;">
+                  <label style="display: flex; gap: 8px; align-items: center; font-weight: 600; color: #1e293b;">
+                    <input id="gacha-new-meme-enabled" type="checkbox" onchange="toggleGachaSettingInput('gacha-new-meme-enabled', 'gacha-new-meme-limit')">
+                    Bảo đảm thẻ mới
+                  </label>
+                  <label for="gacha-new-meme-limit" style="display: block; margin-top: 10px; font-size: 13px;">Số lượt tối đa để nhận thẻ chưa có</label>
+                  <input id="gacha-new-meme-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <small style="display: block; margin-top: 6px; color: #64748b;">Khi đạt ngưỡng, thẻ mới được chọn theo tỷ lệ độ hiếm gốc.</small>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap;">
+                <button id="btn-save-gacha-settings" type="submit" class="btn btn-primary">Lưu quy tắc</button>
+                <span id="gacha-settings-status" class="status-msg" role="status"></span>
+              </div>
+            </form>
+          </div>
           
           <!-- KHỐI 1: THÊM MEME MỚI (TẢI LÊN CLOUDFLARE R2) -->
           <div class="card form-container mb-4" style="background: #f0fdf4; border: 1px solid #86efac;">
@@ -2867,6 +2905,7 @@
         fetchPendingRewardRequests();
       } else if (tabId === 'tab-collection') {
         loadAdminMemeCollection();
+        loadGachaSettings();
       } else if (tabId === 'tab-login-history') {
         loadLoginHistory();
         loadIpManagement();
@@ -3259,6 +3298,99 @@
         schoolCreateStatus.textContent = "Lỗi kết nối đến máy chủ!";
       }
     });
+
+    function toggleGachaSettingInput(checkboxId, inputId) {
+      const checkbox = document.getElementById(checkboxId);
+      const input = document.getElementById(inputId);
+      input.disabled = !checkbox.checked;
+      input.required = checkbox.checked;
+      if (!checkbox.checked) input.value = "";
+    }
+
+    function toggleGachaTargetInputs() {
+      const enabled = document.getElementById("gacha-target-enabled").checked;
+      document.querySelectorAll(".gacha-target-limit").forEach(input => {
+        input.disabled = !enabled;
+        if (!enabled) input.value = "";
+      });
+    }
+
+    async function loadGachaSettings() {
+      const statusEl = document.getElementById("gacha-settings-status");
+      if (statusEl) {
+        statusEl.className = "status-msg";
+        statusEl.textContent = "Đang tải cài đặt...";
+      }
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_gacha_settings" })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || "Không thể tải cài đặt quay thưởng.");
+
+        const settings = result.data || {};
+        const targetLimits = settings.target_pull_limits || {};
+        document.getElementById("gacha-target-enabled").checked = settings.target_enabled === true;
+        ["ss", "s", "a", "b", "c"].forEach(rarity => {
+          document.getElementById(`gacha-target-limit-${rarity}`).value = targetLimits[rarity.toUpperCase()] || "";
+        });
+        document.getElementById("gacha-new-meme-enabled").checked = settings.new_meme_enabled === true;
+        document.getElementById("gacha-new-meme-limit").value = settings.new_meme_pull_limit || "";
+        toggleGachaTargetInputs();
+        toggleGachaSettingInput("gacha-new-meme-enabled", "gacha-new-meme-limit");
+        if (statusEl) {
+          statusEl.className = "status-msg status-success";
+          statusEl.textContent = "Đã tải cài đặt.";
+        }
+      } catch (error) {
+        if (statusEl) {
+          statusEl.className = "status-msg status-error";
+          statusEl.textContent = error.message || "Lỗi kết nối máy chủ.";
+        }
+      }
+    }
+
+    async function saveGachaSettings(event) {
+      event.preventDefault();
+      const statusEl = document.getElementById("gacha-settings-status");
+      const button = document.getElementById("btn-save-gacha-settings");
+      const targetEnabled = document.getElementById("gacha-target-enabled").checked;
+      const newMemeEnabled = document.getElementById("gacha-new-meme-enabled").checked;
+      const targetPullLimits = {};
+      ["SS", "S", "A", "B", "C"].forEach(rarity => {
+        targetPullLimits[rarity] = document.getElementById(`gacha-target-limit-${rarity.toLowerCase()}`).value;
+      });
+      button.disabled = true;
+      statusEl.className = "status-msg";
+      statusEl.textContent = "Đang lưu...";
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_gacha_settings",
+            teacher_username: user.username,
+            target_enabled: targetEnabled,
+            target_pull_limits: targetPullLimits,
+            new_meme_enabled: newMemeEnabled,
+            new_meme_pull_limit: newMemeEnabled ? document.getElementById("gacha-new-meme-limit").value : null
+          })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || "Không thể lưu cài đặt quay thưởng.");
+        statusEl.className = "status-msg status-success";
+        statusEl.textContent = result.message || "Đã lưu cài đặt quay thưởng.";
+      } catch (error) {
+        statusEl.className = "status-msg status-error";
+        statusEl.textContent = error.message || "Lỗi kết nối máy chủ.";
+      } finally {
+        button.disabled = false;
+      }
+    }
 
     async function loadAdminMemeCollection() {
       const container = document.getElementById("admin-meme-grid-container");

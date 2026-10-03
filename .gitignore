@@ -1,5 +1,5 @@
-# Local Netlify folder
 node_modules/
+supabase/
 .env
 lms-meme.json
 

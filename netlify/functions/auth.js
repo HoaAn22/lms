@@ -70,6 +70,30 @@ const parseMemeIds = (data) => {
   return [];
 };
 
+const GACHA_RARITIES = ['SS', 'S', 'A', 'B', 'C'];
+const getTargetPullLimits = (settings = {}) => Object.fromEntries(
+  GACHA_RARITIES.map(rarity => [
+    rarity,
+    Number(settings[`target_pull_limit_${rarity.toLowerCase()}`]) || null
+  ])
+);
+
+const pickMemeByOriginalRarity = (memes) => {
+  const poolSS = memes.filter(meme => meme.rarity === 'SS');
+  const poolS = memes.filter(meme => meme.rarity === 'S');
+  const poolA = memes.filter(meme => meme.rarity === 'A');
+  const poolB = memes.filter(meme => meme.rarity === 'B');
+  const poolC = memes.filter(meme => meme.rarity === 'C');
+  const roll = Math.random() * 100;
+  const selectedPool = (roll < 1 && poolSS.length > 0) ? poolSS
+    : (roll < 6 && poolS.length > 0) ? poolS
+      : (roll < 16 && poolA.length > 0) ? poolA
+        : (roll < 46 && poolB.length > 0) ? poolB
+          : (poolC.length > 0 ? poolC : memes);
+
+  return selectedPool[Math.floor(Math.random() * selectedPool.length)];
+};
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
@@ -368,12 +392,91 @@ exports.handler = async (event) => {
     if (action === "get_student_info") {
       const { data: student, error } = await supabase.from('students').select('id, username, full_name, last_name, first_name, class_name, school, grade, username_change_limit').eq('id', body.id).single();
       if (error || !student) return createResponse(false, null, "Không tìm thấy học sinh.");
-      let { data: itemData } = await supabase.from('items').select('coins, total_coins, spent_coins, meme_id_list, pending_coins, reward_notice, reward_status').eq('student_id', body.id).single();
+      let { data: itemData } = await supabase.from('items').select('coins, total_coins, spent_coins, meme_id_list, pending_coins, reward_notice, reward_status, gacha_target_meme_id, gacha_target_pull_count, gacha_new_pull_count').eq('student_id', body.id).single();
       if (!itemData) {
-        await supabase.from('items').insert([{ student_id: body.id, coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, reward_status: null, meme_id_list: [] }]);
-        itemData = { coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, reward_status: null, meme_id_list: [] };
+        await supabase.from('items').insert([{ student_id: body.id, coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, reward_status: null, meme_id_list: [], gacha_target_meme_id: null, gacha_target_pull_count: 0, gacha_new_pull_count: 0 }]);
+        itemData = { coins: 100, total_coins: 100, spent_coins: 0, pending_coins: 0, reward_notice: null, reward_status: null, meme_id_list: [], gacha_target_meme_id: null, gacha_target_pull_count: 0, gacha_new_pull_count: 0 };
       }
-      return createResponse(true, { ...student, grade: student.grade || '7', username_change_limit: student.username_change_limit !== undefined ? student.username_change_limit : 2, coins: itemData.coins !== undefined ? itemData.coins : 100, total_coins: itemData.total_coins !== undefined ? itemData.total_coins : 100, spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0, pending_coins: itemData.pending_coins !== undefined ? itemData.pending_coins : 0, reward_notice: itemData.reward_notice || null, reward_status: itemData.reward_status || null, meme_id_list: parseMemeIds(itemData.meme_id_list) });
+      const { data: gachaSettings, error: settingsError } = await supabase.from('gacha_settings').select('target_enabled, target_pull_limit_ss, target_pull_limit_s, target_pull_limit_a, target_pull_limit_b, target_pull_limit_c, new_meme_enabled, new_meme_pull_limit').eq('id', 1).maybeSingle();
+      if (settingsError) return createResponse(false, null, "Không thể tải quy tắc quay thưởng. Giáo viên cần cập nhật cơ sở dữ liệu gacha_settings.");
+      const resolvedSettings = gachaSettings || { target_enabled: false, new_meme_enabled: false, new_meme_pull_limit: null };
+      return createResponse(true, { ...student, grade: student.grade || '7', username_change_limit: student.username_change_limit !== undefined ? student.username_change_limit : 2, coins: itemData.coins !== undefined ? itemData.coins : 100, total_coins: itemData.total_coins !== undefined ? itemData.total_coins : 100, spent_coins: itemData.spent_coins !== undefined ? itemData.spent_coins : 0, pending_coins: itemData.pending_coins !== undefined ? itemData.pending_coins : 0, reward_notice: itemData.reward_notice || null, reward_status: itemData.reward_status || null, meme_id_list: parseMemeIds(itemData.meme_id_list), gacha_target_meme_id: itemData.gacha_target_meme_id || null, gacha_target_pull_count: Number(itemData.gacha_target_pull_count) || 0, gacha_new_pull_count: Number(itemData.gacha_new_pull_count) || 0, gacha_settings: { ...resolvedSettings, target_pull_limits: getTargetPullLimits(resolvedSettings) } });
+    }
+
+    if (action === "get_gacha_settings") {
+      const { data, error } = await supabase.from('gacha_settings').select('target_enabled, target_pull_limit_ss, target_pull_limit_s, target_pull_limit_a, target_pull_limit_b, target_pull_limit_c, new_meme_enabled, new_meme_pull_limit').eq('id', 1).maybeSingle();
+      if (error) return createResponse(false, null, "Không thể tải cài đặt quay thưởng. Hãy chạy tệp migration Supabase mới nhất.");
+      const settings = data || { target_enabled: false, new_meme_enabled: false, new_meme_pull_limit: null };
+      return createResponse(true, { ...settings, target_pull_limits: getTargetPullLimits(settings) });
+    }
+
+    if (action === "save_gacha_settings") {
+      const targetEnabled = body.target_enabled === true;
+      const newMemeEnabled = body.new_meme_enabled === true;
+      const newMemeLimit = Number(body.new_meme_pull_limit);
+      const targetPullLimits = {};
+      for (const rarity of GACHA_RARITIES) {
+        const rawLimit = body.target_pull_limits?.[rarity];
+        if (rawLimit === null || rawLimit === undefined || rawLimit === "") {
+          targetPullLimits[rarity] = null;
+          continue;
+        }
+        const limit = Number(rawLimit);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 10000) {
+          return createResponse(false, null, `Số lượt mục tiêu độ hiếm ${rarity} phải là số nguyên từ 1 đến 10000.`);
+        }
+        targetPullLimits[rarity] = limit;
+      }
+      if (targetEnabled && !GACHA_RARITIES.some(rarity => targetPullLimits[rarity] !== null)) {
+        return createResponse(false, null, "Hãy nhập số lượt mục tiêu cho ít nhất một độ hiếm.");
+      }
+      if (newMemeEnabled && (!Number.isInteger(newMemeLimit) || newMemeLimit < 1 || newMemeLimit > 10000)) {
+        return createResponse(false, null, "Số lượt bảo đảm thẻ mới phải là số nguyên từ 1 đến 10000.");
+      }
+
+      const { data, error } = await supabase.from('gacha_settings').upsert({
+        id: 1,
+        target_enabled: targetEnabled,
+        target_pull_limit: targetEnabled ? Math.min(...GACHA_RARITIES.map(rarity => targetPullLimits[rarity]).filter(Number.isInteger)) : null,
+        target_pull_limit_ss: targetEnabled ? targetPullLimits.SS : null,
+        target_pull_limit_s: targetEnabled ? targetPullLimits.S : null,
+        target_pull_limit_a: targetEnabled ? targetPullLimits.A : null,
+        target_pull_limit_b: targetEnabled ? targetPullLimits.B : null,
+        target_pull_limit_c: targetEnabled ? targetPullLimits.C : null,
+        new_meme_enabled: newMemeEnabled,
+        new_meme_pull_limit: newMemeEnabled ? newMemeLimit : null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' }).select('target_enabled, target_pull_limit_ss, target_pull_limit_s, target_pull_limit_a, target_pull_limit_b, target_pull_limit_c, new_meme_enabled, new_meme_pull_limit').single();
+      if (error) return createResponse(false, null, "Không thể lưu cài đặt quay thưởng. Hãy chạy tệp migration Supabase mới nhất.");
+      return createResponse(true, { ...data, target_pull_limits: getTargetPullLimits(data) }, "Đã lưu cài đặt quay thưởng.");
+    }
+
+    if (action === "set_gacha_target") {
+      const studentId = body.student_id;
+      const targetMemeId = body.target_meme_id === null || body.target_meme_id === "" ? null : Number(body.target_meme_id);
+      if (!studentId || (targetMemeId !== null && !Number.isInteger(targetMemeId))) {
+        return createResponse(false, null, "Thẻ mục tiêu không hợp lệ.");
+      }
+
+      const { data: itemData, error: itemError } = await supabase.from('items').select('meme_id_list').eq('student_id', studentId).single();
+      if (itemError || !itemData) return createResponse(false, null, "Không tìm thấy bộ sưu tập của học sinh.");
+
+      if (targetMemeId !== null) {
+        const { data: meme, error: memeError } = await supabase.from('meme').select('id, rarity').eq('id', targetMemeId).maybeSingle();
+        if (memeError || !meme) return createResponse(false, null, "Không tìm thấy thẻ mục tiêu.");
+        if (parseMemeIds(itemData.meme_id_list).includes(targetMemeId)) {
+          return createResponse(false, null, "Bạn đã sở hữu thẻ này. Hãy chọn một thẻ chưa có.");
+        }
+        const { data: settings, error: settingsError } = await supabase.from('gacha_settings').select('target_enabled, target_pull_limit_ss, target_pull_limit_s, target_pull_limit_a, target_pull_limit_b, target_pull_limit_c').eq('id', 1).maybeSingle();
+        if (settingsError) return createResponse(false, null, "Không thể xác minh cài đặt mục tiêu.");
+        if (!settings?.target_enabled || !getTargetPullLimits(settings)[meme.rarity]) {
+          return createResponse(false, null, `Giáo viên chưa thiết lập số lượt mục tiêu cho độ hiếm ${meme.rarity}.`);
+        }
+      }
+
+      const { data, error } = await supabase.from('items').update({ gacha_target_meme_id: targetMemeId }).eq('student_id', studentId).select('gacha_target_meme_id, gacha_target_pull_count').single();
+      if (error) return createResponse(false, null, "Không thể cập nhật thẻ mục tiêu. Hãy chạy tệp migration Supabase mới nhất.");
+      return createResponse(true, data, targetMemeId === null ? "Đã bỏ mục tiêu. Tiến độ lượt mục tiêu được giữ lại." : "Đã đặt thẻ mục tiêu. Tiến độ lượt hiện có được giữ lại.");
     }
 
     if (action === "update_student_highlight") {
@@ -911,32 +1014,112 @@ exports.handler = async (event) => {
 
     if (action === "pull_gacha") {
       const { student_id } = body;
-      let { data: itemData, error: itemErr } = await supabase.from('items').select('coins, total_coins, spent_coins, meme_id_list').eq('student_id', student_id).single();
+      const requestedPullCount = body.pull_count === "all" ? "all" : Number(body.pull_count || 1);
+      const { data: itemData, error: itemErr } = await supabase.from('items').select('coins, total_coins, spent_coins, meme_id_list, gacha_target_meme_id, gacha_target_pull_count, gacha_new_pull_count').eq('student_id', student_id).single();
       if (itemErr || !itemData) return createResponse(false, null, "Không tìm thấy dữ liệu ví của học sinh.");
       
       const currentCoins = itemData.coins !== undefined ? itemData.coins : 100;
       const gachaCost = 30;
-      if (currentCoins < gachaCost) return createResponse(false, null, "Bạn không đủ 30 Xu để quay Gacha!");
+      const availablePullCount = Math.floor(currentCoins / gachaCost);
+      if (requestedPullCount !== "all" && (!Number.isInteger(requestedPullCount) || requestedPullCount < 1 || requestedPullCount > 10)) {
+        return createResponse(false, null, "Số lượt quay không hợp lệ.");
+      }
+      const pullCount = requestedPullCount === "all" ? availablePullCount : requestedPullCount;
+      if (pullCount < 1) return createResponse(false, null, "Bạn không đủ 30 Xu để quay Gacha!");
+      if (pullCount > availablePullCount) return createResponse(false, null, `Bạn cần ít nhất ${pullCount * gachaCost} Xu để quay ${pullCount} lần.`);
 
-      let { data: memesList } = await supabase.from('meme').select('id, image, slogan, rarity');
+      const { data: memesList, error: memesError } = await supabase.from('meme').select('id, image, slogan, rarity');
+      if (memesError) return createResponse(false, null, "Không thể tải danh sách thẻ để quay thưởng.");
       if (!memesList || memesList.length === 0) return createResponse(false, null, "Hệ thống chưa có dữ liệu meme!");
 
-      const poolSS = memesList.filter(m => m.rarity === 'SS');
-      const poolS = memesList.filter(m => m.rarity === 'S');
-      const poolA = memesList.filter(m => m.rarity === 'A');
-      const poolB = memesList.filter(m => m.rarity === 'B');
-      const poolC = memesList.filter(m => m.rarity === 'C');
+      const { data: gachaSettings, error: settingsError } = await supabase.from('gacha_settings').select('target_enabled, target_pull_limit_ss, target_pull_limit_s, target_pull_limit_a, target_pull_limit_b, target_pull_limit_c, new_meme_enabled, new_meme_pull_limit').eq('id', 1).maybeSingle();
+      if (settingsError) return createResponse(false, null, "Không thể tải quy tắc quay thưởng. Giáo viên cần cập nhật cơ sở dữ liệu gacha_settings.");
+      const settings = gachaSettings || {};
+      const targetPullLimits = getTargetPullLimits(settings);
+      const targetRuleEnabled = settings.target_enabled === true;
+      const ownedIds = parseMemeIds(itemData.meme_id_list);
+      const ownedIdSet = new Set(ownedIds);
+      let targetMemeId = itemData.gacha_target_meme_id === null ? null : Number(itemData.gacha_target_meme_id);
+      let targetPullCount = Number(itemData.gacha_target_pull_count) || 0;
+      let newPullCount = Number(itemData.gacha_new_pull_count) || 0;
+      const newMemeLimit = Number(settings.new_meme_pull_limit);
+      const newMemeRuleActive = settings.new_meme_enabled === true && Number.isInteger(newMemeLimit) && newMemeLimit > 0;
 
-      const roll = Math.random() * 100;
-      let selectedPool = (roll < 1 && poolSS.length > 0) ? poolSS : (roll < 6 && poolS.length > 0) ? poolS : (roll < 16 && poolA.length > 0) ? poolA : (roll < 46 && poolB.length > 0) ? poolB : (poolC.length > 0 ? poolC : memesList);
-      if (selectedPool.length === 0) selectedPool = memesList;
+      if (targetMemeId !== null && (!memesList.some(meme => Number(meme.id) === targetMemeId) || ownedIdSet.has(targetMemeId))) {
+        targetMemeId = null;
+      }
 
-      const randomMeme = selectedPool[Math.floor(Math.random() * selectedPool.length)];
-      let updatedInventoryIds = [...parseMemeIds(itemData.meme_id_list)];
-      updatedInventoryIds.push(randomMeme.id);
+      const wonMemes = [];
+      for (let pullIndex = 0; pullIndex < pullCount; pullIndex += 1) {
+        const currentTarget = targetMemeId === null ? null : memesList.find(meme => Number(meme.id) === targetMemeId);
+        const currentTargetLimit = currentTarget ? targetPullLimits[currentTarget.rarity] : null;
+        const targetRuleApplies = settings.target_enabled === true && Number.isInteger(currentTargetLimit) && currentTargetLimit > 0;
+        const unownedMemes = memesList.filter(meme => !ownedIdSet.has(Number(meme.id)));
 
-      await supabase.from('items').update({ coins: currentCoins - gachaCost, spent_coins: (itemData.spent_coins || 0) + gachaCost, total_coins: itemData.total_coins || currentCoins, meme_id_list: updatedInventoryIds }).eq('student_id', student_id);
-      return createResponse(true, { coins: currentCoins - gachaCost, total_coins: itemData.total_coins || currentCoins, spent_coins: (itemData.spent_coins || 0) + gachaCost, wonMeme: randomMeme, meme_id_list: updatedInventoryIds }, "Quay Gacha thành công!");
+        if (targetRuleEnabled) targetPullCount += 1;
+        const targetWasReached = targetRuleApplies && targetMemeId !== null && targetPullCount >= currentTargetLimit;
+        if (newMemeRuleActive && unownedMemes.length > 0) newPullCount += 1;
+        const newMemeWasReached = newMemeRuleActive && unownedMemes.length > 0 && newPullCount >= newMemeLimit;
+
+        let wonMeme;
+        if (targetWasReached) {
+          wonMeme = currentTarget;
+          targetMemeId = null;
+          targetPullCount = 0;
+        } else if (newMemeWasReached) {
+          wonMeme = pickMemeByOriginalRarity(unownedMemes);
+        } else {
+          wonMeme = pickMemeByOriginalRarity(memesList);
+        }
+
+        const isNewMeme = !ownedIdSet.has(Number(wonMeme.id));
+        if (!isNewMeme) {
+          if (!newMemeRuleActive) newPullCount = Number(itemData.gacha_new_pull_count) || 0;
+        } else {
+          ownedIdSet.add(Number(wonMeme.id));
+          newPullCount = 0;
+          if (targetMemeId === Number(wonMeme.id)) targetMemeId = null;
+        }
+        ownedIds.push(wonMeme.id);
+        wonMemes.push({
+          ...wonMeme,
+          is_new_meme: isNewMeme,
+          target_was_reached: targetWasReached,
+          new_meme_was_reached: newMemeWasReached && !targetWasReached
+        });
+      }
+
+      const updatedInventoryIds = ownedIds;
+      const totalCost = pullCount * gachaCost;
+      const nextSpentCoins = (Number(itemData.spent_coins) || 0) + totalCost;
+      const nextTotalCoins = Number(itemData.total_coins) || currentCoins;
+      const { error: updateError } = await supabase.from('items').update({
+        coins: currentCoins - totalCost,
+        spent_coins: nextSpentCoins,
+        total_coins: nextTotalCoins,
+        meme_id_list: updatedInventoryIds,
+        gacha_target_meme_id: targetMemeId,
+        gacha_target_pull_count: targetPullCount,
+        gacha_new_pull_count: newPullCount
+      }).eq('student_id', student_id);
+      if (updateError) return createResponse(false, null, "Không thể lưu kết quả quay thưởng.");
+      return createResponse(true, {
+        coins: currentCoins - totalCost,
+        total_coins: nextTotalCoins,
+        spent_coins: nextSpentCoins,
+        wonMeme: wonMemes[wonMemes.length - 1],
+        is_new_meme: wonMemes[wonMemes.length - 1].is_new_meme,
+        wonMemes,
+        pull_count: pullCount,
+        total_cost: totalCost,
+        meme_id_list: updatedInventoryIds,
+        gacha_target_meme_id: targetMemeId,
+        gacha_target_pull_count: targetPullCount,
+        gacha_new_pull_count: newPullCount,
+        gacha_settings: { ...settings, target_pull_limits: targetPullLimits },
+        target_was_reached: wonMemes.some(meme => meme.target_was_reached),
+        new_meme_was_reached: wonMemes.some(meme => meme.new_meme_was_reached)
+      }, `Quay Gacha thành công ${pullCount} lần!`);
     }
 
     if (action === "transfer_meme") {
