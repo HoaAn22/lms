@@ -764,8 +764,9 @@
     }
 
     .student-app .student-content {
-      max-width: 1240px;
-      padding: clamp(20px, 3vw, 36px);
+      width: 100%;
+      max-width: none;
+      padding: clamp(20px, 2vw, 30px);
     }
 
     .student-app .card {
@@ -780,7 +781,6 @@
       gap: 14px;
     }
 
-    .student-app .card h3,
     .student-app .gacha-header h3 {
       color: var(--student-ink);
       font-size: 18px;
@@ -844,20 +844,19 @@
     }
 
     .student-app .score-table {
-      display: block;
+      display: table;
+      width: 100%;
       max-width: 100%;
-      overflow-x: auto;
       border-collapse: separate;
       border-spacing: 0;
       border-radius: 12px;
-      white-space: nowrap;
-      scrollbar-width: thin;
+      table-layout: auto;
     }
 
     .student-app .score-table th {
       background: #f4f7fb;
       color: #475569;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 750;
       letter-spacing: 0.035em;
       text-transform: uppercase;
@@ -965,7 +964,27 @@
       isolation: isolate;
       min-height: 250px;
       border-radius: 24px;
-      background: radial-gradient(ellipse at center, rgba(254, 243, 199, 0.34), rgba(255, 255, 255, 0) 68%);
+      background:
+        radial-gradient(ellipse at 50% 78%, rgba(251, 191, 36, 0.16), transparent 36%),
+        radial-gradient(ellipse at center, rgba(254, 243, 199, 0.34), rgba(255, 255, 255, 0) 68%);
+      transition: background 0.3s ease;
+    }
+
+    .student-app .gacha-stage:has(.gacha-box-animation.shaking) {
+      animation: gachaStageCharge 1.1s ease-in-out infinite alternate;
+    }
+
+    .student-app .gacha-stage:has(.gacha-box-animation.shaking)::before {
+      width: 230px;
+      height: 230px;
+      opacity: 0.72;
+      animation: gachaChargeAura 1.1s ease-in-out infinite alternate;
+    }
+
+    .student-app .gacha-stage:has(.gacha-box-animation.shaking)::after {
+      opacity: 0.55;
+      transform: none;
+      animation: gachaChargeParticles 1.4s ease-in-out infinite alternate;
     }
 
     .student-app .gacha-stage::before {
@@ -977,9 +996,10 @@
     }
 
     .student-app .gacha-stage.burst-active::before {
-      width: min(440px, 90vw);
-      height: min(440px, 90vw);
-      animation: rotateAura 5s linear infinite, gachaAuraPulse 0.8s ease-in-out infinite alternate;
+      width: 180px;
+      height: 180px;
+      opacity: 0.45;
+      animation: none;
     }
 
     .student-app .gacha-stage::after {
@@ -997,7 +1017,7 @@
     }
 
     .student-app .gacha-stage.burst-active::after {
-      animation: gachaSparkBurst 0.8s ease-out both;
+      animation: none;
     }
 
     .student-app .gacha-box-animation {
@@ -1031,15 +1051,42 @@
     }
 
     .student-app .gacha-box-animation.glow::before {
-      animation: gachaRevealGlow 0.8s ease-out both;
+      opacity: 0.38;
+      animation: none;
     }
 
     .student-app #gacha-result-modal .modal-card {
+      isolation: isolate;
       overflow: hidden;
       background:
         radial-gradient(circle at 50% 0%, rgba(254, 243, 199, 0.75), transparent 38%),
         #fff;
       animation: gachaResultCardIn 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .student-app #gacha-result-modal .modal-card > :not(.modal-close-btn) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .student-app #gacha-result-modal .modal-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse at 12% 18%, rgba(96, 165, 250, 0.38) 0 2px, transparent 3px),
+        radial-gradient(ellipse at 88% 22%, rgba(244, 114, 182, 0.42) 0 3px, transparent 4px),
+        radial-gradient(ellipse at 18% 76%, rgba(52, 211, 153, 0.38) 0 2px, transparent 3px),
+        radial-gradient(ellipse at 84% 78%, rgba(251, 191, 36, 0.52) 0 3px, transparent 4px),
+        radial-gradient(ellipse at 50% 10%, rgba(251, 191, 36, 0.24), transparent 55%);
+      opacity: 0;
+      pointer-events: none;
+      animation: gachaConfettiIn 1.1s 0.05s ease-out both;
+    }
+
+    .student-app #gacha-result-modal .modal-close-btn {
+      z-index: 2;
     }
 
     .student-app #gacha-result-rarity {
@@ -1060,6 +1107,8 @@
     }
 
     .student-app #gacha-result-img {
+      border-color: #fde68a;
+      box-shadow: 0 12px 28px rgba(217, 119, 6, 0.14);
       animation: gachaResultImageIn 0.55s 0.08s both cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -1067,15 +1116,19 @@
       animation: gachaResultTextIn 0.4s 0.2s both ease-out;
     }
 
-    @keyframes gachaAuraPulse {
-      from { opacity: 0.65; }
-      to { opacity: 1; }
+    @keyframes gachaStageCharge {
+      from { background-size: 100% 100%, 100% 100%; }
+      to { background-size: 130% 130%, 115% 115%; }
     }
 
-    @keyframes gachaSparkBurst {
-      0% { opacity: 0; transform: scale(0.55) rotate(-12deg); }
-      30% { opacity: 1; }
-      100% { opacity: 0; transform: scale(1.2) rotate(12deg); }
+    @keyframes gachaChargeAura {
+      from { opacity: 0.38; transform: translate(-50%, -50%) scale(0.72); }
+      to { opacity: 0.82; transform: translate(-50%, -50%) scale(1.12); }
+    }
+
+    @keyframes gachaChargeParticles {
+      from { opacity: 0.2; background-position: 14% 54%, 82% 44%, 66% 68%; }
+      to { opacity: 0.75; background-position: 14% 34%, 82% 24%, 66% 88%; }
     }
 
     @keyframes gachaChargeShake {
@@ -1098,15 +1151,15 @@
       100% { transform: scale(1) rotate(0); filter: brightness(1.15) drop-shadow(0 0 18px #fbbf24); }
     }
 
-    @keyframes gachaRevealGlow {
-      0% { opacity: 0.25; transform: scale(0.5); }
-      55% { opacity: 1; transform: scale(1.8); }
-      100% { opacity: 0; transform: scale(2.3); }
-    }
-
     @keyframes gachaResultCardIn {
       from { opacity: 0; transform: translateY(18px) scale(0.9); }
       to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes gachaConfettiIn {
+      0% { opacity: 0; transform: translateY(12px) scale(0.82); }
+      28% { opacity: 1; }
+      100% { opacity: 0.35; transform: translateY(-5px) scale(1); }
     }
 
     @keyframes gachaRarityIn {

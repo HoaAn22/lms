@@ -619,11 +619,12 @@
     }
 
     .dashboard-layout .content-body {
-      padding: clamp(20px, 3vw, 38px);
+      padding: clamp(20px, 2vw, 30px);
     }
 
     .dashboard-layout .tab-panel {
-      max-width: 1320px;
+      width: 100%;
+      max-width: none;
     }
 
     .dashboard-layout .card {
@@ -726,9 +727,11 @@
     }
 
     .dashboard-layout .data-table {
-      display: block;
+      display: table;
+      width: 100%;
       max-width: 100%;
       white-space: nowrap;
+      table-layout: auto;
     }
 
     .dashboard-layout .data-table th,
@@ -737,7 +740,7 @@
       border-bottom: 1px solid #e2e8f0;
       background: #f4f7fb;
       color: #475569;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 750;
       letter-spacing: 0.035em;
       text-transform: uppercase;
