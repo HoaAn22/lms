@@ -18,9 +18,14 @@
 
     .school-management-box { display: flex; flex-direction: column; gap: 8px; }
     .school-row-item { display: flex; flex-direction: column; background: #fff; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-    .school-row-main { display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; }
-    .school-dropdown-actions { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; align-items: center; gap: 10px; }
-    .school-dropdown-actions.show { display: flex; }
+    .school-row-main { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
+    .school-dropdown-actions { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
+    .school-dropdown-actions.show { display: block; }
+    .school-action-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .school-action-buttons > .btn { flex: 1 1 220px; }
+    .school-action-buttons > .btn { justify-content: center; }
+    .school-delete-controls { display: flex; flex: 0 0 100%; align-items: center; gap: 8px; }
+    .school-actions-toggle { flex-shrink: 0; }
     
     .card-header-collapse {
       display: flex;
@@ -789,6 +794,34 @@
     .dashboard-layout .school-row-item:hover {
       border-color: #bfdbfe;
       box-shadow: 0 5px 14px rgba(37, 99, 235, 0.07);
+    }
+
+    .school-classes-panel {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #edf1f6;
+    }
+
+    .school-classes-panel[hidden] {
+      display: none;
+    }
+
+    .school-class-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .school-class-status {
+      color: #64748b;
+      font-size: 12px;
     }
 
     .dashboard-layout .filter-btn {
@@ -2703,31 +2736,43 @@
         const itemDiv = document.createElement("div");
         itemDiv.className = "school-row-item";
         itemDiv.innerHTML = `
-          <div class="school-row-main" onclick="toggleSchoolActions('${idSafe}')">
+          <div class="school-row-main">
             <span style="font-weight: 500; color: ${isHidden ? '#94a3b8' : '#1e293b'}">
               ${schoolName} ${isHidden ? '<span style="color:#ef4444; font-size:12px;">(Đang ẩn)</span>' : '<span style="color:#10b981; font-size:12px;">(Đang hiện)</span>'}
             </span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="display: flex; gap: 6px;" onclick="event.stopPropagation()">
-                <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
-                  ${isExamLocked ? '🔒 Đang khóa bài thi' : '🔓 Đang mở bài thi'}
-                </button>
-                <button type="button" onclick="toggleSchoolRewardShareLock('${escapeForJsString(schoolName)}', ${isRewardSharingLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isRewardSharingLocked ? '#fef3c7' : '#ecfeff'}; color: ${isRewardSharingLocked ? '#92400e' : '#0f766e'}; border: 1px solid ${isRewardSharingLocked ? '#fcd34d' : '#67e8f9'}; cursor: pointer;">
-                  ${isRewardSharingLocked ? '🔒 Đang chặn chia sẻ' : '🔓 Cho phép chia sẻ'}
-                </button>
+            <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation()">
                 <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
                   ${isHidden ? '👁️ Hiện' : '🚫 Ẩn'}
                 </button>
-              </div>
-              <span title="Tùy chọn xóa trường" style="font-weight: bold; cursor: pointer; padding: 0 6px; color: #64748b; font-size: 16px;">...</span>
+                <button type="button" class="btn school-actions-toggle" aria-expanded="false" aria-controls="actions-${idSafe}" onclick="toggleSchoolActions('${idSafe}', this)" style="padding: 6px 12px; font-size: 13px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; cursor: pointer;">
+                  Thao tác <span aria-hidden="true">▾</span>
+                </button>
             </div>
           </div>
           <div class="school-dropdown-actions" id="actions-${idSafe}">
-            <input type="password" id="del-pwd-${idSafe}" placeholder="Nhập mật khẩu" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            <button type="button" onclick="verifyAndDeleteSchool('${schoolName}', '${idSafe}')" class="btn" style="background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer;">Xóa trường</button>
+            <div class="school-action-buttons">
+                <button type="button" class="btn school-classes-toggle" style="padding: 6px 10px; font-size: 12px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; cursor: pointer;">
+                  📚 Danh sách lớp
+                </button>
+                <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 6px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
+                  ${isExamLocked ? '🔒 Đang khóa bài thi' : '🔓 Đang mở bài thi'}
+                </button>
+                <button type="button" onclick="toggleSchoolRewardShareLock('${escapeForJsString(schoolName)}', ${isRewardSharingLocked})" class="btn" style="padding: 6px 10px; font-size: 12px; background: ${isRewardSharingLocked ? '#fef3c7' : '#ecfeff'}; color: ${isRewardSharingLocked ? '#92400e' : '#0f766e'}; border: 1px solid ${isRewardSharingLocked ? '#fcd34d' : '#67e8f9'}; cursor: pointer;">
+                  ${isRewardSharingLocked ? '🔒 Đang chặn chia sẻ' : '🔓 Cho phép chia sẻ'}
+                </button>
+                <div class="school-delete-controls">
+                  <input type="password" id="del-pwd-${idSafe}" placeholder="Nhập mật khẩu để xóa trường" style="flex: 1; min-width: 0; padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                  <button type="button" onclick="verifyAndDeleteSchool('${schoolName}', '${idSafe}')" class="btn" style="background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer;">Xóa trường</button>
+                </div>
+            </div>
+            <div class="school-classes-panel" hidden></div>
           </div>
         `;
         schoolsManagementList.appendChild(itemDiv);
+
+        const classesToggle = itemDiv.querySelector(".school-classes-toggle");
+        const classesPanel = itemDiv.querySelector(".school-classes-panel");
+        classesToggle.addEventListener("click", () => toggleSchoolClasses(schoolName, classesToggle, classesPanel));
       });
 
       let defaultSchool = currentSelectedSchool;
@@ -2747,10 +2792,111 @@
       }
     }
 
-    function toggleSchoolActions(idSafe) {
+    function toggleSchoolActions(idSafe, button) {
       const actionsEl = document.getElementById(`actions-${idSafe}`);
       if (actionsEl) {
-        actionsEl.classList.toggle('show');
+        const isOpen = actionsEl.classList.toggle('show');
+        button.setAttribute("aria-expanded", String(isOpen));
+      }
+    }
+
+    async function toggleSchoolClasses(school, button, panel) {
+      if (!panel.hidden) {
+        panel.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+        return;
+      }
+
+      panel.hidden = false;
+      button.setAttribute("aria-expanded", "true");
+      panel.replaceChildren();
+      const loading = document.createElement("div");
+      loading.className = "school-class-status";
+      loading.textContent = "Đang tải danh sách lớp...";
+      panel.appendChild(loading);
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_school_classes", school })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || "Không thể tải danh sách lớp.");
+        }
+
+        panel.replaceChildren();
+        if (!result.data?.classes?.length) {
+          const empty = document.createElement("div");
+          empty.className = "school-class-status";
+          empty.textContent = "Trường này chưa có lớp học sinh nào.";
+          panel.appendChild(empty);
+          return;
+        }
+
+        result.data.classes.forEach(classInfo => {
+          const row = document.createElement("div");
+          row.className = "school-class-row";
+
+          const className = document.createElement("strong");
+          className.textContent = `Lớp ${classInfo.class_name}`;
+
+          const lockButton = document.createElement("button");
+          lockButton.type = "button";
+          lockButton.className = "btn btn-sm";
+          lockButton.textContent = classInfo.is_login_locked ? "🔒 Đang khóa đăng nhập" : "🔓 Đang mở đăng nhập";
+          lockButton.style.background = classInfo.is_login_locked ? "#fee2e2" : "#f0fdf4";
+          lockButton.style.color = classInfo.is_login_locked ? "#991b1b" : "#166534";
+          lockButton.style.border = `1px solid ${classInfo.is_login_locked ? "#fca5a5" : "#86efac"}`;
+          lockButton.addEventListener("click", () => {
+            lockButton.disabled = true;
+            toggleClassLoginLock(
+              school,
+              classInfo.class_name,
+              !classInfo.is_login_locked,
+              lockButton,
+              button,
+              panel
+            );
+          });
+
+          row.append(className, lockButton);
+          panel.appendChild(row);
+        });
+      } catch (error) {
+        panel.replaceChildren();
+        const errorMessage = document.createElement("div");
+        errorMessage.className = "school-class-status";
+        errorMessage.style.color = "#b91c1c";
+        errorMessage.textContent = error.message || "Lỗi kết nối khi tải danh sách lớp.";
+        panel.appendChild(errorMessage);
+      }
+    }
+
+    async function toggleClassLoginLock(school, className, isLoginLocked, actionButton, toggleButton, panel) {
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "toggle_class_login_lock",
+            school,
+            class_name: className,
+            is_login_locked: isLoginLocked,
+            teacher_username: user.username
+          })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || "Không thể cập nhật trạng thái lớp.");
+        }
+        alert(result.message);
+        panel.hidden = true;
+        await toggleSchoolClasses(school, toggleButton, panel);
+      } catch (error) {
+        alert(error.message || "Lỗi kết nối khi cập nhật trạng thái lớp.");
+        actionButton.disabled = false;
       }
     }
 

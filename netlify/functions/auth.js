@@ -110,6 +110,27 @@ exports.handler = async (event) => {
       let { data: studentData, error: stuErr } = await supabase.from('students').select('id, username, full_name, last_name, first_name, class_name, school, grade, username_change_limit').eq('username', username).eq('password', password).single();
       if (stuErr || !studentData) return createResponse(false, null, "Sai tên đăng nhập hoặc mật khẩu!");
 
+      const studentClassName = typeof studentData.class_name === 'string'
+        ? studentData.class_name.trim().toUpperCase()
+        : '';
+      const { data: classAccess, error: classAccessError } = studentClassName
+        ? await supabase
+            .from('class_schedules')
+            .select('is_login_locked')
+            .eq('school', studentData.school)
+            .eq('class_name', studentClassName)
+            .maybeSingle()
+        : { data: null, error: null };
+      if (classAccessError) {
+        if (`${classAccessError.code || ''} ${classAccessError.message || ''}`.includes('is_login_locked')) {
+          return createResponse(false, null, "Cơ sở dữ liệu chưa được cập nhật tính năng khóa đăng nhập theo lớp. Hãy chạy trong Supabase SQL Editor: ALTER TABLE public.class_schedules ADD COLUMN IF NOT EXISTS is_login_locked boolean NOT NULL DEFAULT false;");
+        }
+        return createResponse(false, null, "Không thể xác minh trạng thái lớp học. Vui lòng thử lại sau.");
+      }
+      if (classAccess?.is_login_locked) {
+        return createResponse(false, null, "Lớp học của bạn hiện đang bị khóa đăng nhập. Vui lòng liên hệ giáo viên.");
+      }
+
       await supabase.from('login_history').insert([{
         user_id: studentData.id,
         student_id: studentData.id,
@@ -121,6 +142,97 @@ exports.handler = async (event) => {
       }]);
 
       return createResponse(true, { id: studentData.id, username: studentData.username, role: 'student', fullName: studentData.full_name, lastName: studentData.last_name, firstName: studentData.first_name, className: studentData.class_name, school: studentData.school, grade: studentData.grade || '7', username_change_limit: studentData.username_change_limit !== undefined ? studentData.username_change_limit : 2 });
+    }
+
+    if (action === "get_school_classes") {
+      const school = typeof body.school === 'string' ? body.school.trim() : '';
+      if (!school) return createResponse(false, null, "Vui lòng chọn trường học.");
+
+      const { data: scheduleRows, error: schedulesError } = await supabase
+        .from('class_schedules')
+        .select('class_name, is_login_locked')
+        .eq('school', school);
+      if (schedulesError) {
+        if (`${schedulesError.code || ''} ${schedulesError.message || ''}`.includes('is_login_locked')) {
+          return createResponse(false, null, "Cơ sở dữ liệu chưa được cập nhật tính năng khóa đăng nhập theo lớp. Hãy chạy trong Supabase SQL Editor: ALTER TABLE public.class_schedules ADD COLUMN IF NOT EXISTS is_login_locked boolean NOT NULL DEFAULT false;");
+        }
+        return createResponse(false, null, "Lỗi khi tải trạng thái khóa lớp: " + schedulesError.message);
+      }
+
+      const studentRows = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from('students')
+          .select('class_name')
+          .eq('school', school)
+          .range(offset, offset + pageSize - 1);
+        if (error) return createResponse(false, null, "Lỗi khi tải danh sách lớp: " + error.message);
+        studentRows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+
+      const lockedByClass = new Map((scheduleRows || []).map(row => [
+        typeof row.class_name === 'string' ? row.class_name.trim().toUpperCase() : '',
+        row.is_login_locked === true
+      ]));
+      const classes = [...new Set((studentRows || [])
+        .map(row => typeof row.class_name === 'string' ? row.class_name.trim().toUpperCase() : '')
+        .filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+        .map(class_name => ({ class_name, is_login_locked: lockedByClass.get(class_name) || false }));
+
+      return createResponse(true, { classes });
+    }
+
+    if (action === "toggle_class_login_lock") {
+      const school = typeof body.school === 'string' ? body.school.trim() : '';
+      const className = typeof body.class_name === 'string' ? body.class_name.trim().toUpperCase() : '';
+      const teacherUsername = typeof body.teacher_username === 'string' ? body.teacher_username.trim() : '';
+      if (!school || !className || typeof body.is_login_locked !== 'boolean' || !teacherUsername) {
+        return createResponse(false, null, "Thông tin trường, lớp hoặc trạng thái khóa không hợp lệ.");
+      }
+
+      const { data: teacherData, error: teacherError } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('username', teacherUsername)
+        .maybeSingle();
+      if (teacherError) return createResponse(false, null, "Không thể xác minh tài khoản giáo viên: " + teacherError.message);
+      if (!teacherData) return createResponse(false, null, "Không thể xác minh tài khoản giáo viên.");
+
+      const { data: existingSchedule, error: existingScheduleError } = await supabase
+        .from('class_schedules')
+        .select('schedule_days, is_locked')
+        .eq('school', school)
+        .eq('class_name', className)
+        .maybeSingle();
+      if (existingScheduleError) {
+        if (`${existingScheduleError.code || ''} ${existingScheduleError.message || ''}`.includes('is_login_locked')) {
+          return createResponse(false, null, "Cơ sở dữ liệu chưa được cập nhật tính năng khóa đăng nhập theo lớp. Hãy chạy trong Supabase SQL Editor: ALTER TABLE public.class_schedules ADD COLUMN IF NOT EXISTS is_login_locked boolean NOT NULL DEFAULT false;");
+        }
+        return createResponse(false, null, "Không thể đọc cấu hình lớp: " + existingScheduleError.message);
+      }
+
+      const { error: updateError } = existingSchedule
+        ? await supabase.from('class_schedules').update({ is_login_locked: body.is_login_locked }).eq('school', school).eq('class_name', className)
+        : await supabase.from('class_schedules').insert([{
+            school,
+            class_name: className,
+            schedule_days: [],
+            is_locked: false,
+            is_login_locked: body.is_login_locked
+          }]);
+      if (updateError) {
+        if (`${updateError.code || ''} ${updateError.message || ''}`.includes('is_login_locked')) {
+          return createResponse(false, null, "Cơ sở dữ liệu chưa được cập nhật tính năng khóa đăng nhập theo lớp. Hãy chạy trong Supabase SQL Editor: ALTER TABLE public.class_schedules ADD COLUMN IF NOT EXISTS is_login_locked boolean NOT NULL DEFAULT false;");
+        }
+        return createResponse(false, null, "Lỗi khi cập nhật trạng thái khóa lớp: " + updateError.message);
+      }
+
+      return createResponse(true, null, body.is_login_locked
+        ? `Đã khóa đăng nhập lớp ${className}.`
+        : `Đã mở khóa đăng nhập lớp ${className}.`);
     }
 
     if (action === "get_login_history") {
