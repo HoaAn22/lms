@@ -208,6 +208,8 @@
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
+      display: grid;
+      place-items: center;
       overflow: hidden;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -219,6 +221,7 @@
       height: 100%;
       padding: 5px;
       object-fit: contain;
+      object-position: center;
       border-radius: 6px;
     }
     .meme-count-badge {
@@ -402,7 +405,8 @@
     .view-meme-img {
       display: block;
       width: 100%;
-      height: min(280px, 55vw);
+      height: auto;
+      max-height: min(420px, 60vh);
       object-fit: contain;
       border-radius: 10px;
       background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 80%);
@@ -1075,9 +1079,11 @@
 
     .gacha-target-preview img {
       width: 92px;
-      height: 118px;
+      height: auto;
+      aspect-ratio: 4 / 3;
       padding: 4px;
       object-fit: contain;
+      object-position: center;
       filter: grayscale(1);
       border: 2px solid #93c5fd;
       border-radius: 12px;
@@ -1162,9 +1168,11 @@
     .gacha-target-option img {
       display: block;
       width: 42px;
-      height: 42px;
+      height: auto;
+      aspect-ratio: 4 / 3;
       padding: 2px;
       object-fit: contain;
+      object-position: center;
       filter: grayscale(1);
       border-radius: 5px;
       background: #fff;
@@ -1313,9 +1321,10 @@
     .student-app .gacha-result-item img {
       display: block;
       width: 100%;
-      height: 112px;
+      aspect-ratio: 4 / 3;
       padding: 5px;
       object-fit: contain;
+      object-position: center;
       border: 2px solid #fde68a;
       border-radius: 8px;
       background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 80%);
@@ -1402,7 +1411,10 @@
     }
 
     .student-app #gacha-result-img {
+      height: auto;
+      aspect-ratio: 4 / 3;
       border-color: #fde68a;
+      object-position: center;
       box-shadow: 0 12px 28px rgba(217, 119, 6, 0.14);
       animation: gachaResultImageIn 0.55s 0.08s both cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -1837,7 +1849,7 @@
 
       .gacha-target-preview img {
         width: 68px;
-        height: 88px;
+        height: auto;
       }
 
       .gacha-target-preview-label {
@@ -1859,7 +1871,7 @@
 
       .gacha-target-option img {
         width: 38px;
-        height: 38px;
+        height: auto;
       }
 
       .student-app .attendance-section {
@@ -3008,7 +3020,8 @@
       const target = hasTarget ? currentMemesList.find(meme => Number(meme.id) === gachaTargetMemeId) : null;
       preview.classList.toggle("show", Boolean(target));
       if (target) {
-        document.getElementById("gacha-target-preview-image").src = target.image;
+        const targetImage = document.getElementById("gacha-target-preview-image");
+        targetImage.src = target.image;
         const previewLabel = document.getElementById("gacha-target-preview-label");
         previewLabel.textContent = typeof target.rarity === "string" ? target.rarity.trim().toUpperCase() : "";
         previewLabel.dataset.rarity = previewLabel.textContent;
@@ -3136,7 +3149,8 @@
         const rarity = document.getElementById("gacha-result-rarity");
         rarity.textContent = won.rarity;
         rarity.dataset.rarity = won.rarity;
-        document.getElementById("gacha-result-img").src = won.image;
+        const resultImage = document.getElementById("gacha-result-img");
+        resultImage.src = won.image;
         document.getElementById("gacha-result-slogan").textContent = won.slogan;
         if (won.is_new_meme) {
           resultModal.classList.add("is-new-card");
@@ -3413,7 +3427,8 @@
       rarity.textContent = meme.rarity;
       rarity.dataset.rarity = meme.rarity;
       document.getElementById("view-meme-count").textContent = `Sở hữu: x${count}`;
-      document.getElementById("view-meme-img").src = meme.image;
+      const memeImage = document.getElementById("view-meme-img");
+      memeImage.src = meme.image;
       document.getElementById("view-meme-slogan").textContent = meme.slogan;
 
       const shareBox = document.getElementById("view-meme-share-box");
