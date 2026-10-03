@@ -510,7 +510,9 @@
     }
 
     .dashboard-layout .sidebar-brand {
-      height: 84px;
+      height: 78px;
+      min-height: 78px;
+      flex: 0 0 78px;
       padding: 0 26px;
       border-bottom-color: rgba(226, 232, 240, 0.12);
     }
@@ -581,8 +583,9 @@
       position: sticky;
       top: 0;
       z-index: 20;
+      height: 78px;
       min-height: 78px;
-      height: auto;
+      flex: 0 0 78px;
       padding: 12px clamp(18px, 3vw, 38px);
       border-bottom: 1px solid rgba(226, 232, 240, 0.9);
       background: rgba(255, 255, 255, 0.92);
@@ -2075,7 +2078,21 @@
     if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
 
     function toggleSidebar() {
-      document.getElementById('admin-sidebar').classList.toggle('collapsed');
+      const sidebar = document.getElementById('admin-sidebar');
+      const isCollapsing = !sidebar.classList.contains('collapsed');
+
+      sidebar.getAnimations().forEach(animation => animation.cancel());
+      sidebar.classList.toggle('collapsed', isCollapsing);
+
+      sidebar.animate(
+        isCollapsing
+          ? [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }]
+          : [{ transform: 'translateX(-100%)' }, { transform: 'translateX(0)' }],
+        {
+          duration: 260,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+        }
+      );
     }
 
     function toggleDropdownMenu(e) {

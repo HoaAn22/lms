@@ -196,7 +196,7 @@ body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: margin-left 0.3s ease; /* Hiệu ứng trượt mượt mà */
+  transition: none;
 }
 
 /* Class để ẩn Sidebar */
