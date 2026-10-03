@@ -1,6 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
-const { S3Client, ListObjectsV2Command, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, ListObjectsV2Command, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const jwt = require('jsonwebtoken');
 const sharp = require('sharp'); // Thư viện nén và chuyển đổi ảnh WebP
+const { randomUUID } = require('crypto');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,6 +21,43 @@ const s3Client = new S3Client({
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const PUBLIC_URL = process.env.R2_PUBLIC_URL; // VD: https://pub-xxxxxx.r2.dev
 // ======================================
+
+const uploadMemeImageToR2 = async imageDataUrl => {
+  const matches = typeof imageDataUrl === 'string'
+    ? imageDataUrl.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/]+={0,2})$/)
+    : null;
+  if (!matches) throw new Error('Dữ liệu ảnh không hợp lệ.');
+  if (!BUCKET_NAME || !PUBLIC_URL) throw new Error('Thiếu cấu hình lưu trữ ảnh Cloudflare R2.');
+
+  const inputBuffer = Buffer.from(matches[1], 'base64');
+  const webpBuffer = await sharp(inputBuffer).webp({ quality: 80 }).toBuffer();
+  const fileName = `meme_${Date.now()}_${randomUUID()}.webp`;
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: fileName,
+    Body: webpBuffer,
+    ContentType: 'image/webp'
+  }));
+
+  return {
+    imageUrl: `${PUBLIC_URL.replace(/\/$/, "")}/${fileName}`,
+    key: fileName
+  };
+};
+
+const getR2ObjectKey = imageUrl => {
+  if (!PUBLIC_URL || typeof imageUrl !== 'string') return null;
+  try {
+    const publicUrl = new URL(PUBLIC_URL);
+    const image = new URL(imageUrl);
+    const basePath = publicUrl.pathname.replace(/\/$/, "");
+    if (image.origin !== publicUrl.origin || !image.pathname.startsWith(`${basePath}/`)) return null;
+    const key = decodeURIComponent(image.pathname.slice(basePath.length + 1));
+    return key && !key.split('/').some(segment => segment === "." || segment === "..") ? key : null;
+  } catch (error) {
+    return null;
+  }
+};
 
 const createResponse = (success, data, message = "") => {
   return {
@@ -78,6 +117,26 @@ const getTargetPullLimits = (settings = {}) => Object.fromEntries(
   ])
 );
 
+const verifyTeacherSession = async (username, token) => {
+  if (typeof username !== 'string' || !username.trim() || typeof token !== 'string' || !token) return false;
+  let session;
+  try {
+    session = jwt.verify(token, process.env.SUPABASE_SERVICE_KEY, { algorithms: ['HS256'] });
+  } catch (error) {
+    return false;
+  }
+  if (session.role !== 'teacher' || session.username !== username.trim() || !session.id) return false;
+
+  const { data, error } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('username', username.trim())
+    .eq('id', session.id)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
 const pickMemeByOriginalRarity = (memes) => {
   const poolSS = memes.filter(meme => meme.rarity === 'SS');
   const poolS = memes.filter(meme => meme.rarity === 'S');
@@ -128,7 +187,12 @@ exports.handler = async (event) => {
       let { data: adminData } = await supabase.from('admins').select('id, username, role, full_name').eq('username', username).eq('password', password).single();
       if (adminData) {
         await supabase.from('login_history').insert([{ user_id: adminData.id, admin_id: adminData.id, username: adminData.username, role: 'teacher', full_name: adminData.full_name || 'Giáo viên', ip_address: ipAddress, device_name: deviceName }]);
-        return createResponse(true, { id: adminData.id, username: adminData.username, role: 'teacher', adminRole: adminData.role, fullName: adminData.full_name });
+        const sessionToken = jwt.sign(
+          { id: adminData.id, username: adminData.username, role: 'teacher' },
+          process.env.SUPABASE_SERVICE_KEY,
+          { algorithm: 'HS256', expiresIn: '7d' }
+        );
+        return createResponse(true, { id: adminData.id, username: adminData.username, role: 'teacher', adminRole: adminData.role, fullName: adminData.full_name, sessionToken });
       }
 
       let { data: studentData, error: stuErr } = await supabase.from('students').select('id, username, full_name, last_name, first_name, class_name, school, grade, username_change_limit').eq('username', username).eq('password', password).single();
@@ -528,6 +592,119 @@ exports.handler = async (event) => {
       });
       await Promise.all(updatePromises);
       return createResponse(true, null, `Đã duyệt tất cả.`);
+    }
+
+    if (action === "manage_student_rewards") {
+      const teacherUsername = body.teacher_username;
+      if (!await verifyTeacherSession(teacherUsername, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const studentId = body.student_id;
+      if (!studentId) return createResponse(false, null, "Không tìm thấy học sinh cần quản lý.");
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('id', studentId)
+        .maybeSingle();
+      if (studentError) return createResponse(false, null, "Không thể xác minh học sinh: " + studentError.message);
+      if (!student) return createResponse(false, null, "Không tìm thấy học sinh.");
+
+      const { data: memes, error: memesError } = await supabase
+        .from('meme')
+        .select('id, image, slogan, rarity');
+      if (memesError) return createResponse(false, null, "Không thể tải danh sách thẻ: " + memesError.message);
+      if (!Array.isArray(memes)) return createResponse(false, null, "Danh sách thẻ hiện không hợp lệ.");
+
+      const { data: itemData, error: itemError } = await supabase
+        .from('items')
+        .select('meme_id_list, gacha_target_meme_id, gacha_target_pull_count')
+        .eq('student_id', studentId)
+        .maybeSingle();
+      if (itemError) return createResponse(false, null, "Không thể tải bộ sưu tập học sinh: " + itemError.message);
+      let inventoryIds = parseMemeIds(itemData?.meme_id_list);
+      const mode = body.mode || "get";
+
+      if (mode !== "get") {
+        if (!itemData && mode !== "add") return createResponse(false, null, "Học sinh chưa có dữ liệu phần thưởng để cập nhật.");
+        if (mode === "add") {
+          const memeId = Number(body.meme_id);
+          if (!Number.isInteger(memeId) || !memes.some(meme => Number(meme.id) === memeId)) {
+            return createResponse(false, null, "Thẻ cần thêm không hợp lệ.");
+          }
+          inventoryIds.push(memeId);
+        } else if (mode === "remove_selected") {
+          if (!Array.isArray(body.selections) || body.selections.length < 1 || body.selections.length > 200) {
+            return createResponse(false, null, "Hãy chọn ít nhất một thẻ cần xóa.");
+          }
+          const removalCounts = new Map();
+          for (const selection of body.selections) {
+            const memeId = Number(selection?.meme_id);
+            const count = Number(selection?.count);
+            if (!Number.isInteger(memeId) || !Number.isInteger(count) || count < 1 || count > 10000) {
+              return createResponse(false, null, "Thông tin số lượng thẻ cần xóa không hợp lệ.");
+            }
+            if (!memes.some(meme => Number(meme.id) === memeId)) {
+              return createResponse(false, null, "Một trong các thẻ cần xóa không còn tồn tại.");
+            }
+            removalCounts.set(memeId, (removalCounts.get(memeId) || 0) + count);
+          }
+          for (const [memeId, count] of removalCounts) {
+            const ownedCount = inventoryIds.filter(id => id === memeId).length;
+            if (count > ownedCount) return createResponse(false, null, "Số lượng xóa vượt quá số thẻ học sinh đang sở hữu.");
+          }
+          for (const [memeId, count] of removalCounts) {
+            let remaining = count;
+            inventoryIds = inventoryIds.filter(id => {
+              if (id !== memeId || remaining === 0) return true;
+              remaining -= 1;
+              return false;
+            });
+          }
+        } else if (mode === "remove_all") {
+          inventoryIds = [];
+        } else {
+          return createResponse(false, null, "Thao tác quản lý phần thưởng không hợp lệ.");
+        }
+
+        const updatePayload = { meme_id_list: inventoryIds };
+        const targetMemeId = itemData?.gacha_target_meme_id === null || itemData?.gacha_target_meme_id === undefined
+          ? null
+          : Number(itemData.gacha_target_meme_id);
+        if (mode === "add" && targetMemeId !== null && inventoryIds.includes(targetMemeId)) {
+          updatePayload.gacha_target_meme_id = null;
+        }
+
+        const { error: updateError } = itemData
+          ? await supabase.from('items').update(updatePayload).eq('student_id', studentId)
+          : await supabase.from('items').insert([{
+              student_id: studentId,
+              coins: 100,
+              total_coins: 100,
+              spent_coins: 0,
+              pending_coins: 0,
+              meme_id_list: inventoryIds,
+              gacha_target_meme_id: null,
+              gacha_target_pull_count: 0,
+              gacha_new_pull_count: 0
+            }]);
+        if (updateError) return createResponse(false, null, "Không thể lưu thay đổi phần thưởng: " + updateError.message);
+      }
+
+      const counts = new Map();
+      inventoryIds.forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
+      const inventory = [...counts.entries()]
+        .map(([id, count]) => {
+          const meme = memes.find(item => Number(item.id) === id);
+          return meme ? { ...meme, count } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => String(a.rarity).localeCompare(String(b.rarity)) || String(a.slogan || "").localeCompare(String(b.slogan || ""), 'vi'));
+      return createResponse(true, {
+        inventory,
+        memes: memes || [],
+        meme_id_list: inventoryIds
+      }, mode === "get" ? "Đã tải bộ sưu tập phần thưởng." : "Đã cập nhật phần thưởng học sinh.");
     }
 
     if (action === "get_students") {
@@ -934,27 +1111,8 @@ exports.handler = async (event) => {
       // Nếu dữ liệu là dạng Base64 từ giao diện kéo thả, chuyển sang WebP và tải lên R2
       if (image_url.startsWith('data:image')) {
         try {
-          const matches = image_url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-          if (!matches || matches.length !== 3) throw new Error('Dữ liệu ảnh không hợp lệ');
-          
-          const buffer = Buffer.from(matches[2], 'base64');
-          const fileName = `meme_${Date.now()}.webp`; // Lưu ảnh dưới dạng .webp
-
-          // Sử dụng sharp để chuyển đổi và nén ảnh (Chất lượng 80%)
-          const webpBuffer = await sharp(buffer)
-            .webp({ quality: 80 }) 
-            .toBuffer();
-
-          await s3Client.send(new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: fileName,
-            Body: webpBuffer,
-            ContentType: 'image/webp' // Đặt Content-Type là webp
-          }));
-
-          // Tạo URL cuối cùng để lưu vào Database
-          const baseUrl = PUBLIC_URL.replace(/\/$/, "");
-          finalImageUrl = `${baseUrl}/${fileName}`;
+          const uploadedImage = await uploadMemeImageToR2(image_url);
+          finalImageUrl = uploadedImage.imageUrl;
         } catch (err) {
           return createResponse(false, null, "Lỗi xử lý hoặc upload ảnh lên Cloudflare R2: " + err.message);
         }
@@ -978,23 +1136,76 @@ exports.handler = async (event) => {
       return createResponse(true, { memes: memes || [] });
     }
 
-    // Cập nhật Meme hiện có (Giữ nguyên link, chỉ đổi nội dung)
+    // Cập nhật thông tin meme và tùy chọn thay ảnh trong cùng thao tác
     if (action === "update_meme") {
-      const { id, old_slogan, slogan, rarity } = body;
+      const { id, old_slogan, slogan, rarity, image_url } = body;
       let targetId = id;
       if (!targetId && old_slogan) {
-        const { data: existingMeme } = await supabase.from('meme').select('id').eq('slogan', old_slogan).single();
+        const { data: existingMeme } = await supabase.from('meme').select('id, image').eq('slogan', old_slogan).single();
         if (existingMeme) targetId = existingMeme.id;
       }
       if (!targetId) return createResponse(false, null, "Không xác định được meme cần sửa!");
 
-      const { error } = await supabase.from('meme').update({ 
+      const { data: existingMeme, error: memeError } = await supabase
+        .from('meme')
+        .select('id, image')
+        .eq('id', targetId)
+        .maybeSingle();
+      if (memeError) return createResponse(false, null, "Không thể tải meme cần sửa: " + memeError.message);
+      if (!existingMeme) return createResponse(false, null, "Không tìm thấy meme cần sửa!");
+
+      let uploadedImage = null;
+      if (image_url !== undefined && image_url !== null && image_url !== "") {
+        if (typeof image_url !== 'string' || !image_url.startsWith('data:image/')) {
+          return createResponse(false, null, "Dữ liệu ảnh mới không hợp lệ.");
+        }
+        try {
+          uploadedImage = await uploadMemeImageToR2(image_url);
+        } catch (uploadError) {
+          return createResponse(false, null, "Lỗi xử lý hoặc upload ảnh mới lên Cloudflare R2: " + uploadError.message);
+        }
+      }
+
+      const updates = {
         slogan: slogan.trim(), 
         rarity: rarity ? rarity.trim().split(" ")[0] : "C" 
-      }).eq('id', targetId);
+      };
+      if (uploadedImage) updates.image = uploadedImage.imageUrl;
+      const { data: updatedMeme, error: updateError } = await supabase
+        .from('meme')
+        .update(updates)
+        .eq('id', targetId)
+        .select('id, image')
+        .maybeSingle();
 
-      if (error) return createResponse(false, null, "Lỗi cập nhật: " + error.message);
-      return createResponse(true, null, "Cập nhật thành công!");
+      if (updateError || !updatedMeme) {
+        if (uploadedImage) {
+          try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: uploadedImage.key }));
+          } catch (cleanupError) {
+            console.error("Không thể xóa ảnh mới sau khi cập nhật meme thất bại:", cleanupError);
+          }
+        }
+        return createResponse(false, null, updateError
+          ? "Lỗi cập nhật meme: " + updateError.message
+          : "Meme không còn tồn tại để cập nhật.");
+      }
+
+      if (uploadedImage) {
+        const oldImageKey = getR2ObjectKey(existingMeme.image);
+        if (oldImageKey) {
+          try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: oldImageKey }));
+          } catch (deleteError) {
+            console.error(`Đã cập nhật meme ${targetId} nhưng không thể xóa object R2 cũ:`, deleteError);
+            return createResponse(true, updatedMeme, "Đã cập nhật meme nhưng chưa thể xóa ảnh cũ khỏi R2.");
+          }
+        }
+      }
+
+      return createResponse(true, updatedMeme, uploadedImage
+        ? "Đã cập nhật meme và thay ảnh bằng ảnh R2 thành công!"
+        : "Cập nhật thành công!");
     }
 
     // Xóa Meme khỏi Supabase

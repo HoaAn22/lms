@@ -8,8 +8,6 @@ npm run dev
 - npm install @aws-sdk/client-s3
 2. Tạo file lưu biến môi trường `.env`
 
-sessionStorage
-Prompt Dialog (JavaScript Prompt)
 
 ## Cài đặt supabase
 

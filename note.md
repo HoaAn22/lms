@@ -1,0 +1,3 @@
+- sessionStorage
+- Prompt Dialog (JavaScript Prompt)
+- API vẫn xác thực bằng phiên giáo viên đã ký. Phiên cũ chưa có token cần đăng nhập lại một lần sau khi cập nhật.

@@ -371,6 +371,58 @@
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
     }
+    #student-reward-modal .modal-card {
+      width: min(94vw, 900px);
+      max-width: 900px;
+      max-height: calc(100vh - 32px);
+      overflow: hidden;
+    }
+    .student-reward-inventory {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      max-height: min(48vh, 460px);
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .student-reward-item {
+      display: grid;
+      grid-template-columns: 18px 64px minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      padding: 9px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .student-reward-item img {
+      width: 64px;
+      height: 64px;
+      border-radius: 7px;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+    .student-reward-item-info {
+      min-width: 0;
+      color: #334155;
+      font-size: 12px;
+    }
+    .student-reward-item-info strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #1e293b;
+    }
+    .student-reward-item-info span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .student-reward-remove-count {
+      width: 66px;
+      margin-top: 6px;
+      padding: 4px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+    }
     .teacher-notifications {
       position: fixed;
       top: 20px;
@@ -1898,6 +1950,14 @@
             <img id="edit-meme-preview" src="" alt="Meme Preview" style="max-height: 140px; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: contain;">
           </div>
 
+          <div id="replace-meme-drop-area" style="margin-bottom: 16px; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; text-align: center;">
+            <label style="display: block; margin-bottom: 8px; color: #334155; font-size: 13px; font-weight: 600;">Thay ảnh meme:</label>
+            <input type="file" id="replace-meme-file" accept="image/*" style="display: none;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('replace-meme-file').click()">🖼️ Chọn ảnh</button>
+            <div style="margin-top: 6px; color: #64748b; font-size: 12px;">hoặc kéo ảnh vào đây</div>
+            <img id="replace-meme-preview" src="" alt="Xem trước ảnh mới" style="display: none; max-width: 160px; max-height: 100px; margin: 10px auto 0; border-radius: 6px; object-fit: contain; background: #fff;">
+          </div>
+
           <form id="edit-meme-form" onsubmit="submitUpdateMeme(event)">
             <input type="hidden" id="edit-meme-id">
             
@@ -2124,6 +2184,44 @@
             </div>
           </form>
           <p id="feedback-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <div id="student-reward-modal" class="modal-backdrop" onclick="closeStudentRewardModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
+            <div>
+              <h3 style="margin: 0; font-size: 18px; color: #1e293b;">🎁 Quản lý phần thưởng</h3>
+              <p style="margin: 5px 0 0; color: #64748b; font-size: 13px;">
+                <strong id="student-reward-name" style="color: #334155;">---</strong>
+                <span id="student-reward-class"></span>
+              </p>
+            </div>
+            <button type="button" onclick="closeStudentRewardModal()" aria-label="Đóng" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+            <button type="button" id="btn-load-student-rewards" class="btn btn-secondary btn-sm" onclick="loadStudentRewardInventory()">↻ Làm mới bộ sưu tập</button>
+          </div>
+
+          <div id="student-reward-controls" style="display: none;">
+            <div style="display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
+              <div class="form-group" style="flex: 1 1 240px; margin: 0;">
+                <label for="student-reward-add-select">Thêm một thẻ:</label>
+                <select id="student-reward-add-select" style="width: 100%; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 7px;"></select>
+              </div>
+              <button type="button" id="btn-add-student-reward" class="btn btn-primary" onclick="addStudentReward()">➕ Thêm thẻ</button>
+              <button type="button" id="btn-remove-selected-rewards" class="btn btn-secondary" onclick="removeSelectedStudentRewards()" style="background: #fff7ed; color: #c2410c; border-color: #fed7aa;">Xóa thẻ đã chọn</button>
+              <button type="button" id="btn-remove-all-rewards" class="btn btn-secondary" onclick="removeAllStudentRewards()" style="background: #fef2f2; color: #b91c1c; border-color: #fecaca;">Xóa tất cả</button>
+            </div>
+            <p id="student-reward-summary" style="margin: 0 0 10px; color: #475569; font-size: 13px;"></p>
+            <label style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; color: #334155; font-size: 13px; font-weight: 600;">
+              <input type="checkbox" id="student-reward-select-all" onchange="toggleAllStudentRewardSelections(this.checked)">
+              Chọn tất cả loại thẻ
+            </label>
+            <div id="student-reward-inventory" class="student-reward-inventory" aria-live="polite"></div>
+          </div>
+          <p id="student-reward-status" class="status-msg mt-2" role="status"></p>
         </div>
       </div>
 
@@ -2826,7 +2924,10 @@
     let cachedStudentsList = [];
     let adminMemesCache = [];
     let currentAdminFilter = 'ALL';
+    let currentRewardStudentId = null;
+    let currentStudentRewardData = null;
     let currentSelectedMeme = null;
+    let replacementMemeBase64Image = null;
     let pendingRewardsList = [];
     let currentRewardClassFilter = 'ALL';
     const quickPageScroll = document.getElementById("quick-page-scroll");
@@ -3447,16 +3548,21 @@
         const card = document.createElement("div");
         card.className = "admin-meme-card";
         card.onclick = () => openEditMemeModal(meme);
+        const imageStorageType = typeof meme.image === "string" && meme.image.startsWith("https://pub")
+          ? "R2"
+          : typeof meme.image === "string" && meme.image.startsWith("data:image/")
+            ? "base64"
+            : "";
         
         // Đã sửa lại cấu trúc innerHTML: Thêm div bao bọc có text-align: center
         // và thêm dòng ID nằm ngay trên Slogan
         card.innerHTML = `
           <div>
-            <span style="display:inline-block; padding:2px 6px; font-size:10px; font-weight:bold; border-radius:4px; color:#fff; background:#2563eb; margin-bottom:4px;">${meme.rarity}</span>
+            <span class="rarity-label" data-rarity="${meme.rarity}" style="padding:2px 6px; font-size:10px; margin-bottom:4px;">${meme.rarity}</span>
             <img src="${meme.image}" alt="Meme">
           </div>
           <div style="margin-top: 8px; text-align: center;">
-            <div style="font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 3px;">ID: ${meme.id}</div>
+            <div style="font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 3px;">ID: ${meme.id}${imageStorageType ? ` | ${imageStorageType}` : ""}</div>
             <div style="font-size: 12px; color: #334155; font-weight: 500; word-break: break-word;">${meme.slogan}</div>
           </div>
         `;
@@ -3470,6 +3576,7 @@
       document.getElementById("edit-meme-preview").src = meme.image;
       document.getElementById("edit-meme-slogan").value = meme.slogan || "";
       document.getElementById("edit-meme-rarity").value = meme.rarity || "C";
+      clearReplacementMemeImage();
       document.getElementById("edit-meme-status").textContent = "";
       document.getElementById("edit-meme-status").className = "status-msg mt-2";
       document.getElementById("edit-meme-modal").classList.add("show");
@@ -3477,14 +3584,28 @@
 
     function closeEditMemeModal() {
       document.getElementById("edit-meme-modal").classList.remove("show");
+      clearReplacementMemeImage();
       currentSelectedMeme = null;
+    }
+
+    function clearReplacementMemeImage() {
+      replacementMemeBase64Image = null;
+      const fileInput = document.getElementById("replace-meme-file");
+      const preview = document.getElementById("replace-meme-preview");
+      if (fileInput) fileInput.value = "";
+      if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
+      }
     }
 
     async function submitUpdateMeme(e) {
       e.preventDefault();
       const statusEl = document.getElementById("edit-meme-status");
       statusEl.className = "status-msg mt-2";
-      statusEl.textContent = "Đang cập nhật...";
+      statusEl.textContent = replacementMemeBase64Image
+        ? "Đang cập nhật meme và tải ảnh mới lên R2..."
+        : "Đang cập nhật...";
 
       const memeId = document.getElementById("edit-meme-id").value;
       const slogan = document.getElementById("edit-meme-slogan").value.trim();
@@ -3499,7 +3620,8 @@
             id: memeId,
             old_slogan: currentSelectedMeme?.slogan,
             slogan: slogan,
-            rarity: rarity
+            rarity: rarity,
+            image_url: replacementMemeBase64Image
           })
         });
         const result = await res.json();
@@ -3510,7 +3632,7 @@
           return;
         }
 
-        showTeacherNotification("Cập nhật meme thành công!");
+        showTeacherNotification(result.message || "Cập nhật meme thành công!");
         closeEditMemeModal();
         loadAdminMemeCollection();
       } catch (err) {
@@ -3799,6 +3921,216 @@
 
     function closeFeedbackModal() {
       document.getElementById("feedback-student-modal").classList.remove("show");
+    }
+
+    function openStudentRewardModal(studentId) {
+      const student = cachedStudentsList.find(item => String(item.id) === String(studentId));
+      const teacher = getCurrentTeacherSession();
+      if (!student || !teacher || teacher.role !== "teacher" || !teacher.username) {
+        showTeacherNotification("Không thể xác minh học sinh hoặc phiên giáo viên.");
+        return;
+      }
+
+      currentRewardStudentId = student.id;
+      currentStudentRewardData = null;
+      document.getElementById("student-reward-name").textContent =
+        student.fullName || `${student.lastName || ""} ${student.firstName || ""}`.trim() || student.username;
+      document.getElementById("student-reward-class").textContent = ` · Lớp ${student.className || "---"}`;
+      document.getElementById("student-reward-controls").style.display = "none";
+      document.getElementById("student-reward-inventory").replaceChildren();
+      const status = document.getElementById("student-reward-status");
+      status.textContent = "";
+      status.className = "status-msg mt-2";
+      document.getElementById("student-reward-select-all").checked = false;
+      document.getElementById("student-reward-modal").classList.add("show");
+      void loadStudentRewardInventory();
+    }
+
+    function closeStudentRewardModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById("student-reward-modal").classList.remove("show");
+      currentRewardStudentId = null;
+      currentStudentRewardData = null;
+    }
+
+    function setStudentRewardStatus(message, isError = false) {
+      const status = document.getElementById("student-reward-status");
+      status.className = `status-msg mt-2 ${isError ? "status-error" : ""}`;
+      status.textContent = message;
+    }
+
+    async function requestStudentRewardManagement(mode, extra = {}) {
+      const teacher = getCurrentTeacherSession();
+      if (!teacher || teacher.role !== "teacher" || !teacher.username || !teacher.sessionToken || !currentRewardStudentId) {
+        setStudentRewardStatus("Phiên giáo viên hiện tại đã cũ. Vui lòng đăng nhập lại để tiếp tục.", true);
+        return null;
+      }
+
+      const buttons = document.querySelectorAll("#student-reward-modal button");
+      buttons.forEach(button => { button.disabled = true; });
+      setStudentRewardStatus(mode === "get" ? "Đang tải bộ sưu tập..." : "Đang cập nhật phần thưởng...");
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "manage_student_rewards",
+            mode,
+            student_id: currentRewardStudentId,
+            teacher_username: teacher.username,
+            teacher_session_token: teacher.sessionToken,
+            ...extra
+          })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+          setStudentRewardStatus(result.message || "Không thể quản lý phần thưởng.", true);
+          return null;
+        }
+
+        currentStudentRewardData = result.data;
+        renderStudentRewardInventory(result.data);
+        document.getElementById("student-reward-controls").style.display = "block";
+        setStudentRewardStatus(result.message || "Đã cập nhật phần thưởng.");
+        return result.data;
+      } catch (error) {
+        console.error("Không thể kết nối khi quản lý phần thưởng học sinh:", error);
+        setStudentRewardStatus("Lỗi kết nối máy chủ khi quản lý phần thưởng.", true);
+        return null;
+      } finally {
+        buttons.forEach(button => { button.disabled = false; });
+        if (currentStudentRewardData) {
+          const hasRewards = currentStudentRewardData.inventory.length > 0;
+          document.getElementById("btn-remove-selected-rewards").disabled =
+            !hasRewards || !document.querySelector(".student-reward-select:checked");
+          document.getElementById("btn-remove-all-rewards").disabled = !hasRewards;
+        }
+      }
+    }
+
+    async function loadStudentRewardInventory() {
+      await requestStudentRewardManagement("get");
+    }
+
+    function renderStudentRewardInventory(data) {
+      const inventory = document.getElementById("student-reward-inventory");
+      const summary = document.getElementById("student-reward-summary");
+      const addSelect = document.getElementById("student-reward-add-select");
+      const ownedCards = Array.isArray(data.inventory) ? data.inventory : [];
+      const memes = Array.isArray(data.memes) ? data.memes : [];
+      const totalCards = ownedCards.reduce((total, meme) => total + Number(meme.count || 0), 0);
+      summary.textContent = `Đang sở hữu ${ownedCards.length} loại thẻ, tổng cộng ${totalCards} thẻ. Chọn thẻ và số lượng cần xóa.`;
+
+      addSelect.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "-- Chọn thẻ cần thêm --";
+      addSelect.appendChild(placeholder);
+      [...memes].sort((a, b) => String(a.rarity).localeCompare(String(b.rarity)) || String(a.slogan || "").localeCompare(String(b.slogan || ""), "vi"))
+        .forEach(meme => {
+          const option = document.createElement("option");
+          option.value = String(meme.id);
+          option.textContent = `[${meme.rarity || "?"}] ${meme.slogan || `Thẻ #${meme.id}`}`;
+          addSelect.appendChild(option);
+        });
+
+      inventory.replaceChildren();
+      const selectAll = document.getElementById("student-reward-select-all");
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      selectAll.disabled = ownedCards.length === 0;
+      if (ownedCards.length === 0) {
+        const empty = document.createElement("p");
+        empty.style.cssText = "grid-column: 1 / -1; margin: 0; padding: 20px; color: #64748b; text-align: center;";
+        empty.textContent = "Học sinh chưa sở hữu thẻ nào.";
+        inventory.appendChild(empty);
+        document.getElementById("btn-remove-selected-rewards").disabled = true;
+        document.getElementById("btn-remove-all-rewards").disabled = true;
+        return;
+      }
+
+      ownedCards.forEach(meme => {
+        const card = document.createElement("label");
+        card.className = "student-reward-item";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "student-reward-select";
+        checkbox.dataset.memeId = String(meme.id);
+        checkbox.setAttribute("aria-label", `Chọn thẻ ${meme.slogan || meme.id} để xóa`);
+        checkbox.addEventListener("change", updateStudentRewardSelectionState);
+        const image = document.createElement("img");
+        image.src = meme.image || "";
+        image.alt = "";
+        image.loading = "lazy";
+        const info = document.createElement("span");
+        info.className = "student-reward-item-info";
+        const title = document.createElement("strong");
+        title.textContent = `[${meme.rarity || "?"}] ${meme.slogan || `Thẻ #${meme.id}`}`;
+        const count = document.createElement("span");
+        count.textContent = `Đang sở hữu: ${meme.count}`;
+        const removeCount = document.createElement("input");
+        removeCount.type = "number";
+        removeCount.className = "student-reward-remove-count";
+        removeCount.min = "1";
+        removeCount.max = String(meme.count);
+        removeCount.value = "1";
+        removeCount.dataset.memeId = String(meme.id);
+        removeCount.setAttribute("aria-label", `Số bản sao cần xóa, tối đa ${meme.count}`);
+        info.append(title, count, removeCount);
+        card.append(checkbox, image, info);
+        inventory.appendChild(card);
+      });
+      document.getElementById("btn-remove-selected-rewards").disabled = true;
+      document.getElementById("btn-remove-all-rewards").disabled = false;
+    }
+
+    function toggleAllStudentRewardSelections(checked) {
+      document.querySelectorAll(".student-reward-select").forEach(checkbox => {
+        checkbox.checked = checked;
+      });
+      updateStudentRewardSelectionState();
+    }
+
+    function updateStudentRewardSelectionState() {
+      const checkboxes = [...document.querySelectorAll(".student-reward-select")];
+      const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+      const selectAll = document.getElementById("student-reward-select-all");
+      selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+      selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+      document.getElementById("btn-remove-selected-rewards").disabled = selectedCount === 0;
+    }
+
+    async function addStudentReward() {
+      const memeId = Number(document.getElementById("student-reward-add-select").value);
+      if (!Number.isInteger(memeId) || memeId <= 0) {
+        setStudentRewardStatus("Vui lòng chọn một thẻ cần thêm.", true);
+        return;
+      }
+      await requestStudentRewardManagement("add", { meme_id: memeId });
+    }
+
+    async function removeSelectedStudentRewards() {
+      const selections = [...document.querySelectorAll(".student-reward-select:checked")]
+        .map(checkbox => {
+          const memeId = checkbox.dataset.memeId;
+          const countInput = checkbox.closest(".student-reward-item")?.querySelector(".student-reward-remove-count");
+          return { meme_id: Number(memeId), count: Number(countInput?.value) };
+        });
+      if (selections.length === 0) {
+        setStudentRewardStatus("Chọn ít nhất một thẻ cần xóa.", true);
+        return;
+      }
+      if (selections.some(item => !Number.isInteger(item.count) || item.count < 1)) {
+        setStudentRewardStatus("Số lượng xóa phải là số nguyên dương.", true);
+        return;
+      }
+      await requestStudentRewardManagement("remove_selected", { selections });
+    }
+
+    async function removeAllStudentRewards() {
+      const confirmed = await showStyledConfirm("Bạn có chắc muốn xóa toàn bộ thẻ trong bộ sưu tập của học sinh này? Không thể hoàn tác thao tác này.");
+      if (!confirmed) return;
+      await requestStudentRewardManagement("remove_all");
     }
 
     async function submitSaveFeedback(e) {
@@ -4277,7 +4609,6 @@
                     ↺ Hủy đánh dấu
                   </button>
                 ` : ''}
-
                 ${stu.is_banned
                   ? `<button type="button" class="action-dropdown-item" style="color:#16a34a;" onclick="unbanStudent('${stu.username}')">🔓 Mở khóa tài khoản</button>`
                   : `<button type="button" class="action-dropdown-item danger" onclick="banStudent('${stu.username}')">🔒 Khóa tài khoản</button>`
@@ -4287,6 +4618,9 @@
                 </button>
                 <button type="button" class="action-dropdown-item" style="color: #0f766e;" onclick="quickLoginAsStudent('${stu.id}', '${escapeForJsString(stu.username || '')}', '${escapeForJsString(stu.lastName || '')}', '${escapeForJsString(stu.firstName || '')}', '${escapeForJsString(stu.className || '')}', '${escapeForJsString(stu.grade || '')}')">
                   🚀 Đăng nhập nhanh
+                </button>
+                <button type="button" class="action-dropdown-item" style="color: #7c3aed;" onclick="openStudentRewardModal('${stu.id}')">
+                  🎁 Quản lý phần thưởng
                 </button>
               </div>
             </div>
@@ -5693,7 +6027,57 @@
     const filePreview = document.getElementById('new-meme-preview');
     const previewContainer = document.getElementById('preview-container');
     const fileDropText = document.getElementById('file-drop-text');
+    const replacementMemeFileInput = document.getElementById('replace-meme-file');
+    const replacementMemeDropArea = document.getElementById('replace-meme-drop-area');
     let currentBase64Image = null;
+
+    replacementMemeDropArea.addEventListener('dragover', event => {
+      event.preventDefault();
+      replacementMemeDropArea.style.background = '#e2e8f0';
+    });
+    replacementMemeDropArea.addEventListener('dragleave', event => {
+      if (!replacementMemeDropArea.contains(event.relatedTarget)) {
+        replacementMemeDropArea.style.background = '#f8fafc';
+      }
+    });
+    replacementMemeDropArea.addEventListener('drop', event => {
+      event.preventDefault();
+      replacementMemeDropArea.style.background = '#f8fafc';
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (file) loadReplacementMemeFile(file);
+    });
+
+    replacementMemeFileInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      loadReplacementMemeFile(file);
+    });
+
+    function loadReplacementMemeFile(file) {
+      if (!file.type.match('image.*')) {
+        showTeacherNotification("Vui lòng chọn file hình ảnh hợp lệ!");
+        clearReplacementMemeImage();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = event => {
+        if (typeof event.target.result !== 'string') {
+          showTeacherNotification("Không thể đọc ảnh đã chọn!");
+          clearReplacementMemeImage();
+          return;
+        }
+        replacementMemeBase64Image = event.target.result;
+        const preview = document.getElementById("replace-meme-preview");
+        preview.src = replacementMemeBase64Image;
+        preview.style.display = "block";
+      };
+      reader.onerror = () => {
+        showTeacherNotification("Không thể đọc ảnh đã chọn!");
+        clearReplacementMemeImage();
+      };
+      reader.readAsDataURL(file);
+    }
 
     if (fileDropArea) {
       fileDropArea.addEventListener('click', () => fileInput.click());

@@ -2296,7 +2296,7 @@
       <div class="modal-card" onclick="event.stopPropagation()">
         <button class="modal-close-btn" onclick="closeMemeViewModal()">✕</button>
         <div>
-          <span id="view-meme-rarity" class="rarity-tag" style="font-size: 13px; padding: 4px 12px;">SS</span>
+          <span id="view-meme-rarity" class="rarity-tag" data-rarity="SS" style="font-size: 13px; padding: 4px 12px;">SS</span>
           <span id="view-meme-count" style="font-size: 13px; color: #64748b; font-weight: 600; margin-left: 6px;">Sở hữu: x1</span>
         </div>
         <img id="view-meme-img" class="view-meme-img" src="" alt="Meme Image">
@@ -2919,7 +2919,7 @@
           <div style="display: flex; align-items: center; gap: 10px;">
             <img src="${item.image}" alt="Meme">
             <div>
-              <span class="rarity-tag" style="padding: 1px 6px; font-size: 10px; margin-bottom: 2px;">${item.rarity}</span>
+              <span class="rarity-tag" data-rarity="${item.rarity}" style="padding: 1px 6px; font-size: 10px; margin-bottom: 2px;">${item.rarity}</span>
               <div style="font-weight: 500; color: #1e293b; max-width: 220px; word-break: break-word;">${item.slogan}</div>
             </div>
           </div>
@@ -2973,6 +2973,8 @@
         image.alt = "";
         image.loading = "lazy";
         const rarity = document.createElement("span");
+        rarity.className = "rarity-tag";
+        rarity.dataset.rarity = meme.rarity;
         rarity.textContent = meme.rarity;
         option.append(image, rarity);
         option.addEventListener("click", () => saveGachaTarget(Number(meme.id)));
@@ -2992,7 +2994,9 @@
       preview.classList.toggle("show", Boolean(target));
       if (target) {
         document.getElementById("gacha-target-preview-image").src = target.image;
-        document.getElementById("gacha-target-preview-label").textContent = `${target.rarity}`;
+        const previewLabel = document.getElementById("gacha-target-preview-label");
+        previewLabel.textContent = target.rarity;
+        previewLabel.dataset.rarity = target.rarity;
       }
       if (pickerButton) {
         pickerButton.disabled = unownedMemes.length === 0 && !hasTarget;
@@ -3114,7 +3118,9 @@
         description.textContent = won.is_new_meme
           ? "Bạn vừa mở khóa một thẻ chưa có trong bộ sưu tập!"
           : "Thẻ này đã có trong bộ sưu tập của bạn.";
-        document.getElementById("gacha-result-rarity").textContent = won.rarity;
+        const rarity = document.getElementById("gacha-result-rarity");
+        rarity.textContent = won.rarity;
+        rarity.dataset.rarity = won.rarity;
         document.getElementById("gacha-result-img").src = won.image;
         document.getElementById("gacha-result-slogan").textContent = won.slogan;
         if (won.is_new_meme) {
@@ -3149,6 +3155,7 @@
         image.loading = "lazy";
         const rarity = document.createElement("span");
         rarity.className = "gacha-result-item-rarity";
+        rarity.dataset.rarity = meme.rarity;
         rarity.textContent = meme.rarity;
         const slogan = document.createElement("div");
         slogan.className = "gacha-result-item-slogan";
@@ -3353,7 +3360,7 @@
           card.onclick = () => openMemeViewModal(meme, count);
           card.innerHTML = `
             <div>
-              <span class="rarity-tag">${meme.rarity}</span>
+              <span class="rarity-tag" data-rarity="${meme.rarity}">${meme.rarity}</span>
               <div class="meme-img-wrapper">
                 <img src="${meme.image}" alt="Meme">
                 <span class="meme-count-badge">x${count}</span>
@@ -3367,7 +3374,7 @@
         } else {
           card.innerHTML = `
             <div>
-              <span class="rarity-tag" style="background:#94a3b8;">${meme.rarity}</span>
+              <span class="rarity-tag" data-rarity="${meme.rarity}">${meme.rarity}</span>
               <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
             </div>
             <div style="margin-top: 8px; text-align: center;">
@@ -3386,7 +3393,9 @@
 
       currentViewingMeme = meme;
 
-      document.getElementById("view-meme-rarity").textContent = meme.rarity;
+      const rarity = document.getElementById("view-meme-rarity");
+      rarity.textContent = meme.rarity;
+      rarity.dataset.rarity = meme.rarity;
       document.getElementById("view-meme-count").textContent = `Sở hữu: x${count}`;
       document.getElementById("view-meme-img").src = meme.image;
       document.getElementById("view-meme-slogan").textContent = meme.slogan;
