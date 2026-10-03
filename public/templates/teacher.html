@@ -951,7 +951,10 @@
 
           <!-- KHỐI 2: TRA CỨU ĐIỂM DANH THEO NGÀY, HIỆN NÚT CÁC LỚP VÀ SĨ SỐ CHI TIẾT -->
           <div class="card">
-            <h3 style="margin-top: 0; font-size: 18px; color: #1e293b;">📍 Tra Cứu & Giám Sát Điểm Danh</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <h3 style="margin: 0; font-size: 18px; color: #1e293b;">📍 Tra Cứu & Giám Sát Điểm Danh</h3>
+              <button onclick="openReportModal()" class="btn btn-primary">📝 Tạo Báo Cáo Cuối Buổi</button>
+            </div>
             
             <div class="grid-2 mt-2">
               <div class="form-group">
@@ -1471,6 +1474,71 @@
             </div>
           </form>
           <p id="feedback-student-status" class="status-msg mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Modal Tạo Báo Cáo Cuối Buổi -->
+      <div id="reportModal" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">📝 Báo Cáo Cuối Buổi Dạy</h3>
+            <button onclick="closeReportModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Chọn lớp trong ngày:</label>
+            <div id="reportClassSelect" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; max-height: 200px; overflow-y: auto;">
+                <!-- Checkbox các lớp sẽ được JS đổ vào đây -->
+            </div>
+            <small id="attendanceWarning" style="color: #ef4444; font-weight: 600; display: none; margin-top: 8px;">
+                ⚠️ Lớp này chưa điểm danh (phát hiện cả lớp cùng vắng)! Vui lòng điểm danh trước.
+            </small>
+          </div>
+
+          <div id="reportFields" style="display: block;">
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-bottom: 16px;">
+                
+                <!-- Ô Nhập Giáo viên chính (chiếm toàn bộ chiều ngang) -->
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Tên giáo viên chính:</label>
+                    <input type="text" id="rep_Teacher" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tên trợ giảng:</label> <input type="text" id="rep_TA" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Phòng máy:</label> <input type="text" id="rep_Room" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tổng số máy:</label> <input type="text" id="rep_TotalPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tỷ lệ học sinh có tài liệu:</label> <input type="text" id="rep_Docs" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tổng số máy bị lỗi:</label> <input type="text" id="rep_BrokenPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Số máy còn thiếu cho HS:</label> <input type="text" id="rep_MissingPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tình trạng Netsupport:</label> <input type="text" id="rep_Netsupport" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tình trạng loa, âm ly:</label> <input type="text" id="rep_Speaker" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Tình trạng máy lạnh/quạt:</label> <input type="text" id="rep_AC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Đã tắt thiết bị điện chưa:</label> <input type="text" id="rep_Power" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Ghế HS sắp xếp gọn gàng:</label> <input type="text" id="rep_Chairs" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Vệ sinh phòng máy:</label> <input type="text" id="rep_Clean" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Việc tuân thủ nội quy:</label> <input type="text" id="rep_Rules" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                    <div class="form-group" style="margin-bottom: 12px;"><label>Danh sách vi phạm:</label> <input type="text" id="rep_Violations" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" onclick="closeReportModal()" class="btn btn-secondary">Hủy</button>
+              <button type="button" id="btnCopyReport" onclick="generateAndCopyReport()" class="btn btn-primary" style="background: #16a34a; border-color: #15803d;">📋 Tạo & Lưu vào Clipboard</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3024,7 +3092,7 @@
         const firstName = (stu.firstName || '').trim();
 
         const hasToneInLastName = hasVietnameseTone(lastName);
-        const hasToneInFirstName = hasToneInLastName;
+        const hasToneInFirstName = hasVietnameseTone(firstName);
         const isBothUnaccented = (!hasToneInLastName && !hasToneInFirstName) && (lastName !== '' || firstName !== '');
 
         let isDuplicate = false;
@@ -4596,6 +4664,180 @@
         fetchActiveClassesForDate();
       }
     });
+    /* ========================================================
+   LOGIC TẠO BÁO CÁO CUỐI BUỔI DẠY VÀ COPY VÀO CLIPBOARD
+   ======================================================== */
+    function openReportModal() {
+      const school = document.getElementById("view-att-school-select")?.value || "";
+      const date = document.getElementById("view-att-date-picker")?.value || new Date().toISOString().split('T')[0];
+
+      if(!school) {
+          alert("Vui lòng chọn trường ở mục 'Tra Cứu & Giám Sát Điểm Danh' trước khi tạo báo cáo!");
+          return;
+      }
+
+      const modal = document.getElementById('reportModal');
+      if (modal) {
+        modal.classList.add('show'); 
+      }
+
+      // --- THÊM ĐOẠN NÀY ĐỂ TẢI DỮ LIỆU ĐÃ LƯU ---
+      const savedDataStr = localStorage.getItem('saved_report_form_data');
+      if (savedDataStr) {
+          try {
+              const savedData = JSON.parse(savedDataStr);
+              const fields = ['rep_Teacher', 'rep_TA', 'rep_Room', 'rep_TotalPC', 'rep_Docs', 'rep_BrokenPC', 'rep_MissingPC', 'rep_Netsupport', 'rep_Speaker', 'rep_AC', 'rep_Power', 'rep_Chairs', 'rep_Clean', 'rep_Rules', 'rep_Violations'];
+              fields.forEach(id => {
+                  if (savedData[id] !== undefined) {
+                      const el = document.getElementById(id);
+                      if (el) el.value = savedData[id];
+                  }
+              });
+          } catch (e) { console.error("Lỗi khi nạp dữ liệu cũ:", e); }
+      }
+
+      // Tải danh sách lớp vào dropdown
+      fetch(`/.netlify/functions/attendance?action=get_active_classes_by_date&school=${encodeURIComponent(school)}&date=${date}`)
+      .then(res => res.json())
+      .then(data => {
+          const select = document.getElementById('reportClassSelect');
+          if(!select) return;
+          select.innerHTML = ''; // Xóa rỗng
+          
+          if(data.classes && data.classes.length > 0) {
+              data.classes.forEach(c => {
+                  const lbl = document.createElement('label');
+                  lbl.style.cursor = 'pointer';
+                  lbl.style.display = 'flex';
+                  lbl.style.alignItems = 'center';
+                  lbl.style.gap = '10px';
+                  lbl.style.padding = '12px 16px';
+                  lbl.style.border = '1px solid #cbd5e1';
+                  lbl.style.borderRadius = '8px';
+                  lbl.style.backgroundColor = '#f8fafc';
+                  lbl.style.fontWeight = '600';
+                  lbl.style.color = '#1e293b';
+                  lbl.style.transition = 'all 0.2s';
+
+                  // Thêm hiệu ứng hover đổi màu
+                  lbl.onmouseenter = () => { lbl.style.backgroundColor = '#f1f5f9'; lbl.style.borderColor = '#94a3b8'; };
+                  lbl.onmouseleave = () => { lbl.style.backgroundColor = '#f8fafc'; lbl.style.borderColor = '#cbd5e1'; };
+
+                  // Phóng to nút checkbox lên 18px
+                  lbl.innerHTML = `<input type="checkbox" class="report-class-cb" value="${c.class_name}" onchange="validateClassAttendance()" style="width: 18px; height: 18px; margin: 0; cursor: pointer;"> Lớp ${c.class_name}`;
+                  select.appendChild(lbl);
+              });
+          } else {
+              select.innerHTML = '<span style="color: #ef4444; font-size: 13px;">Không có lớp học nào trong ngày</span>';
+          }
+          
+          // Reset form fields
+          document.getElementById('attendanceWarning').style.display = 'none';
+          document.getElementById('reportFields').style.display = 'block';
+      }).catch(err => console.error(err));
+    }
+
+    function closeReportModal() {
+      const modal = document.getElementById('reportModal');
+      if (modal) {
+        modal.classList.remove('show');
+      }
+    }
+
+    async function validateClassAttendance() {
+      const school = document.getElementById("view-att-school-select")?.value;
+      const date = document.getElementById("view-att-date-picker")?.value;
+      const checkboxes = document.querySelectorAll('.report-class-cb:checked');
+      const warningStr = document.getElementById('attendanceWarning');
+      // Đã xóa dòng gọi reportFields
+
+      if (checkboxes.length === 0) {
+          warningStr.style.display = 'none';
+          // Đã xóa dòng ẩn form
+          return;
+      }
+
+      try {
+          let hasUncheckedClass = false;
+          let classReportStrings = [];
+
+          for (const cb of checkboxes) {
+              const className = cb.value;
+              const res = await fetch(`/.netlify/functions/attendance?action=get_class_attendance&school=${encodeURIComponent(school)}&className=${encodeURIComponent(className)}&date=${date}`);
+              const result = await res.json();
+
+              const total = result.total || 0;
+              const absent = result.absent || 0;
+              const present = result.present || 0;
+
+              if (total > 0 && absent === total) {
+                  hasUncheckedClass = true;
+                  break;
+              }
+              classReportStrings.push(`${className}(${total}/${present})`);
+          }
+
+          if (hasUncheckedClass) {
+              warningStr.style.display = 'block';
+              // Đã xóa dòng ẩn form
+          } else {
+              warningStr.style.display = 'none';
+              // Đã xóa dòng hiện form
+              
+              const modal = document.getElementById('reportModal');
+              modal.dataset.classesInfo = classReportStrings.join(', ');
+          }
+      } catch (err) {
+          console.error("Lỗi khi kiểm tra sĩ số điểm danh", err);
+      }
+    }
+
+    function generateAndCopyReport() {
+      const classesInfo = document.getElementById('reportModal').dataset.classesInfo || "";
+      if (!classesInfo || document.getElementById('attendanceWarning').style.display === 'block') {
+          alert("⚠ Vui lòng chọn lớp và đảm bảo các lớp đã được điểm danh đầy đủ trước khi copy báo cáo!");
+          return;
+      }
+
+      // 1. Thu thập dữ liệu từ Form
+      const fieldIds = ['rep_Teacher', 'rep_TA', 'rep_Room', 'rep_TotalPC', 'rep_Docs', 'rep_BrokenPC', 'rep_MissingPC', 'rep_Netsupport', 'rep_Speaker', 'rep_AC', 'rep_Power', 'rep_Chairs', 'rep_Clean', 'rep_Rules', 'rep_Violations'];
+      const formData = {};
+      fieldIds.forEach(id => {
+          const el = document.getElementById(id);
+          formData[id] = el ? el.value : "";
+      });
+
+      // 2. Lưu dữ liệu vào bộ nhớ máy (LocalStorage)
+      localStorage.setItem('saved_report_form_data', JSON.stringify(formData));
+
+      // 3. Ghép chuỗi báo cáo
+      const reportContent = `BÁO CÁO CUỐI BUỔI DẠY
+    - Tên giáo viên: ${formData['rep_Teacher']}
+    - Tên trợ giảng: ${formData['rep_TA']}
+    - Phòng máy: ${formData['rep_Room']}
+    - Tổng số máy: ${formData['rep_TotalPC']}
+    - Số lượng HS: ${classesInfo}
+    - Tỷ lệ học sinh có tài liệu: ${formData['rep_Docs']}
+    - Tổng số máy bị lỗi: ${formData['rep_BrokenPC']}
+    - Số máy còn thiếu cho HS: ${formData['rep_MissingPC']}
+    - Tình trạng Netsupport: ${formData['rep_Netsupport']}
+    - Tình trạng loa, âm ly: ${formData['rep_Speaker']}
+    - Tình trạng máy lạnh, máy quạt: ${formData['rep_AC']}
+    - Đã tắt thiết bị điện chưa: ${formData['rep_Power']}
+    - Ghế ngồi của HS được sắp xếp gọn gàng: ${formData['rep_Chairs']}
+    - Vệ sinh phòng máy: ${formData['rep_Clean']}
+    - Việc tuân thủ nội quy của HS: ${formData['rep_Rules']}
+    - Danh sách vi phạm: ${formData['rep_Violations']}`;
+
+      // 4. Lưu vào Clipboard
+      navigator.clipboard.writeText(reportContent).then(() => {
+          alert("Đã lưu báo cáo vào Clipboard thành công! Thông tin của bạn đã được ghi nhớ cho lần sau.");
+          closeReportModal();
+      }).catch(err => {
+          console.error('Lỗi khi copy vào clipboard: ', err);
+          alert("Có lỗi xảy ra, trình duyệt của bạn chặn quyền truy cập Clipboard. Hãy thử lại trên máy tính.");
+      });
+    }
   </script>
 </body>
 </html>

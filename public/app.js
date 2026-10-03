@@ -22,7 +22,6 @@ const TAB_TITLES = {
   "tab-settings": "Cài Đặt Hệ Thống"
 };
 
-// 1. Kiểm tra phiên đăng nhập khi tải trang
 window.addEventListener("DOMContentLoaded", () => {
   const session = getUserSession();
   if (session) {
@@ -32,14 +31,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function getUserSession() {
   try {
-    // Kiểm tra cả localStorage (cho giáo viên) và sessionStorage (cho học sinh)
-    return JSON.parse(localStorage.getItem("user_session") || sessionStorage.getItem("user_session") || sessionStorage.getItem("current_user") || "null");
+    const storedUser = localStorage.getItem("user_session") || sessionStorage.getItem("user_session") || sessionStorage.getItem("current_user");
+    return storedUser ? JSON.parse(storedUser) : null;
   } catch (e) {
     return null;
   }
 }
 
-// 2. Xử lý Đăng nhập
 if (loginForm) {
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -67,13 +65,12 @@ if (loginForm) {
         return;
       }
 
-      // Lưu trữ dựa trên phân quyền: teacher lưu ở localStorage, student lưu ở sessionStorage
       if (result.data.role === "teacher") {
         localStorage.setItem("user_session", JSON.stringify(result.data));
       } else {
         sessionStorage.setItem("user_session", JSON.stringify(result.data));
       }
-      sessionStorage.setItem("current_user", JSON.stringify(result.data)); // Fallback cho UI cũ
+      sessionStorage.setItem("current_user", JSON.stringify(result.data));
 
       showDashboard(result.data);
 
@@ -365,14 +362,15 @@ function restartQuiz() {
   if (intro) intro.classList.remove("hidden");
 }
 
-// 7. Đăng xuất hoàn chỉnh (Xóa session và dọn sạch lịch sử gacha)
 function logout() {
-  localStorage.removeItem("user_session"); 
+  localStorage.removeItem("user_session");
   sessionStorage.removeItem("user_session");
   sessionStorage.removeItem("current_user");
-  sessionStorage.removeItem("gacha_session_history");
-  sessionStorage.removeItem("teacher_active_tab");
-  sessionStorage.removeItem("student_active_tab");
-  sessionStorage.removeItem("teacher_student_filter");
+  [
+    "gacha_session_history",
+    "teacher_active_tab",
+    "student_active_tab",
+    "teacher_student_filter"
+  ].forEach(key => sessionStorage.removeItem(key));
   window.location.reload();
 }
