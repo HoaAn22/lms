@@ -2113,6 +2113,7 @@
         const isHidden = school.is_hidden || false;
         const idSafe = schoolName.replace(/[^a-zA-Z0-9]/g, '_');
         const isExamLocked = school.is_exam_locked || false;
+        const isRewardSharingLocked = school.is_reward_sharing_locked || false;
 
         const opt2 = document.createElement("option");
         opt2.value = schoolName;
@@ -2156,6 +2157,9 @@
               <div style="display: flex; gap: 6px;" onclick="event.stopPropagation()">
                 <button type="button" onclick="toggleSchoolExamLock('${schoolName}', ${isExamLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isExamLocked ? '#fee2e2' : '#f0fdf4'}; color: ${isExamLocked ? '#991b1b' : '#166534'}; border: 1px solid ${isExamLocked ? '#fca5a5' : '#86efac'}; cursor: pointer;">
                   ${isExamLocked ? '🔒 Đang khóa bài thi' : '🔓 Đang mở bài thi'}
+                </button>
+                <button type="button" onclick="toggleSchoolRewardShareLock('${escapeForJsString(schoolName)}', ${isRewardSharingLocked})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isRewardSharingLocked ? '#fef3c7' : '#ecfeff'}; color: ${isRewardSharingLocked ? '#92400e' : '#0f766e'}; border: 1px solid ${isRewardSharingLocked ? '#fcd34d' : '#67e8f9'}; cursor: pointer;">
+                  ${isRewardSharingLocked ? '🔒 Đang chặn chia sẻ' : '🔓 Cho phép chia sẻ'}
                 </button>
                 <button type="button" onclick="toggleSchoolStatus('${schoolName}', ${isHidden})" class="btn" style="padding: 3px 10px; font-size: 12px; background: ${isHidden ? '#dcfce7' : '#fee2e2'}; color: ${isHidden ? '#166534' : '#991b1b'}; border: 1px solid ${isHidden ? '#86efac' : '#fca5a5'}; cursor: pointer;">
                   ${isHidden ? '👁️ Hiện' : '🚫 Ẩn'}
@@ -2236,11 +2240,19 @@
       try {
         const res = await fetch("/.netlify/functions/auth");
         const result = await res.json();
-        if (result.success && result.data.schools) {
+        if (result.success && result.data && Array.isArray(result.data.schools)) {
           renderSchoolDropdown(result.data.schools);
+        } else {
+          const errorEl = document.createElement("div");
+          errorEl.style.cssText = "color: #b91c1c; font-size: 13px; padding: 4px;";
+          errorEl.textContent = result.message || result.error || "Lỗi tải danh sách trường.";
+          schoolsManagementList.replaceChildren(errorEl);
         }
       } catch (err) {
-        schoolsManagementList.innerHTML = '<div style="color: red; font-size: 13px;">Lỗi tải danh sách trường</div>';
+        const errorEl = document.createElement("div");
+        errorEl.style.cssText = "color: #b91c1c; font-size: 13px; padding: 4px;";
+        errorEl.textContent = "Không kết nối được máy chủ để tải danh sách trường.";
+        schoolsManagementList.replaceChildren(errorEl);
       }
     }
 
@@ -2277,6 +2289,26 @@
         });
         const result = await res.json();
         if (result.success) {
+          loadSchools();
+        } else {
+          alert(result.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối máy chủ!");
+      }
+    }
+
+    async function toggleSchoolRewardShareLock(schoolName, currentLockStatus) {
+      const newLockStatus = !currentLockStatus;
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "toggle_school_reward_sharing_lock", school: schoolName, is_reward_sharing_locked: newLockStatus })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message || "Đã cập nhật trạng thái khóa chia sẻ phần thưởng.");
           loadSchools();
         } else {
           alert(result.message);

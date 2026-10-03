@@ -73,8 +73,14 @@ const parseMemeIds = (data) => {
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
-      const { data, error } = await supabase.from('schools').select('name, is_hidden, is_exam_locked');
-      if (error) throw error;
+      let { data, error } = await supabase.from('schools').select('name, is_hidden, is_exam_locked, is_reward_sharing_locked');
+      if (error && `${error.code || ''} ${error.message || ''}`.includes('is_reward_sharing_locked')) {
+        const fallback = await supabase.from('schools').select('name, is_hidden, is_exam_locked');
+        if (fallback.error) throw fallback.error;
+        data = (fallback.data || []).map(school => ({ ...school, is_reward_sharing_locked: false }));
+      } else if (error) {
+        throw error;
+      }
       return createResponse(true, { schools: data || [] });
     }
 
@@ -538,6 +544,22 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Cập nhật thành công!");
     }
 
+    if (action === "toggle_school_reward_sharing_lock") {
+      const { school, is_reward_sharing_locked } = body;
+      const { error } = await supabase
+        .from('schools')
+        .update({ is_reward_sharing_locked })
+        .eq('name', school);
+
+      if (error) {
+        if (`${error.code || ''} ${error.message || ''}`.includes('is_reward_sharing_locked')) {
+          return createResponse(false, null, "Cơ sở dữ liệu chưa có cột khóa chia sẻ. Hãy chạy trong Supabase SQL Editor: ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS is_reward_sharing_locked boolean NOT NULL DEFAULT false;");
+        }
+        return createResponse(false, null, "Lỗi cập nhật trạng thái khóa chia sẻ phần thưởng của trường.");
+      }
+      return createResponse(true, null, is_reward_sharing_locked ? "Đã khóa chia sẻ phần thưởng cho trường." : "Đã mở khóa chia sẻ phần thưởng cho trường.");
+    }
+
     if (action === "get_school_exam_status") {
       const { school } = body;
       const { data, error } = await supabase
@@ -548,6 +570,18 @@ exports.handler = async (event) => {
 
       if (error || !data) return createResponse(true, { is_exam_locked: false });
       return createResponse(true, { is_exam_locked: data.is_exam_locked || false });
+    }
+
+    if (action === "get_school_reward_sharing_status") {
+      const { school } = body;
+      const { data, error } = await supabase
+        .from('schools')
+        .select('is_reward_sharing_locked')
+        .eq('name', school)
+        .single();
+
+      if (error || !data) return createResponse(true, { is_reward_sharing_locked: false });
+      return createResponse(true, { is_reward_sharing_locked: data.is_reward_sharing_locked || false });
     }
     
     if (action === "student_change_password") {
@@ -739,6 +773,15 @@ exports.handler = async (event) => {
 
     if (action === "transfer_meme") {
       const { sender_id, recipient_username, meme_id } = body;
+      const { data: senderStudent } = await supabase.from('students').select('school').eq('id', sender_id).single();
+      const schoolName = senderStudent ? senderStudent.school : null;
+      if (schoolName) {
+        const { data: schoolStatus } = await supabase.from('schools').select('is_reward_sharing_locked').eq('name', schoolName).single();
+        if (schoolStatus && schoolStatus.is_reward_sharing_locked) {
+          return createResponse(false, null, "🔒 Chia sẻ phần thưởng đã bị khóa bởi giáo viên. Bạn không thể tặng thẻ cho đến khi tính năng được mở lại!");
+        }
+      }
+
       const { data: recipient } = await supabase.from('students').select('id, full_name, username').ilike('username', recipient_username.trim().toLowerCase()).single();
       if (!recipient) return createResponse(false, null, `Không tìm thấy tài khoản "${recipient_username}"!`);
       if (recipient.id === sender_id) return createResponse(false, null, "Không thể tự tặng thẻ!");

@@ -5,7 +5,7 @@ const path = require("path");
 
 const authHandler = require("./netlify/functions/auth").handler;
 const attendanceHandler = require("./netlify/functions/attendance").handler;
-const PORT = 8888;
+const PORT = Number(process.env.PORT || 8888);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",

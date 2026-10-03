@@ -1869,8 +1869,52 @@
 
     function toggleShareInput() {
       const inputSec = document.getElementById("share-input-section");
+      const noticeEl = document.getElementById("share-notice");
+      const btnToggle = document.getElementById("btn-toggle-share");
+      const isLocked = btnToggle && btnToggle.disabled;
+      if (isLocked) {
+        if (noticeEl) {
+          noticeEl.textContent = "🔒 Chia sẻ phần thưởng đang bị khóa bởi giáo viên.";
+          noticeEl.style.color = "#b91c1c";
+        }
+        return;
+      }
       if (inputSec) {
         inputSec.style.display = inputSec.style.display === "none" ? "block" : "none";
+      }
+    }
+
+    async function checkStudentRewardSharingStatus() {
+      try {
+        const session = getSession();
+        if (!session || !session.school) return;
+
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_school_reward_sharing_status", school: session.school })
+        });
+        const result = await res.json();
+
+        if (!result.success || !result.data || !result.data.is_reward_sharing_locked) return;
+
+        const shareBox = document.getElementById("view-meme-share-box");
+        const shareNotice = document.getElementById("share-notice");
+        const btnToggle = document.getElementById("btn-toggle-share");
+        const btnConfirm = document.getElementById("btn-confirm-transfer");
+
+        if (shareBox) shareBox.style.display = "block";
+        if (btnToggle) {
+          btnToggle.disabled = true;
+          btnToggle.textContent = "🔒 Chia sẻ đã bị khóa";
+        }
+        if (btnConfirm) btnConfirm.disabled = true;
+        if (shareNotice) {
+          shareNotice.textContent = "🔒 Chia sẻ phần thưởng đã bị khóa bởi giáo viên. Hãy chờ mở lại!";
+          shareNotice.style.color = "#b91c1c";
+        }
+      } catch (err) {
+        console.warn("Không kiểm tra được trạng thái khóa chia sẻ phần thưởng.");
       }
     }
 
