@@ -347,6 +347,100 @@
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       position: relative;
     }
+    .prompt-dialog-card {
+      max-width: 480px;
+      animation: prompt-dialog-enter 0.18s ease-out;
+    }
+    .prompt-dialog-message {
+      margin: 0 0 16px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .prompt-dialog-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      color: #1e293b;
+      font: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .prompt-dialog-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+    .teacher-notifications {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(380px, calc(100vw - 32px));
+      pointer-events: none;
+    }
+    .teacher-notification {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid #3b82f6;
+      border-radius: 10px;
+      background: #fff;
+      color: #1e293b;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+      pointer-events: auto;
+      animation: prompt-dialog-enter 0.18s ease-out;
+    }
+    .teacher-notification.error {
+      border-color: #fecaca;
+      border-left-color: #ef4444;
+    }
+    .teacher-notification.success {
+      border-color: #bbf7d0;
+      border-left-color: #22c55e;
+    }
+    .teacher-notification-icon {
+      flex: 0 0 auto;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+    .teacher-notification-message {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.5;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+    .teacher-notification-close {
+      flex: 0 0 auto;
+      padding: 0 2px;
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .confirm-dialog-card {
+      max-width: 480px;
+      animation: prompt-dialog-enter 0.18s ease-out;
+    }
+    .confirm-dialog-message {
+      margin: 0;
+      color: #475569;
+      line-height: 1.5;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+    @keyframes prompt-dialog-enter {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
     .ip-list-badge {
       display: inline-block; 
@@ -1473,7 +1567,7 @@
           <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
               <h3 style="margin: 0; font-size: 18px; color: #1e293b;">📍 Tra Cứu & Giám Sát Điểm Danh</h3>
-              <button onclick="openReportModal()" class="btn btn-primary">📝 Tạo Báo Cáo Cuối Buổi</button>
+              <button onclick="openReportModal()" class="btn btn-primary">Báo cáo cuối buổi</button>
             </div>
             
             <div class="grid-2 mt-2">
@@ -2084,8 +2178,123 @@
     <button id="quick-page-scroll-button" type="button" onclick="scrollTeacherPage()" aria-label="Cuộn lên đầu trang" title="Lên đầu trang">↑</button>
   </div>
 
+  <div id="prompt-dialog" class="modal-backdrop" role="presentation" onclick="if (event.target === this) closeStyledPrompt(null)">
+    <form class="modal-card prompt-dialog-card" role="dialog" aria-modal="true" aria-labelledby="prompt-dialog-title" aria-describedby="prompt-dialog-message" onsubmit="submitStyledPrompt(event)">
+      <h3 id="prompt-dialog-title" style="margin:0 0 8px; color:#1e293b; font-size:18px;">Nhập thông tin</h3>
+      <p id="prompt-dialog-message" class="prompt-dialog-message"></p>
+      <input id="prompt-dialog-input" class="prompt-dialog-input" type="text" autocomplete="off">
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledPrompt(null)">Hủy</button>
+        <button type="submit" class="btn btn-primary">Xác nhận</button>
+      </div>
+    </form>
+  </div>
+  <div id="teacher-notifications" class="teacher-notifications" aria-live="polite" aria-relevant="additions"></div>
+  <div id="confirm-dialog" class="modal-backdrop" role="presentation" onclick="if (event.target === this) closeStyledConfirm(false)">
+    <div class="modal-card confirm-dialog-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message">
+      <h3 id="confirm-dialog-title" style="margin:0 0 8px; color:#1e293b; font-size:18px;">Xác nhận</h3>
+      <p id="confirm-dialog-message" class="confirm-dialog-message"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledConfirm(false)">Hủy</button>
+        <button id="confirm-dialog-accept" type="button" class="btn btn-primary" onclick="closeStyledConfirm(true)">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/auth-guard.js"></script>
   <script>
+    let styledPromptResolver = null;
+    let styledConfirmResolver = null;
+
+    function showTeacherNotification(message) {
+      const container = document.getElementById("teacher-notifications");
+      const text = String(message);
+      const isError = /lỗi|thất bại|không thể|không hợp lệ|vui lòng|chặn|error|failed/i.test(text);
+      const isSuccess = /thành công|đã lưu|đã xóa|đã khóa|đã mở khóa|đã cập nhật|đã duyệt/i.test(text);
+      const notification = document.createElement("div");
+      notification.className = `teacher-notification${isError ? " error" : isSuccess ? " success" : ""}`;
+      notification.setAttribute("role", isError ? "alert" : "status");
+
+      const icon = document.createElement("span");
+      icon.className = "teacher-notification-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = isError ? "⚠️" : isSuccess ? "✓" : "ℹ️";
+
+      const messageElement = document.createElement("span");
+      messageElement.className = "teacher-notification-message";
+      messageElement.textContent = text;
+
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "teacher-notification-close";
+      closeButton.setAttribute("aria-label", "Đóng thông báo");
+      closeButton.textContent = "×";
+      closeButton.addEventListener("click", () => notification.remove());
+
+      notification.append(icon, messageElement, closeButton);
+      container.appendChild(notification);
+      window.setTimeout(() => notification.remove(), 5000);
+    }
+
+    function showStyledConfirm(message) {
+      if (styledConfirmResolver) closeStyledConfirm(false);
+
+      const dialog = document.getElementById("confirm-dialog");
+      document.getElementById("confirm-dialog-message").textContent = message;
+      dialog.classList.add("show");
+      requestAnimationFrame(() => document.getElementById("confirm-dialog-accept").focus());
+
+      return new Promise(resolve => {
+        styledConfirmResolver = resolve;
+      });
+    }
+
+    function closeStyledConfirm(confirmed) {
+      document.getElementById("confirm-dialog").classList.remove("show");
+      if (!styledConfirmResolver) return;
+
+      const resolve = styledConfirmResolver;
+      styledConfirmResolver = null;
+      resolve(confirmed);
+    }
+
+    function showStyledPrompt(message, defaultValue = "") {
+      const dialog = document.getElementById("prompt-dialog");
+      const input = document.getElementById("prompt-dialog-input");
+      document.getElementById("prompt-dialog-message").textContent = message;
+      input.value = defaultValue;
+      dialog.classList.add("show");
+      requestAnimationFrame(() => input.focus());
+
+      return new Promise(resolve => {
+        styledPromptResolver = resolve;
+      });
+    }
+
+    function closeStyledPrompt(value) {
+      const dialog = document.getElementById("prompt-dialog");
+      dialog.classList.remove("show");
+      if (!styledPromptResolver) return;
+
+      const resolve = styledPromptResolver;
+      styledPromptResolver = null;
+      resolve(value);
+    }
+
+    function submitStyledPrompt(event) {
+      event.preventDefault();
+      closeStyledPrompt(document.getElementById("prompt-dialog-input").value);
+    }
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && styledPromptResolver) {
+        closeStyledPrompt(null);
+      }
+      if (event.key === "Escape" && styledConfirmResolver) {
+        closeStyledConfirm(false);
+      }
+    });
+
     /* BẬT / TẮT MENU BẢNG CHỌN TRÊN MOBILE */
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const overlay = document.getElementById('mobile-nav-overlay');
@@ -2892,11 +3101,11 @@
         if (!res.ok || !result.success) {
           throw new Error(result.message || "Không thể cập nhật trạng thái lớp.");
         }
-        alert(result.message);
+        showTeacherNotification(result.message);
         panel.hidden = true;
         await toggleSchoolClasses(school, toggleButton, panel);
       } catch (error) {
-        alert(error.message || "Lỗi kết nối khi cập nhật trạng thái lớp.");
+        showTeacherNotification(error.message || "Lỗi kết nối khi cập nhật trạng thái lớp.");
         actionButton.disabled = false;
       }
     }
@@ -2906,11 +3115,11 @@
       const password = pwdInput ? pwdInput.value.trim() : "";
 
       if (!password) {
-        alert("Vui lòng nhập mật khẩu tài khoản giáo viên để tiếp tục!");
+        showTeacherNotification("Vui lòng nhập mật khẩu tài khoản giáo viên để tiếp tục!");
         return;
       }
 
-      if (!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn trường "${schoolName}" không?`)) {
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa vĩnh viễn trường "${schoolName}" không?`)) {
         return;
       }
 
@@ -2927,13 +3136,13 @@
         });
         const result = await res.json();
         if (result.success) {
-          alert(result.message);
+          showTeacherNotification(result.message);
           loadSchools();
         } else {
-          alert(result.message || "Xóa trường thất bại!");
+          showTeacherNotification(result.message || "Xóa trường thất bại!");
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -2973,10 +3182,10 @@
         if (result.success) {
           loadSchools();
         } else {
-          alert(result.message);
+          showTeacherNotification(result.message);
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -2992,10 +3201,10 @@
         if (result.success) {
           loadSchools();
         } else {
-          alert(result.message);
+          showTeacherNotification(result.message);
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -3009,13 +3218,13 @@
         });
         const result = await res.json();
         if (result.success) {
-          alert(result.message || "Đã cập nhật trạng thái khóa chia sẻ phần thưởng.");
+          showTeacherNotification(result.message || "Đã cập nhật trạng thái khóa chia sẻ phần thưởng.");
           loadSchools();
         } else {
-          alert(result.message);
+          showTeacherNotification(result.message);
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -3169,7 +3378,7 @@
           return;
         }
 
-        alert("Cập nhật meme thành công!");
+        showTeacherNotification("Cập nhật meme thành công!");
         closeEditMemeModal();
         loadAdminMemeCollection();
       } catch (err) {
@@ -3180,7 +3389,7 @@
 
     async function confirmDeleteMeme() {
       if (!currentSelectedMeme) return;
-      if (!confirm(`Bạn có chắc chắn muốn xóa meme "${currentSelectedMeme.slogan}" không?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa meme "${currentSelectedMeme.slogan}" không?`)) return;
 
       const memeId = document.getElementById("edit-meme-id").value;
       const statusEl = document.getElementById("edit-meme-status");
@@ -3205,7 +3414,7 @@
           return;
         }
 
-        alert("Đã xóa meme thành công!");
+        showTeacherNotification("Đã xóa meme thành công!");
         closeEditMemeModal();
         loadAdminMemeCollection();
       } catch (err) {
@@ -3216,7 +3425,7 @@
 
     /* QUẢN LÝ KHÓA/MỞ KHÓA TÀI KHOẢN HỌC SINH */
     async function banStudent(username) {
-      const reason = prompt(`Nhập lý do khóa tài khoản ${username}:`, "Vi phạm nội quy");
+      const reason = await showStyledPrompt(`Nhập lý do khóa tài khoản ${username}:`, "Vi phạm nội quy");
       if (reason === null) return;
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -3225,15 +3434,15 @@
           body: JSON.stringify({ action: "ban_account", username: username, reason: reason })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) fetchStudentList(true);
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
     async function unbanStudent(username) {
-      if (!confirm(`Bạn có chắc chắn muốn mở khóa cho tài khoản ${username}?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn mở khóa cho tài khoản ${username}?`)) return;
       try {
         const res = await fetch("/.netlify/functions/auth", {
           method: "POST",
@@ -3241,10 +3450,10 @@
           body: JSON.stringify({ action: "unban_account", username: username })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) fetchStudentList(true);
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -3269,10 +3478,10 @@
           saveCurrentFilterState();
           sortAndRenderStudents();
         } else {
-          alert(result.message || "Cập nhật trạng thái đánh dấu thất bại!");
+          showTeacherNotification(result.message || "Cập nhật trạng thái đánh dấu thất bại!");
         }
       } catch (err) {
-        alert("Lỗi kết nối máy chủ khi đánh dấu!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi đánh dấu!");
       }
     }
 
@@ -3340,7 +3549,7 @@
           return;
         }
 
-        alert(result.message || "Cập nhật xu học sinh thành công!");
+        showTeacherNotification(result.message || "Cập nhật xu học sinh thành công!");
         closeSingleCoinModal();
         fetchStudentList(true);
       } catch (err) {
@@ -3429,7 +3638,7 @@
           return;
         }
 
-        alert(result.message || "Đã xóa học sinh thành công!");
+        showTeacherNotification(result.message || "Đã xóa học sinh thành công!");
         closeDeleteStudentModal();
         fetchStudentList(true);
       } catch (err) {
@@ -3491,7 +3700,7 @@
         if (stu) stu.feedback = feedbackText;
         saveCurrentFilterState();
 
-        alert("Lưu đánh giá cho học sinh thành công!");
+        showTeacherNotification("Lưu đánh giá cho học sinh thành công!");
         closeFeedbackModal();
       } catch (err) {
         statusEl.className = "status-msg status-error mt-2";
@@ -3533,7 +3742,7 @@
           return;
         }
 
-        alert("Cập nhật thông tin học sinh thành công!");
+        showTeacherNotification("Cập nhật thông tin học sinh thành công!");
         closeEditStudentModal();
         fetchStudentList(true);
       } catch (err) {
@@ -3628,7 +3837,7 @@
       const className = document.getElementById("filter-class-input").value.trim();
 
       if (!school) {
-        alert("Vui lòng chọn trường học trước!");
+        showTeacherNotification("Vui lòng chọn trường học trước!");
         return;
       }
 
@@ -3744,11 +3953,11 @@
     async function executeBatchBan() {
       const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
-        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để khóa!");
+        showTeacherNotification("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để khóa!");
         return;
       }
 
-      const reason = prompt(`Nhập lý do khóa cho ${selectedCheckboxes.length} tài khoản này:`, "Vi phạm nội quy");
+      const reason = await showStyledPrompt(`Nhập lý do khóa cho ${selectedCheckboxes.length} tài khoản này:`, "Vi phạm nội quy");
       if (reason === null) return; 
 
       const btnConfirm = document.getElementById("btn-confirm-quick-ban");
@@ -3768,7 +3977,7 @@
               if (result.success) successCount++; else failCount++;
           } catch (e) { failCount++; }
       }
-      alert(`Đã khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
+      showTeacherNotification(`Đã khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành khóa (<span id="quick-ban-count">0</span>)`;
       turnOffAllBatchModes();
@@ -3778,10 +3987,10 @@
     async function executeBatchUnban() {
       const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
-        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để mở khóa!");
+        showTeacherNotification("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để mở khóa!");
         return;
       }
-      if (!confirm(`Bạn có chắc chắn muốn mở khóa cho ${selectedCheckboxes.length} tài khoản đã chọn?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn mở khóa cho ${selectedCheckboxes.length} tài khoản đã chọn?`)) return;
 
       const btnConfirm = document.getElementById("btn-confirm-quick-unban");
       btnConfirm.disabled = true;
@@ -3800,7 +4009,7 @@
               if (result.success) successCount++; else failCount++;
           } catch (e) { failCount++; }
       }
-      alert(`Đã mở khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
+      showTeacherNotification(`Đã mở khóa thành công ${successCount} tài khoản.${failCount > 0 ? ` Thất bại ${failCount} tài khoản.` : ''}`);
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = `Tiến hành mở khóa (<span id="quick-unban-count">0</span>)`;
       turnOffAllBatchModes();
@@ -4078,7 +4287,7 @@
     function openBatchDeleteModal() {
       const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
-        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để xóa!");
+        showTeacherNotification("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để xóa!");
         return;
       }
       document.getElementById("batch-delete-count-display").textContent = selectedCheckboxes.length;
@@ -4131,7 +4340,7 @@
           return;
         }
 
-        alert(result.message || "Đã xóa hàng loạt thành công!");
+        showTeacherNotification(result.message || "Đã xóa hàng loạt thành công!");
         closeBatchDeleteModal();
         turnOffAllBatchModes();
         fetchStudentList(true);
@@ -4146,7 +4355,7 @@
     function openBatchCoinModal() {
       const selectedCheckboxes = document.querySelectorAll('.batch-checkbox:checked');
       if (selectedCheckboxes.length === 0) {
-        alert("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để cộng/trừ xu!");
+        showTeacherNotification("Vui lòng tích chọn ít nhất 1 học sinh ở các ô bên trái để cộng/trừ xu!");
         return;
       }
       
@@ -4202,7 +4411,7 @@
           return;
         }
 
-        alert(result.message || "Cập nhật xu các học sinh đã chọn thành công!");
+        showTeacherNotification(result.message || "Cập nhật xu các học sinh đã chọn thành công!");
         closeBatchCoinModal();
         if (typeof turnOffAllBatchModes === 'function') turnOffAllBatchModes();
         fetchStudentList(true);
@@ -4227,11 +4436,11 @@
       statusEl.textContent = "";
 
       if (!school) {
-        alert("Vui lòng chọn trường học!");
+        showTeacherNotification("Vui lòng chọn trường học!");
         return;
       }
       if (!oldClass) {
-        alert("Vui lòng nhập tên lớp hiện tại cần tìm!");
+        showTeacherNotification("Vui lòng nhập tên lớp hiện tại cần tìm!");
         return;
       }
 
@@ -4524,7 +4733,7 @@
 
     async function clearAllLoginLogs() {
       const roleText = currentLogRole === 'teacher' ? 'giáo viên' : 'học sinh';
-      if (!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn nhật ký đăng nhập (${roleText})?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa vĩnh viễn nhật ký đăng nhập (${roleText})?`)) return;
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -4533,10 +4742,10 @@
           body: JSON.stringify({ action: "clear_login_history", role: currentLogRole })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) loadLoginHistory();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi xóa nhật ký!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi xóa nhật ký!");
       }
     }
 
@@ -4620,7 +4829,7 @@
     }
 
     async function banIp(ipAddress) {
-      const reason = prompt(`Nhập lý do khóa (Cấm vĩnh viễn) IP ${ipAddress}:`, "Vi phạm quy chế hệ thống");
+      const reason = await showStyledPrompt(`Nhập lý do khóa (Cấm vĩnh viễn) IP ${ipAddress}:`, "Vi phạm quy chế hệ thống");
       if (reason === null) return;
 
       try {
@@ -4631,15 +4840,15 @@
         });
         const result = await res.json();
         
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) loadIpManagement();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi thực hiện Ban IP!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi thực hiện Ban IP!");
       }
     }
 
     async function unbanIp(ipAddress) {
-      if (!confirm(`Bạn có chắc muốn bỏ cấm cho IP ${ipAddress} không?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc muốn bỏ cấm cho IP ${ipAddress} không?`)) return;
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -4649,21 +4858,21 @@
         });
         const result = await res.json();
         
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) loadIpManagement();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi Unban IP!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi Unban IP!");
       }
     }
 
     async function deleteIpRecord(ipAddress) {
       const starredList = getStarredIps();
       if (starredList.includes(ipAddress)) {
-        if (!confirm(`⚠️ CẢNH BÁO: IP ${ipAddress} đang được đánh dấu sao là MÁY CHỦ hoặc GIÁO VIÊN!\nBạn có thực sự muốn xóa IP này khỏi danh sách không?`)) {
+        if (!await showStyledConfirm(`⚠️ CẢNH BÁO: IP ${ipAddress} đang được đánh dấu sao là MÁY CHỦ hoặc GIÁO VIÊN!\nBạn có thực sự muốn xóa IP này khỏi danh sách không?`)) {
           return;
         }
       } else {
-        if (!confirm(`Bạn có chắc chắn muốn xóa IP ${ipAddress} ra khỏi hệ thống?\n(Khi thiết bị thuộc dải IP này đăng nhập lại sau này, hệ thống sẽ ghi nhận lại từ đầu)`)) {
+        if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa IP ${ipAddress} ra khỏi hệ thống?\n(Khi thiết bị thuộc dải IP này đăng nhập lại sau này, hệ thống sẽ ghi nhận lại từ đầu)`)) {
           return;
         }
       }
@@ -4675,13 +4884,13 @@
           body: JSON.stringify({ action: "delete_ip_logs", ip_address: ipAddress })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) {
           loadIpManagement();
           loadLoginHistory();
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi xóa IP!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi xóa IP!");
       }
     }
 
@@ -4806,7 +5015,7 @@
     }
 
     async function approveSingleReward(studentId, coins) {
-      if (!confirm(`Xác nhận duyệt cộng ${coins} xu cho học sinh này?`)) return;
+      if (!await showStyledConfirm(`Xác nhận duyệt cộng ${coins} xu cho học sinh này?`)) return;
 
       try {
         const res = await fetch("/.netlify/functions/auth", {
@@ -4818,7 +5027,7 @@
           })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) {
           fetchPendingRewardRequests();
           if (filterSchoolSelect.value) {
@@ -4826,12 +5035,12 @@
           }
         }
       } catch (err) {
-        alert("Lỗi kết nối máy chủ khi duyệt thưởng!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi duyệt thưởng!");
       }
     }
 
     async function rejectSingleReward(studentId, coins) {
-      const reason = prompt(`Nhập lý do từ chối (+${coins} xu):`, "Không hợp lệ");
+      const reason = await showStyledPrompt(`Nhập lý do từ chối (+${coins} xu):`, "Không hợp lệ");
       if (reason === null) return;
 
       try {
@@ -4845,12 +5054,12 @@
           })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) {
           fetchPendingRewardRequests();
         }
       } catch (err) {
-        alert("Lỗi kết nối máy chủ khi từ chối nhận thưởng!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi từ chối nhận thưởng!");
       }
     }
 
@@ -4866,7 +5075,7 @@
         ? `Bạn có chắc chắn muốn duyệt tất cả ${filteredList.length} yêu cầu nhận xu này không?`
         : `Bạn có chắc chắn muốn duyệt tất cả ${filteredList.length} yêu cầu của lớp ${currentRewardClassFilter} không?`;
 
-      if (!confirm(confirmMsg)) return;
+      if (!await showStyledConfirm(confirmMsg)) return;
 
       const studentIds = filteredList.map(r => r.student_id);
 
@@ -4880,7 +5089,7 @@
           })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         if (result.success) {
           fetchPendingRewardRequests();
           if (filterSchoolSelect.value) {
@@ -4888,7 +5097,7 @@
           }
         }
       } catch (err) {
-        alert("Lỗi kết nối máy chủ khi duyệt tất cả thưởng!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi duyệt tất cả thưởng!");
       }
     }
 
@@ -5005,7 +5214,7 @@
 
     async function deleteClassSchedule(className) {
       const school = document.getElementById("sched-school-select").value;
-      if (!confirm(`Bạn có chắc chắn muốn xóa hoàn toàn lịch điểm danh của lớp ${className}?`)) {
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa hoàn toàn lịch điểm danh của lớp ${className}?`)) {
         return;
       }
 
@@ -5016,11 +5225,11 @@
           body: JSON.stringify({ school, class_name: className })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         loadClassSchedules();
         fetchActiveClassesForDate();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi xóa lịch!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi xóa lịch!");
       }
     }
 
@@ -5028,7 +5237,7 @@
       const school = document.getElementById("sched-school-select").value;
       const className = document.getElementById("sched-class-input").value.trim().toUpperCase();
       if (!school || !className) {
-        alert("Vui lòng chọn trường và nhập tên lớp!");
+        showTeacherNotification("Vui lòng chọn trường và nhập tên lớp!");
         return;
       }
 
@@ -5049,11 +5258,11 @@
           })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         loadClassSchedules();
         fetchActiveClassesForDate();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi lưu lịch điểm danh!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi lưu lịch điểm danh!");
       }
     }
 
@@ -5071,11 +5280,11 @@
           })
         });
         const result = await res.json();
-        alert(result.message);
+        showTeacherNotification(result.message);
         loadClassSchedules();
         fetchActiveClassesForDate();
       } catch (e) {
-        alert("Lỗi kết nối máy chủ khi cập nhật trạng thái!");
+        showTeacherNotification("Lỗi kết nối máy chủ khi cập nhật trạng thái!");
       }
     }
 
@@ -5214,11 +5423,11 @@
       const className = document.getElementById("current-viewing-class").textContent;
 
       if (!school || !date || className === "---" || currentClassAttendanceRecords.length === 0) {
-        alert("Dữ liệu không hợp lệ hoặc lớp hiện tại chưa có học sinh!");
+        showTeacherNotification("Dữ liệu không hợp lệ hoặc lớp hiện tại chưa có học sinh!");
         return;
       }
 
-      if (!confirm(`Bạn có chắc chắn muốn đánh dấu CÓ MẶT cho toàn bộ học sinh lớp ${className} trong ngày ${date}?`)) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn đánh dấu CÓ MẶT cho toàn bộ học sinh lớp ${className} trong ngày ${date}?`)) return;
 
       const studentsToMark = currentClassAttendanceRecords.map(stu => ({
         student_id: stu.student_id,
@@ -5240,13 +5449,13 @@
         const result = await res.json();
         
         if (res.ok && result.success) {
-          alert(result.message || "Đã đánh dấu có mặt cho toàn bộ lớp!");
+          showTeacherNotification(result.message || "Đã đánh dấu có mặt cho toàn bộ lớp!");
           loadClassAttendanceDetail(school, className, date);
         } else {
-          alert(result.message || "Lỗi khi điểm danh cả lớp!");
+          showTeacherNotification(result.message || "Lỗi khi điểm danh cả lớp!");
         }
       } catch (e) {
-        alert("Lỗi kết nối đến máy chủ!");
+        showTeacherNotification("Lỗi kết nối đến máy chủ!");
       }
     }
 
@@ -5257,7 +5466,7 @@
 
       if (!school || !date || className === "---") return;
 
-      if (!confirm(`⚠️ Bạn có chắc chắn muốn HỦY điểm danh toàn bộ lớp ${className} trong ngày ${date} (chuyển tất cả thành Vắng)?`)) return;
+      if (!await showStyledConfirm(`⚠️ Bạn có chắc chắn muốn HỦY điểm danh toàn bộ lớp ${className} trong ngày ${date} (chuyển tất cả thành Vắng)?`)) return;
 
       try {
         const res = await fetch("/.netlify/functions/attendance", {
@@ -5273,13 +5482,13 @@
         const result = await res.json();
         
         if (res.ok && result.success) {
-          alert(result.message || "Đã hủy điểm danh cả lớp (Chuyển thành Vắng)!");
+          showTeacherNotification(result.message || "Đã hủy điểm danh cả lớp (Chuyển thành Vắng)!");
           loadClassAttendanceDetail(school, className, date);
         } else {
-          alert(result.message || "Lỗi khi hủy điểm danh!");
+          showTeacherNotification(result.message || "Lỗi khi hủy điểm danh!");
         }
       } catch (e) {
-        alert("Lỗi kết nối đến máy chủ!");
+        showTeacherNotification("Lỗi kết nối đến máy chủ!");
       }
     }
 
@@ -5307,10 +5516,10 @@
         if (res.ok && result.success) {
           loadClassAttendanceDetail(school, className, date);
         } else {
-          alert(result.message || "Lỗi khi điểm danh!");
+          showTeacherNotification(result.message || "Lỗi khi điểm danh!");
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -5337,10 +5546,10 @@
         if (res.ok && result.success) {
           loadClassAttendanceDetail(school, className, date);
         } else {
-          alert(result.message || "Lỗi khi hủy điểm danh!");
+          showTeacherNotification(result.message || "Lỗi khi hủy điểm danh!");
         }
       } catch (e) {
-        alert("Lỗi kết nối máy chủ!");
+        showTeacherNotification("Lỗi kết nối máy chủ!");
       }
     }
 
@@ -5377,7 +5586,7 @@
 
     function handleFileSelect(file) {
       if (!file.type.match('image.*')) {
-        alert("Vui lòng chọn file hình ảnh hợp lệ!");
+        showTeacherNotification("Vui lòng chọn file hình ảnh hợp lệ!");
         return;
       }
       const reader = new FileReader();
@@ -5476,7 +5685,7 @@
       const date = document.getElementById("view-att-date-picker")?.value || new Date().toISOString().split('T')[0];
 
       if(!school) {
-          alert("Vui lòng chọn trường ở mục 'Tra Cứu & Giám Sát Điểm Danh' trước khi tạo báo cáo!");
+          showTeacherNotification("Vui lòng chọn trường ở mục 'Tra Cứu & Giám Sát Điểm Danh' trước khi tạo báo cáo!");
           return;
       }
 
@@ -5599,7 +5808,7 @@
     function generateAndCopyReport() {
       const classesInfo = document.getElementById('reportModal').dataset.classesInfo || "";
       if (!classesInfo || document.getElementById('attendanceWarning').style.display === 'block') {
-          alert("⚠ Vui lòng chọn lớp và đảm bảo các lớp đã được điểm danh đầy đủ trước khi copy báo cáo!");
+          showTeacherNotification("⚠ Vui lòng chọn lớp và đảm bảo các lớp đã được điểm danh đầy đủ trước khi copy báo cáo!");
           return;
       }
 
@@ -5635,11 +5844,11 @@
 
       // 4. Lưu vào Clipboard
       navigator.clipboard.writeText(reportContent).then(() => {
-          alert("Đã lưu báo cáo vào Clipboard thành công! Thông tin của bạn đã được ghi nhớ cho lần sau.");
+          showTeacherNotification("Đã lưu báo cáo vào Clipboard thành công! Thông tin của bạn đã được ghi nhớ cho lần sau.");
           closeReportModal();
       }).catch(err => {
           console.error('Lỗi khi copy vào clipboard: ', err);
-          alert("Có lỗi xảy ra, trình duyệt của bạn chặn quyền truy cập Clipboard. Hãy thử lại trên máy tính.");
+          showTeacherNotification("Có lỗi xảy ra, trình duyệt của bạn chặn quyền truy cập Clipboard. Hãy thử lại trên máy tính.");
       });
     }
   </script>
