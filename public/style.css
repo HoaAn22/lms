@@ -28,6 +28,15 @@ body {
   text-align: center;
 }
 
+.rarity-label[data-rarity="SSS"],
+.rarity-tag[data-rarity="SSS"],
+.gacha-result-item-rarity[data-rarity="SSS"],
+.gacha-target-preview-label[data-rarity="SSS"] {
+  border-color: #f9a8d4;
+  background: linear-gradient(135deg, #701a75, #db2777 52%, #f9a8d4);
+  box-shadow: 0 0 12px rgba(219, 39, 119, 0.45);
+}
+
 .rarity-label[data-rarity="SS"],
 .rarity-tag[data-rarity="SS"],
 .gacha-result-item-rarity[data-rarity="SS"],

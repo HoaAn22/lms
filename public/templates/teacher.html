@@ -178,10 +178,14 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
     .admin-meme-card img {
+      display: block;
       width: 100%;
-      height: 100px;
-      object-fit: cover;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      padding: 5px;
+      object-fit: contain;
       border-radius: 6px;
+      background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 80%);
     }
 
     tr.row-unaccented-highlight {
@@ -1715,6 +1719,7 @@
                     Mục tiêu thẻ
                   </label>
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-top: 10px;">
+                    <label for="gacha-target-limit-sss" style="font-size: 12px;">SSS lượt<input id="gacha-target-limit-sss" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
                     <label for="gacha-target-limit-ss" style="font-size: 12px;">SS lượt<input id="gacha-target-limit-ss" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
                     <label for="gacha-target-limit-s" style="font-size: 12px;">S lượt<input id="gacha-target-limit-s" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
                     <label for="gacha-target-limit-a" style="font-size: 12px;">A lượt<input id="gacha-target-limit-a" class="gacha-target-limit" type="number" min="1" max="10000" step="1" disabled style="width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;"></label>
@@ -1786,6 +1791,7 @@
                           <option value="A">A (Hiếm)</option>
                           <option value="S">S (Cực hiếm)</option>
                           <option value="SS">SS (Huyền thoại)</option>
+                          <option value="SSS">SSS (Siêu huyền thoại)</option>
                         </select>
                       </div>
                     </div>
@@ -1813,11 +1819,9 @@
             </div>
 
             <div id="admin-collection-body" class="card-body-collapsible collapsed">
-              <div style="display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 8px;">
-                <button onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
-              </div>
               <div class="filter-bar mt-2" id="admin-filter-bar">
                 <button class="filter-btn active" onclick="filterAdminMemes('ALL', this)">Tất cả</button>
+                <button class="filter-btn" onclick="filterAdminMemes('SSS', this)">SSS</button>
                 <button class="filter-btn" onclick="filterAdminMemes('SS', this)">SS</button>
                 <button class="filter-btn" onclick="filterAdminMemes('S', this)">S</button>
                 <button class="filter-btn" onclick="filterAdminMemes('A', this)">A</button>
@@ -1974,6 +1978,7 @@
                 <option value="A">A (Hiếm)</option>
                 <option value="S">S (Cực hiếm)</option>
                 <option value="SS">SS (Huyền thoại)</option>
+                <option value="SSS">SSS (Siêu huyền thoại)</option>
               </select>
             </div>
 
@@ -3435,7 +3440,7 @@
         const settings = result.data || {};
         const targetLimits = settings.target_pull_limits || {};
         document.getElementById("gacha-target-enabled").checked = settings.target_enabled === true;
-        ["ss", "s", "a", "b", "c"].forEach(rarity => {
+        ["sss", "ss", "s", "a", "b", "c"].forEach(rarity => {
           document.getElementById(`gacha-target-limit-${rarity}`).value = targetLimits[rarity.toUpperCase()] || "";
         });
         document.getElementById("gacha-new-meme-enabled").checked = settings.new_meme_enabled === true;
@@ -3461,7 +3466,7 @@
       const targetEnabled = document.getElementById("gacha-target-enabled").checked;
       const newMemeEnabled = document.getElementById("gacha-new-meme-enabled").checked;
       const targetPullLimits = {};
-      ["SS", "S", "A", "B", "C"].forEach(rarity => {
+      ["SSS", "SS", "S", "A", "B", "C"].forEach(rarity => {
         targetPullLimits[rarity] = document.getElementById(`gacha-target-limit-${rarity.toLowerCase()}`).value;
       });
       button.disabled = true;
@@ -3526,7 +3531,7 @@
 
     function renderAdminMemes() {
       const container = document.getElementById("admin-meme-grid-container");
-      const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
+      const rarityOrder = { 'SSS': 1, 'SS': 2, 'S': 3, 'A': 4, 'B': 5, 'C': 6 };
 
       let sorted = [...adminMemesCache].sort((a, b) => {
         let rA = rarityOrder[a.rarity] || 99;

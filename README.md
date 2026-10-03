@@ -8,7 +8,6 @@ npm run dev
 - npm install @aws-sdk/client-s3
 2. Tạo file lưu biến môi trường `.env`
 
-
 ## Cài đặt supabase
 
 1. Truy cập https://supabase.com/

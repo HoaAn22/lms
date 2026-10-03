@@ -207,13 +207,19 @@
     .meme-img-wrapper {
       position: relative;
       width: 100%;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 78%);
     }
     .meme-card-item img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 6px;
       display: block;
+      width: 100%;
+      height: 100%;
+      padding: 5px;
+      object-fit: contain;
+      border-radius: 6px;
     }
     .meme-count-badge {
       position: absolute;
@@ -394,11 +400,12 @@
       color: #1e293b;
     }
     .view-meme-img {
+      display: block;
       width: 100%;
-      max-height: 280px;
+      height: min(280px, 55vw);
       object-fit: contain;
       border-radius: 10px;
-      background: #f8fafc;
+      background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 80%);
       border: 1px solid #e2e8f0;
       margin: 16px 0 12px 0;
     }
@@ -1069,10 +1076,12 @@
     .gacha-target-preview img {
       width: 92px;
       height: 118px;
-      object-fit: cover;
+      padding: 4px;
+      object-fit: contain;
       filter: grayscale(1);
       border: 2px solid #93c5fd;
       border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
       box-shadow: 0 0 8px rgba(96, 165, 250, 0.68), 0 0 18px rgba(192, 132, 252, 0.38);
       animation: targetBorderGlow 3.2s ease-in-out infinite;
     }
@@ -1154,9 +1163,11 @@
       display: block;
       width: 42px;
       height: 42px;
-      object-fit: cover;
+      padding: 2px;
+      object-fit: contain;
       filter: grayscale(1);
       border-radius: 5px;
+      background: #fff;
     }
 
     .gacha-target-option span {
@@ -1303,10 +1314,11 @@
       display: block;
       width: 100%;
       height: 112px;
+      padding: 5px;
       object-fit: contain;
       border: 2px solid #fde68a;
       border-radius: 8px;
-      background: #f8fafc;
+      background: radial-gradient(circle at 50% 40%, #fff 0, #f1f5f9 80%);
     }
 
     .student-app .gacha-result-item.is-new img {
@@ -2161,6 +2173,7 @@
           
           <div class="filter-bar mt-2" id="student-filter-bar">
             <button class="filter-btn active" onclick="filterStudentMemes('ALL', this)">Tất cả</button>
+            <button class="filter-btn" onclick="filterStudentMemes('SSS', this)">SSS</button>
             <button class="filter-btn" onclick="filterStudentMemes('SS', this)">SS</button>
             <button class="filter-btn" onclick="filterStudentMemes('S', this)">S</button>
             <button class="filter-btn" onclick="filterStudentMemes('A', this)">A</button>
@@ -2935,7 +2948,8 @@
     }
 
     function getGachaTargetLimit(rarity) {
-      return Number(gachaSettings.target_pull_limits?.[rarity]) || 0;
+      const normalizedRarity = typeof rarity === "string" ? rarity.trim().toUpperCase() : "";
+      return Number(gachaSettings.target_pull_limits?.[normalizedRarity]) || 0;
     }
 
     function toggleGachaTargetPicker() {
@@ -2972,10 +2986,11 @@
         image.src = meme.image;
         image.alt = "";
         image.loading = "lazy";
+        const rarityLabel = typeof meme.rarity === "string" ? meme.rarity.trim().toUpperCase() : "";
         const rarity = document.createElement("span");
         rarity.className = "rarity-tag";
-        rarity.dataset.rarity = meme.rarity;
-        rarity.textContent = meme.rarity;
+        rarity.dataset.rarity = rarityLabel;
+        rarity.textContent = rarityLabel;
         option.append(image, rarity);
         option.addEventListener("click", () => saveGachaTarget(Number(meme.id)));
         picker.appendChild(option);
@@ -2995,8 +3010,8 @@
       if (target) {
         document.getElementById("gacha-target-preview-image").src = target.image;
         const previewLabel = document.getElementById("gacha-target-preview-label");
-        previewLabel.textContent = target.rarity;
-        previewLabel.dataset.rarity = target.rarity;
+        previewLabel.textContent = typeof target.rarity === "string" ? target.rarity.trim().toUpperCase() : "";
+        previewLabel.dataset.rarity = previewLabel.textContent;
       }
       if (pickerButton) {
         pickerButton.disabled = unownedMemes.length === 0 && !hasTarget;
@@ -3074,7 +3089,7 @@
 
       if (gachaSettings.target_enabled) {
         const targetLimits = gachaSettings.target_pull_limits || {};
-        const configuredRarities = ["SS", "S", "A", "B", "C"]
+        const configuredRarities = ["SSS", "SS", "S", "A", "B", "C"]
           .filter(rarity => Number(targetLimits[rarity]) > 0)
           .map(rarity => `${rarity}: ${targetLimits[rarity]} lượt`);
         const goalText = currentTarget
@@ -3086,7 +3101,7 @@
       }
 
       if (gachaSettings.new_meme_enabled) {
-        addRule(`🆕 Bảo đảm thẻ mới: sau tối đa ${gachaSettings.new_meme_pull_limit} lượt chưa nhận thẻ mới, lượt tiếp theo theo ngưỡng sẽ chắc chắn ra một thẻ bạn chưa có. Độ hiếm được chọn theo tỷ lệ gốc (SS 1%, S 5%, A 10%, B 30%, C 54%). Tiến độ hiện tại: ${gachaNewPullCount}/${gachaSettings.new_meme_pull_limit} lượt.`);
+        addRule(`🆕 Bảo đảm thẻ mới: sau tối đa ${gachaSettings.new_meme_pull_limit} lượt chưa nhận thẻ mới, lượt tiếp theo theo ngưỡng sẽ chắc chắn ra một thẻ bạn chưa có. Độ hiếm được chọn theo tỷ lệ gốc (SSS 0.5%, SS 1%, S 5%, A 10%, B 30%, C 53.5%). Tiến độ hiện tại: ${gachaNewPullCount}/${gachaSettings.new_meme_pull_limit} lượt.`);
       } else {
         addRule("🆕 Tính năng bảo đảm thẻ mới hiện chưa được giáo viên bật.");
       }
@@ -3326,16 +3341,16 @@
       if (!grid) return;
 
       const cachedMemes = currentMemesList || [];
-      const rarityOrder = { 'SS': 1, 'S': 2, 'A': 3, 'B': 4, 'C': 5 };
+      const rarityOrder = { 'SSS': 1, 'SS': 2, 'S': 3, 'A': 4, 'B': 5, 'C': 6 };
 
       let sorted = [...cachedMemes].sort((a, b) => {
-        let rA = rarityOrder[a.rarity] || 99;
-        let rB = rarityOrder[b.rarity] || 99;
+        let rA = rarityOrder[typeof a.rarity === "string" ? a.rarity.trim().toUpperCase() : ""] || 99;
+        let rB = rarityOrder[typeof b.rarity === "string" ? b.rarity.trim().toUpperCase() : ""] || 99;
         return rA - rB;
       });
 
       if (currentStudentFilter !== 'ALL') {
-        sorted = sorted.filter(m => m.rarity === currentStudentFilter);
+        sorted = sorted.filter(m => typeof m.rarity === "string" && m.rarity.trim().toUpperCase() === currentStudentFilter);
       }
 
       if (sorted.length === 0) {
@@ -3352,6 +3367,7 @@
         const idToCheck = Number(meme.id || meme._id);
         const count = studentMemeIds.filter(id => id === idToCheck).length;
         const isUnlocked = count > 0;
+        const rarityLabel = typeof meme.rarity === "string" ? meme.rarity.trim().toUpperCase() : "";
         
         const card = document.createElement("div");
         card.className = `meme-card-item ${isUnlocked ? 'unlocked' : 'locked'}`;
@@ -3360,7 +3376,7 @@
           card.onclick = () => openMemeViewModal(meme, count);
           card.innerHTML = `
             <div>
-              <span class="rarity-tag" data-rarity="${meme.rarity}">${meme.rarity}</span>
+              <span class="rarity-tag" data-rarity="${rarityLabel}">${rarityLabel}</span>
               <div class="meme-img-wrapper">
                 <img src="${meme.image}" alt="Meme">
                 <span class="meme-count-badge">x${count}</span>
@@ -3374,8 +3390,8 @@
         } else {
           card.innerHTML = `
             <div>
-              <span class="rarity-tag" data-rarity="${meme.rarity}">${meme.rarity}</span>
-              <div style="height: 120px; background: #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔒</div>
+              <span class="rarity-tag" data-rarity="${rarityLabel}">${rarityLabel}</span>
+              <div class="meme-img-wrapper" style="display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 24px;">🔒</div>
             </div>
             <div style="margin-top: 8px; text-align: center;">
               <div style="font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 3px;">ID: ${idToCheck}</div>
