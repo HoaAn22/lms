@@ -487,6 +487,416 @@
         z-index: 10000;
       }
     }
+
+    /* Giao diện bảng điều khiển giáo viên */
+    .dashboard-layout {
+      --teacher-primary: #2563eb;
+      --teacher-primary-dark: #1d4ed8;
+      --teacher-ink: #172554;
+      --teacher-muted: #64748b;
+      --teacher-border: #e2e8f0;
+      min-height: 100vh;
+      background: #f3f6fb;
+    }
+
+    .dashboard-layout .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #172554 0%, #0f172a 100%);
+      box-shadow: 8px 0 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .dashboard-layout .sidebar.collapsed {
+      margin-left: -280px;
+    }
+
+    .dashboard-layout .sidebar-brand {
+      height: 84px;
+      padding: 0 26px;
+      border-bottom-color: rgba(226, 232, 240, 0.12);
+    }
+
+    .dashboard-layout .sidebar-brand h3 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+    }
+
+    .dashboard-layout .sidebar-brand h3::before {
+      content: "";
+      width: 11px;
+      height: 11px;
+      border-radius: 4px;
+      background: #60a5fa;
+      box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.14);
+    }
+
+    .dashboard-layout .sidebar-nav {
+      gap: 6px;
+      padding: 20px 12px;
+    }
+
+    .dashboard-layout .sidebar-nav .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 14px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      border-left-width: 1px;
+      color: #cbd5e1;
+      text-align: left;
+      line-height: 1.45;
+    }
+
+    .dashboard-layout .sidebar-nav .nav-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+    }
+
+    .dashboard-layout .sidebar-nav .nav-item.active {
+      border-color: rgba(147, 197, 253, 0.18);
+      border-left-color: #60a5fa;
+      background: linear-gradient(105deg, rgba(37, 99, 235, 0.36), rgba(37, 99, 235, 0.12));
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .dashboard-layout .sidebar-nav .nav-item img {
+      flex: 0 0 auto;
+    }
+
+    .dashboard-layout .main-content {
+      background:
+        radial-gradient(ellipse at 85% 0%, rgba(219, 234, 254, 0.42), transparent 34%),
+        #f6f8fc;
+    }
+
+    .dashboard-layout .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: 78px;
+      height: auto;
+      padding: 12px clamp(18px, 3vw, 38px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.035);
+      backdrop-filter: blur(14px);
+    }
+
+    .dashboard-layout .topbar h2 {
+      color: var(--teacher-ink);
+      font-size: 20px;
+      font-weight: 750;
+      letter-spacing: -0.025em;
+    }
+
+    .dashboard-layout .topbar-right {
+      gap: 14px;
+    }
+
+    .dashboard-layout #teacher-name {
+      color: #334155;
+      font-size: 14px;
+    }
+
+    .dashboard-layout .btn-toggle,
+    .dashboard-layout .mobile-menu-btn {
+      border-radius: 10px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .dashboard-layout .btn-toggle:hover,
+    .dashboard-layout .mobile-menu-btn:hover {
+      background: #eff6ff;
+      color: var(--teacher-primary);
+    }
+
+    .dashboard-layout .content-body {
+      padding: clamp(20px, 3vw, 38px);
+    }
+
+    .dashboard-layout .tab-panel {
+      max-width: 1320px;
+    }
+
+    .dashboard-layout .card {
+      padding: clamp(20px, 2.2vw, 30px);
+      border: 1px solid rgba(226, 232, 240, 0.88);
+      border-radius: 18px;
+      background-color: #fff;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.055), 0 2px 6px rgba(15, 23, 42, 0.025);
+    }
+
+    .dashboard-layout .card-header-collapse {
+      gap: 14px;
+      min-height: 34px;
+    }
+
+    .dashboard-layout .card-header-collapse h3,
+    .dashboard-layout .card > h3,
+    .dashboard-layout .placeholder-card h4 {
+      letter-spacing: -0.02em;
+    }
+
+    .dashboard-layout .card-header-collapse > span {
+      flex: 0 0 auto;
+    }
+
+    .dashboard-layout .placeholder-card {
+      border: 1px dashed #cbd5e1;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    }
+
+    .dashboard-layout .form-group label {
+      margin-bottom: 7px;
+      color: #334155;
+      font-weight: 650;
+    }
+
+    .dashboard-layout input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .dashboard-layout select,
+    .dashboard-layout textarea,
+    .dashboard-layout .dropdown-select-btn {
+      min-height: 42px;
+      border: 1px solid #d7e0ec;
+      border-radius: 10px;
+      background-color: #fff;
+      color: #1e293b;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+
+    .dashboard-layout textarea {
+      min-height: 96px;
+    }
+
+    .dashboard-layout input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+    .dashboard-layout select:focus,
+    .dashboard-layout textarea:focus,
+    .dashboard-layout .dropdown-select-btn:focus-visible {
+      border-color: #60a5fa;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.13);
+    }
+
+    .dashboard-layout .btn,
+    .dashboard-layout .btn-action-main,
+    .dashboard-layout .filter-btn,
+    .dashboard-layout .class-attendance-btn {
+      border-radius: 10px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .dashboard-layout .btn:hover:not(:disabled),
+    .dashboard-layout .btn-action-main:hover,
+    .dashboard-layout .class-attendance-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(15, 23, 42, 0.12);
+    }
+
+    .dashboard-layout .btn-primary {
+      background-color: var(--teacher-primary);
+    }
+
+    .dashboard-layout .btn-primary:hover {
+      background-color: var(--teacher-primary-dark);
+    }
+
+    .dashboard-layout .btn-logout-sm {
+      padding: 9px 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.16);
+    }
+
+    .dashboard-layout .data-table,
+    .dashboard-layout .batch-preview-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: auto;
+      border-radius: 12px;
+      color: #334155;
+    }
+
+    .dashboard-layout .data-table {
+      display: block;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+
+    .dashboard-layout .data-table th,
+    .dashboard-layout .batch-preview-table th {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f4f7fb;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+    }
+
+    .dashboard-layout .data-table td,
+    .dashboard-layout .batch-preview-table td {
+      padding: 12px 14px;
+      border-bottom-color: #edf1f6;
+      vertical-align: middle;
+    }
+
+    .dashboard-layout .data-table tbody tr:last-child td,
+    .dashboard-layout .batch-preview-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .dashboard-layout .data-table tbody tr:hover td {
+      background-color: #f5f9ff;
+    }
+
+    .dashboard-layout .school-row-item {
+      padding: 14px 16px;
+      border-color: #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.025);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .dashboard-layout .school-row-item:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.07);
+    }
+
+    .dashboard-layout .filter-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+    }
+
+    .dashboard-layout .filter-btn.active {
+      background: var(--teacher-primary);
+      border-color: var(--teacher-primary);
+      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
+    }
+
+    .dashboard-layout .admin-meme-card {
+      border-color: #e2e8f0;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.035);
+    }
+
+    .dashboard-layout .admin-meme-card:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.1);
+    }
+
+    .dashboard-layout .modal-card {
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 18px;
+    }
+
+    .dashboard-layout .action-dropdown-menu,
+    .dashboard-layout .dropdown-list {
+      border-color: #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+    }
+
+    .dashboard-layout :focus-visible {
+      outline: 3px solid rgba(59, 130, 246, 0.45);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-layout .topbar {
+        min-height: 68px;
+        padding: 10px 16px;
+      }
+
+      .dashboard-layout .topbar h2 {
+        display: block;
+        font-size: 17px;
+      }
+
+      .dashboard-layout .topbar-left,
+      .dashboard-layout .topbar-right {
+        gap: 8px;
+      }
+
+      .dashboard-layout #teacher-name {
+        max-width: 34vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dashboard-layout .content-body {
+        padding: 16px 12px 28px;
+      }
+
+      .dashboard-layout .card {
+        padding: 18px 15px;
+        border-radius: 15px;
+      }
+
+      .dashboard-layout #create-school-form > div {
+        flex-wrap: wrap;
+        align-items: stretch !important;
+      }
+
+      .dashboard-layout #create-school-form > div > .form-group {
+        min-width: min(100%, 220px);
+      }
+
+      .dashboard-layout #admin-sidebar.show-menu {
+        background: #fff !important;
+        border: 1px solid #e2e8f0;
+      }
+
+      .dashboard-layout #admin-sidebar.show-menu .sidebar-nav .nav-item {
+        min-height: 72px;
+        color: #475569 !important;
+      }
+
+      .dashboard-layout #admin-sidebar.show-menu .sidebar-nav .nav-item.active {
+        color: #1d4ed8 !important;
+      }
+
+      .dashboard-layout .filter-bar {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .dashboard-layout .topbar h2 {
+        font-size: 15px;
+      }
+
+      .dashboard-layout .btn-logout-sm {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .dashboard-layout .topbar-right {
+        gap: 6px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dashboard-layout *,
+      .dashboard-layout *::before,
+      .dashboard-layout *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
   </style>
 </head>
 <body>
