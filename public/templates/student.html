@@ -516,7 +516,7 @@
     }
     /* ========================================== */
 
-    @media (max-width: 760px) {
+    @media (max-width: 800px) {
       h2 {
           display: none;
       }
@@ -677,6 +677,7 @@
       --student-ink: #172554;
       --student-muted: #64748b;
       --student-border: #e2e8f0;
+      --student-ring-decoration: radial-gradient(circle at 96% 92%, transparent 0 38px, rgba(37, 99, 235, 0.2) 39px 41px, transparent 42px 62px, rgba(37, 99, 235, 0.16) 63px 65px, transparent 66px 86px, rgba(37, 99, 235, 0.12) 87px 89px, transparent 90px);
       background:
         radial-gradient(ellipse at 82% 0%, rgba(219, 234, 254, 0.55), transparent 32%),
         #f4f7fc;
@@ -1266,7 +1267,7 @@
       }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 800px) {
       .student-app .student-header {
         min-height: 64px;
         padding: 10px 14px;
@@ -1417,7 +1418,7 @@
       }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 800px) {
       .student-app .student-header {
         gap: 8px;
       }
@@ -1445,6 +1446,10 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
       }
+    }
+
+    .student-app #tab-collection .meme-card-item {
+      background-image: var(--student-ring-decoration), linear-gradient(145deg, #fff, #f8faff);
     }
   </style>
 </head>
