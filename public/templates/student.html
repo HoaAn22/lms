@@ -673,7 +673,8 @@
         <h2 style="margin-left: 15px;">Trang học sinh</h2>
       </div>
       <div class="user-stats">
-        <div class="user-profile">
+        <div class="user-profile" style="display: flex; align-items: center; gap: 8px;">
+          <button id="btn-return-admin" onclick="returnToAdmin()" class="btn btn-logout-sm" style="background: #2563eb; display: none;">↩ Quay lại admin</button>
           <span id="header-student-name" class="header-user-clickable" onclick="switchStudentTab('tab-account')" title="Nhấn để xem thông tin tài khoản">
             👤 <span id="header-student-name-text">Học sinh</span>
           </span>
@@ -1098,9 +1099,18 @@
     let currentViewingMeme = null;
     let currentMemesList = [];
 
+    function toggleReturnToAdminButton() {
+      const btn = document.getElementById("btn-return-admin");
+      if (!btn) return;
+      const hasBackup = !!(sessionStorage.getItem("admin_quick_login_backup") || localStorage.getItem("admin_quick_login_backup"));
+      btn.style.display = hasBackup ? "inline-block" : "none";
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       const session = checkAuth("student");
       if (!session) return;
+
+      toggleReturnToAdminButton();
 
       const displayName = session.fullName || session.username;
       const headerNameEl = document.getElementById("header-student-name-text");

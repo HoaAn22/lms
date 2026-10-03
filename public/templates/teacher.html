@@ -3155,6 +3155,9 @@
                 <button type="button" class="action-dropdown-item" onclick="openSingleCoinModal('${stu.id}')">
                   💰 Xu
                 </button>
+                <button type="button" class="action-dropdown-item" style="color: #0f766e;" onclick="quickLoginAsStudent('${stu.id}', '${escapeForJsString(stu.username || '')}', '${escapeForJsString(stu.lastName || '')}', '${escapeForJsString(stu.firstName || '')}', '${escapeForJsString(stu.className || '')}', '${escapeForJsString(stu.grade || '')}')">
+                  🚀 Đăng nhập nhanh
+                </button>
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
                 </button>
@@ -3230,6 +3233,42 @@
         span.textContent = "••••••";
         btn.textContent = "👁️";
       }
+    }
+
+    function getCurrentTeacherSession() {
+      try {
+        const localUser = localStorage.getItem("user_session");
+        if (localUser) return JSON.parse(localUser);
+        const sessionUser = sessionStorage.getItem("user_session");
+        if (sessionUser) return JSON.parse(sessionUser);
+      } catch (e) {}
+      return null;
+    }
+
+    function quickLoginAsStudent(studentId, username, lastName, firstName, className, grade) {
+      const teacherSession = getCurrentTeacherSession();
+      if (teacherSession && teacherSession.role === "teacher") {
+        sessionStorage.setItem("admin_quick_login_backup", JSON.stringify(teacherSession));
+        localStorage.setItem("admin_quick_login_backup", JSON.stringify(teacherSession));
+      }
+
+      const studentSession = {
+        id: studentId,
+        username: username || "",
+        fullName: `${lastName || ""} ${firstName || ""}`.trim(),
+        lastName: lastName || "",
+        firstName: firstName || "",
+        className: className || "",
+        school: document.getElementById("filter-school-select")?.value || "",
+        role: "student",
+        grade: grade || "",
+        username_change_limit: 2
+      };
+
+      localStorage.setItem("user_session", JSON.stringify(studentSession));
+      sessionStorage.setItem("user_session", JSON.stringify(studentSession));
+      sessionStorage.setItem("current_user", JSON.stringify(studentSession));
+      window.location.href = "/student";
     }
 
     function applyColumnVisibility() {

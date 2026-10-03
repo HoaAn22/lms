@@ -55,6 +55,8 @@ function logout() {
   try {
     localStorage.removeItem("user_session");
     sessionStorage.removeItem("user_session");
+    localStorage.removeItem("admin_quick_login_backup");
+    sessionStorage.removeItem("admin_quick_login_backup");
     [
       "gacha_session_history",
       "student_memes_cache",
@@ -65,4 +67,29 @@ function logout() {
   } catch (e) {}
 
   window.location.href = "/";
+}
+
+function returnToAdmin() {
+  try {
+    const backupRaw = sessionStorage.getItem("admin_quick_login_backup") || localStorage.getItem("admin_quick_login_backup");
+    if (!backupRaw) {
+      window.location.href = "/teacher";
+      return;
+    }
+
+    const backup = JSON.parse(backupRaw);
+    if (!backup || !backup.role || backup.role !== "teacher") {
+      window.location.href = "/teacher";
+      return;
+    }
+
+    sessionStorage.removeItem("user_session");
+    sessionStorage.removeItem("current_user");
+    localStorage.setItem("user_session", JSON.stringify(backup));
+    localStorage.removeItem("admin_quick_login_backup");
+    sessionStorage.removeItem("admin_quick_login_backup");
+    window.location.href = "/teacher";
+  } catch (e) {
+    window.location.href = "/teacher";
+  }
 }
