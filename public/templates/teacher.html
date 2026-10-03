@@ -1104,7 +1104,7 @@
             <div class="card-header-collapse" onclick="toggleCardBody('admin-collection-body', 'admin-collection-toggle-icon')">
               <h3 style="margin: 0; font-size: 16px; color: #1e293b;">
                 <img src="img/photo-gallery.png" alt="Icon" style="width: 18px; height: 18px; object-fit: contain;">
-                Bộ sưu tập hệ thống</h3>
+                Bộ sưu tập</h3>
               <span id="admin-collection-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▶</span>
             </div>
 
@@ -1112,8 +1112,6 @@
               <div style="display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 8px;">
                 <button onclick="loadAdminMemeCollection()" class="btn btn-secondary btn-sm">🔄 Làm mới</button>
               </div>
-              <p class="section-desc">Danh sách toàn bộ meme đã được học sinh nhìn thấy trong hệ thống gacha. Nhấp vào meme để chỉnh sửa hoặc xóa.</p>
-              
               <div class="filter-bar mt-2" id="admin-filter-bar">
                 <button class="filter-btn active" onclick="filterAdminMemes('ALL', this)">Tất cả</button>
                 <button class="filter-btn" onclick="filterAdminMemes('SS', this)">SS</button>
@@ -3143,7 +3141,7 @@
           </td>
           <td data-col="4">
             <span id="pwd-text-${index}" style="font-family: monospace; margin-right: 6px;">••••••</span>
-            <button type="button" onclick="toggleTablePassword('${rawPassword}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
+            <button type="button" onclick="toggleTablePassword('${escapeForJsString(rawPassword)}', 'pwd-text-${index}', this)" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 0;" title="Hiện/Ẩn mật khẩu">👁️</button>
           </td>
           <td data-col="5">${stu.className || '---'}</td>
           <td data-col="6"><span class="badge-coin ${stu.total_coins < 0 ? 'negative' : ''}">💰 ${stu.total_coins !== undefined ? stu.total_coins : '0'}</span></td>
@@ -3217,6 +3215,10 @@
         chkCells.forEach(el => el.style.display = "none");
         if (masterChk) masterChk.checked = false;
       }
+    }
+
+    function escapeForJsString(value) {
+      return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
     function toggleTablePassword(realPassword, textElementId, btn) {

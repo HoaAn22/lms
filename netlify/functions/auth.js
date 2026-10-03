@@ -254,7 +254,7 @@ exports.handler = async (event) => {
     }
 
     if (action === "get_students") {
-      let query = supabase.from('students').select(`id, full_name, last_name, first_name, class_name, username, grade, is_highlighted, scores (score_1, score_2, score_3, score_4, score_5, feedback), items (coins, total_coins, spent_coins, meme_id_list)`).eq('school', body.school);
+      let query = supabase.from('students').select(`id, full_name, last_name, first_name, class_name, username, password, grade, is_highlighted, scores (score_1, score_2, score_3, score_4, score_5, feedback), items (coins, total_coins, spent_coins, meme_id_list)`).eq('school', body.school);
       if (body.className) query = query.eq('class_name', body.className.trim().toUpperCase());
       const { data, error } = await query;
       if (error) throw error;
