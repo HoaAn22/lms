@@ -110,25 +110,81 @@ exports.handler = async (event) => {
       let { data: studentData, error: stuErr } = await supabase.from('students').select('id, username, full_name, last_name, first_name, class_name, school, grade, username_change_limit').eq('username', username).eq('password', password).single();
       if (stuErr || !studentData) return createResponse(false, null, "Sai tên đăng nhập hoặc mật khẩu!");
 
-      await supabase.from('login_history').insert([{ user_id: studentData.id, student_id: studentData.id, username: studentData.username, role: 'student', full_name: studentData.full_name, ip_address: ipAddress, device_name: deviceName }]);
+      await supabase.from('login_history').insert([{
+        user_id: studentData.id,
+        student_id: studentData.id,
+        username: studentData.username,
+        role: 'student',
+        full_name: studentData.full_name,
+        ip_address: ipAddress,
+        device_name: deviceName
+      }]);
+
       return createResponse(true, { id: studentData.id, username: studentData.username, role: 'student', fullName: studentData.full_name, lastName: studentData.last_name, firstName: studentData.first_name, className: studentData.class_name, school: studentData.school, grade: studentData.grade || '7', username_change_limit: studentData.username_change_limit !== undefined ? studentData.username_change_limit : 2 });
     }
 
     if (action === "get_login_history") {
       const limit = body.limit || 1000;
-      let query = supabase.from('login_history').select(`id, user_id, student_id, admin_id, username, role, full_name, ip_address, device_name, login_at, students (class_name)`).order('login_at', { ascending: false }).limit(limit);
+      let query = supabase.from('login_history')
+        .select(`id, user_id, student_id, admin_id, username, role, full_name, ip_address, device_name, login_at, students (class_name)`)
+        .order('login_at', { ascending: false })
+        .limit(limit);
+
       if (body.role && body.role !== 'ALL') query = query.eq('role', body.role);
       const { data: logs, error } = await query;
       if (error) return createResponse(false, null, "Lỗi khi lấy nhật ký: " + error.message);
 
       let enrichedLogs = logs || [];
-      const missingUsernames = enrichedLogs.filter(l => l.role === 'student' && (!l.students || !l.students.class_name) && l.username).map(l => l.username);
-      let fallbackClassMap = {};
-      if (missingUsernames.length > 0) {
-        const { data: fallbackStudents } = await supabase.from('students').select('username, class_name').in('username', [...new Set(missingUsernames)]);
-        (fallbackStudents || []).forEach(s => fallbackClassMap[s.username] = s.class_name);
+
+      const missingLogs = enrichedLogs.filter(l => l.role === 'student' && (!l.students || !l.students.class_name));
+
+      const missingIds = [...new Set(missingLogs.flatMap(l => [l.student_id, l.user_id]).filter(Boolean))];
+      // Loại bỏ điều kiện !l.student_id để luôn dùng username làm phương án cứu cánh cuối cùng
+      const missingUsernames = [...new Set(missingLogs.filter(l => l.username).map(l => l.username))];
+
+      let fallbackClassMapById = {};
+      let fallbackClassMapByUsername = {};
+
+      if (missingIds.length > 0) {
+        const { data: studentsById, error: studentsByIdError } = await supabase
+          .from('students')
+          .select('id, class_name')
+          .in('id', missingIds);
+        if (studentsByIdError) return createResponse(false, null, "Lỗi khi đối chiếu học sinh theo ID: " + studentsByIdError.message);
+        (studentsById || []).forEach(s => fallbackClassMapById[s.id] = s.class_name);
       }
-      const formattedLogs = enrichedLogs.map(log => ({ ...log, class_name: (log.students && log.students.class_name) ? log.students.class_name : fallbackClassMap[log.username] || "" }));
+
+      if (missingUsernames.length > 0) {
+        const { data: studentsByUsername, error: studentsByUsernameError } = await supabase
+          .from('students')
+          .select('username, class_name')
+          .in('username', missingUsernames);
+        if (studentsByUsernameError) return createResponse(false, null, "Lỗi khi đối chiếu học sinh theo tài khoản: " + studentsByUsernameError.message);
+        (studentsByUsername || []).forEach(s => fallbackClassMapByUsername[s.username] = s.class_name);
+      }
+
+      const formattedLogs = enrichedLogs.map(log => {
+        let finalClassName = "";
+
+        if (log.students && log.students.class_name) {
+          finalClassName = log.students.class_name; // Mức 1: Bảng gốc còn liên kết tốt
+        } else if (log.student_id && fallbackClassMapById[log.student_id]) {
+          finalClassName = fallbackClassMapById[log.student_id]; // Mức 2: ID còn tồn tại nhưng mất liên kết Join
+        } else if (log.user_id && fallbackClassMapById[log.user_id]) {
+          finalClassName = fallbackClassMapById[log.user_id]; // Mức 2: Bản ghi cũ lưu ID học sinh trong user_id
+        } else if (log.username && fallbackClassMapByUsername[log.username]) {
+          finalClassName = fallbackClassMapByUsername[log.username]; // Mức 3: ID đã chết nhưng Username vẫn khớp với tài khoản tạo lại
+        } else if ((log.student_id && Object.prototype.hasOwnProperty.call(fallbackClassMapById, log.student_id)) ||
+                   (log.user_id && Object.prototype.hasOwnProperty.call(fallbackClassMapById, log.user_id)) ||
+                   (log.username && Object.prototype.hasOwnProperty.call(fallbackClassMapByUsername, log.username))) {
+          finalClassName = "Chưa cập nhật lớp";
+        } else {
+          finalClassName = "Tài khoản đã xóa"; // Mức 4: Xóa hoàn toàn
+        }
+
+        return { ...log, class_name: finalClassName };
+      });
+
       return createResponse(true, { logs: formattedLogs });
     }
 

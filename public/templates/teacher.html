@@ -696,6 +696,18 @@
       transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
     }
 
+    #tab-student-manage .student-list-toolbar-button {
+      display: inline-flex;
+      width: 152px;
+      height: 41px;
+      padding: 0 14px;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
     .dashboard-layout .btn:hover:not(:disabled),
     .dashboard-layout .btn-action-main:hover,
     .dashboard-layout .class-attendance-btn:hover {
@@ -815,7 +827,64 @@
       outline-offset: 2px;
     }
 
+    .quick-page-scroll {
+      position: fixed;
+      right: max(18px, env(safe-area-inset-right));
+      top: 50%;
+      z-index: 40;
+      opacity: 0;
+      transform: translate(10px, -50%);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .quick-page-scroll.visible {
+      opacity: 1;
+      transform: translate(0, -50%);
+      pointer-events: auto;
+    }
+
+    .quick-page-scroll button {
+      display: grid;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: 15px;
+      background: linear-gradient(145deg, #2563eb, #1d4ed8);
+      box-shadow: 0 8px 22px rgba(30, 64, 175, 0.25);
+      color: #fff;
+      font-size: 21px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .quick-page-scroll button:hover {
+      transform: translateX(-2px);
+      box-shadow: 0 11px 26px rgba(30, 64, 175, 0.32);
+    }
+
+    .quick-page-scroll button:active {
+      transform: scale(0.94);
+    }
+
     @media (max-width: 768px) {
+      .quick-page-scroll {
+        right: max(12px, env(safe-area-inset-right));
+      }
+
+      .quick-page-scroll button {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      input[type="checkbox"] {
+        right: 60px;
+      }
       .dashboard-layout .topbar {
         min-height: 68px;
         padding: 10px 16px;
@@ -1084,12 +1153,12 @@
 
               <div class="mt-4 mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; gap: 8px;">
-                  <button class="btn btn-primary" onclick="fetchStudentList()">🔍 Xem danh sách</button>
+                  <button class="btn btn-primary student-list-toolbar-button" onclick="fetchStudentList()">🔍 Xem danh sách</button>
                   <button type="button" class="btn btn-secondary" onclick="clearStudentListSearch()" style="height: 41px; padding: 0 14px;">🗑️ Xóa danh sách</button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <div class="action-dropdown-wrapper" id="batch-action-wrapper">
-                    <button type="button" class="btn-action-main" onclick="toggleBatchActionDropdown(event)" style="height: 41px; padding: 0 14px; background: #3b82f6; color: #fff;">
+                    <button type="button" class="btn-action-main student-list-toolbar-button" onclick="toggleBatchActionDropdown(event)" style="height: 41px; padding: 0 14px; background: #3b82f6; color: #fff;">
                       Thao tác lớp ▾
                     </button>
                     <div class="action-dropdown-menu" id="batch-action-menu" style="position: absolute; min-width: 200px; top: calc(100% + 4px); right: 0; left: auto; z-index: 9999;">
@@ -1973,6 +2042,10 @@
     </main>
   </div>
 
+  <div id="quick-page-scroll" class="quick-page-scroll" aria-label="Điều hướng nhanh trang">
+    <button id="quick-page-scroll-button" type="button" onclick="scrollTeacherPage()" aria-label="Cuộn lên đầu trang" title="Lên đầu trang">↑</button>
+  </div>
+
   <script src="/auth-guard.js"></script>
   <script>
     /* BẬT / TẮT MENU BẢNG CHỌN TRÊN MOBILE */
@@ -2457,6 +2530,55 @@
     let currentSelectedMeme = null;
     let pendingRewardsList = [];
     let currentRewardClassFilter = 'ALL';
+    const quickPageScroll = document.getElementById("quick-page-scroll");
+    const quickPageScrollButton = document.getElementById("quick-page-scroll-button");
+    let quickPageScrollTimer;
+    let previousScrollY = window.scrollY;
+    let quickScrollDirection = "up";
+
+    function isQuickScrollTabActive() {
+      return document.getElementById("tab-student-manage").classList.contains("active") ||
+        document.getElementById("tab-login-history").classList.contains("active");
+    }
+
+    function hideQuickPageScroll() {
+      quickPageScroll.classList.remove("visible");
+      clearTimeout(quickPageScrollTimer);
+    }
+
+    function showQuickPageScrollOnScroll() {
+      const currentScrollY = window.scrollY;
+      if (!isQuickScrollTabActive()) {
+        previousScrollY = currentScrollY;
+        hideQuickPageScroll();
+        return;
+      }
+
+      if (currentScrollY > previousScrollY) quickScrollDirection = "down";
+      else if (currentScrollY < previousScrollY) quickScrollDirection = "up";
+      previousScrollY = currentScrollY;
+
+      const isAtPageBottom = window.innerHeight + currentScrollY >= document.documentElement.scrollHeight - 2;
+      if (isAtPageBottom) quickScrollDirection = "up";
+      else if (currentScrollY <= 0) quickScrollDirection = "down";
+
+      const scrollTarget = quickScrollDirection === "down" ? "bottom" : "top";
+      quickPageScrollButton.textContent = quickScrollDirection === "down" ? "↓" : "↑";
+      quickPageScrollButton.setAttribute("aria-label", scrollTarget === "bottom" ? "Cuộn xuống cuối trang" : "Cuộn lên đầu trang");
+      quickPageScrollButton.title = scrollTarget === "bottom" ? "Xuống cuối trang" : "Lên đầu trang";
+
+      quickPageScroll.classList.add("visible");
+      clearTimeout(quickPageScrollTimer);
+      quickPageScrollTimer = setTimeout(hideQuickPageScroll, 2400);
+    }
+
+    function scrollTeacherPage() {
+      const top = quickScrollDirection === "up" ? 0 : document.documentElement.scrollHeight;
+      window.scrollTo({ top, behavior: "smooth" });
+      showQuickPageScrollOnScroll();
+    }
+
+    window.addEventListener("scroll", showQuickPageScrollOnScroll, { passive: true });
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -2471,6 +2593,7 @@
       if (clickedBtn) clickedBtn.classList.add("active");
       
       sessionStorage.setItem("teacher_active_tab", tabId);
+      hideQuickPageScroll();
 
       if (window.innerWidth <= 768) {
         const sidebarObj = document.getElementById('admin-sidebar');
@@ -3266,44 +3389,74 @@
       const school = filterSchoolSelect.value;
       const className = document.getElementById("filter-class-input").value.trim();
       const sortBy = document.getElementById("sort-select").value;
-      
+
       const togglers = document.querySelectorAll('.col-toggler');
       const checkedCols = [];
       togglers.forEach(chk => {
         if (chk.checked) checkedCols.push(chk.getAttribute('data-col'));
       });
 
+      const saved = getSavedFilters() || {};
       const filterState = {
+        ...saved,
         school,
         className,
         sortBy,
-        checkedCols,
         students: cachedStudentsList
       };
+
+      if (window.innerWidth <= 768) {
+        filterState.checkedColsMobile = checkedCols;
+      } else {
+        filterState.checkedCols = checkedCols;
+      }
 
       sessionStorage.setItem("teacher_student_filter", JSON.stringify(filterState));
     }
 
     function restoreFilterAndStudents() {
-      const saved = getSavedFilters();
+      const saved = getSavedFilters() || {};
+      const togglers = document.querySelectorAll('.col-toggler');
+      const isMobile = window.innerWidth <= 768;
+      const selectedCols = isMobile
+        ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '8'])
+        : (Array.isArray(saved.checkedCols) ? saved.checkedCols : []);
+
+      togglers.forEach(chk => {
+        chk.checked = selectedCols.includes(chk.getAttribute('data-col'));
+      });
+      applyColumnVisibility();
+
       if (!saved || !saved.school) return;
 
       if (saved.school) filterSchoolSelect.value = saved.school;
       if (saved.className !== undefined) document.getElementById("filter-class-input").value = saved.className;
       if (saved.sortBy) document.getElementById("sort-select").value = saved.sortBy;
 
-      if (saved.checkedCols && saved.checkedCols.length > 0) {
-        const togglers = document.querySelectorAll('.col-toggler');
-        togglers.forEach(chk => {
-          chk.checked = saved.checkedCols.includes(chk.getAttribute('data-col'));
-        });
-      }
-
       if (saved.students && saved.students.length > 0) {
         cachedStudentsList = saved.students;
         sortAndRenderStudents();
       }
     }
+
+    let isMobileColumnLayout = window.innerWidth <= 768;
+    window.addEventListener("resize", () => {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile === isMobileColumnLayout) return;
+      isMobileColumnLayout = isMobile;
+
+      const saved = getSavedFilters() || {};
+      const togglers = document.querySelectorAll('.col-toggler');
+      const selectedCols = isMobile
+        ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '8'])
+        : (Array.isArray(saved.checkedCols) ? saved.checkedCols : []);
+
+      togglers.forEach(chk => {
+        chk.checked = selectedCols.includes(chk.getAttribute('data-col'));
+      });
+
+      applyColumnVisibility();
+    });
 
     async function fetchStudentList(isSilentUpdate = false) {
       const school = filterSchoolSelect.value;
@@ -3600,9 +3753,6 @@
                 <button type="button" class="action-dropdown-item" onclick="openSingleCoinModal('${stu.id}')">
                   💰 Xu
                 </button>
-                <button type="button" class="action-dropdown-item" style="color: #0f766e;" onclick="quickLoginAsStudent('${stu.id}', '${escapeForJsString(stu.username || '')}', '${escapeForJsString(stu.lastName || '')}', '${escapeForJsString(stu.firstName || '')}', '${escapeForJsString(stu.className || '')}', '${escapeForJsString(stu.grade || '')}')">
-                  🚀 Đăng nhập nhanh
-                </button>
                 <button type="button" class="action-dropdown-item" onclick="openEditStudentModal('${stu.id}')">
                   ✏️ Sửa
                 </button>
@@ -3628,6 +3778,9 @@
                 }
                 <button type="button" class="action-dropdown-item danger" onclick="openDeleteStudentModal('${stu.id}')">
                   🗑️ Xóa tài khoản
+                </button>
+                <button type="button" class="action-dropdown-item" style="color: #0f766e;" onclick="quickLoginAsStudent('${stu.id}', '${escapeForJsString(stu.username || '')}', '${escapeForJsString(stu.lastName || '')}', '${escapeForJsString(stu.firstName || '')}', '${escapeForJsString(stu.className || '')}', '${escapeForJsString(stu.grade || '')}')">
+                  🚀 Đăng nhập nhanh
                 </button>
               </div>
             </div>
