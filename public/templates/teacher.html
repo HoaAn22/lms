@@ -506,6 +506,13 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    .ip-management-cell {
+      max-width: 220px;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
     .ip-list-badge {
       display: inline-block; 
       background: #e2e8f0; 
@@ -515,6 +522,10 @@
       font-size: 11px; 
       margin-bottom: 3px;
       margin-right: 3px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      max-width: 100%;
     }
     .ban-status {
       padding: 4px 8px;
@@ -5290,8 +5301,8 @@
               <code style="background:${isStarred ? '#fef08a' : '#eff6ff'}; color:${isStarred ? '#854d0e' : '#1d4ed8'}; padding:3px 6px; border-radius:4px; font-weight:bold;">${item.ip_address}</code>
               ${isStarred ? '<span style="font-size:11px; color:#d97706; display:block; font-weight:600;">(Máy chủ / GV)</span>' : ''}
             </td>
-            <td style="max-width:200px;">${accountsHtml}</td>
-            <td style="max-width:200px;">${devicesHtml}</td>
+            <td class="ip-management-cell">${accountsHtml}</td>
+            <td class="ip-management-cell">${devicesHtml}</td>
             <td><span style="font-size:12px; color:#64748b;">${timeStr}</span></td>
             <td>${statusHtml}</td>
             <td>
@@ -6356,22 +6367,22 @@
 
       // 3. Ghép chuỗi báo cáo
       const reportContent = `BÁO CÁO CUỐI BUỔI DẠY
-    - Tên giáo viên: ${formData['rep_Teacher']}
-    - Tên trợ giảng: ${formData['rep_TA']}
-    - Phòng máy: ${formData['rep_Room']}
-    - Tổng số máy: ${formData['rep_TotalPC']}
-    - Số lượng HS: ${classesInfo}
-    - Tỷ lệ học sinh có tài liệu: ${formData['rep_Docs']}
-    - Tổng số máy bị lỗi: ${formData['rep_BrokenPC']}
-    - Số máy còn thiếu cho HS: ${formData['rep_MissingPC']}
-    - Tình trạng Netsupport: ${formData['rep_Netsupport']}
-    - Tình trạng loa, âm ly: ${formData['rep_Speaker']}
-    - Tình trạng máy lạnh, máy quạt: ${formData['rep_AC']}
-    - Đã tắt thiết bị điện chưa: ${formData['rep_Power']}
-    - Ghế ngồi của HS được sắp xếp gọn gàng: ${formData['rep_Chairs']}
-    - Vệ sinh phòng máy: ${formData['rep_Clean']}
-    - Việc tuân thủ nội quy của HS: ${formData['rep_Rules']}
-    - Danh sách vi phạm: ${formData['rep_Violations']}`;
+- Tên giáo viên: ${formData['rep_Teacher']}
+- Tên trợ giảng: ${formData['rep_TA']}
+- Phòng máy: ${formData['rep_Room']}
+- Tổng số máy: ${formData['rep_TotalPC']}
+- Số lượng HS: ${classesInfo}
+- Tỷ lệ học sinh có tài liệu: ${formData['rep_Docs']}
+- Tổng số máy bị lỗi: ${formData['rep_BrokenPC']}
+- Số máy còn thiếu cho HS: ${formData['rep_MissingPC']}
+- Tình trạng Netsupport: ${formData['rep_Netsupport']}
+- Tình trạng loa, âm ly: ${formData['rep_Speaker']}
+- Tình trạng máy lạnh, máy quạt: ${formData['rep_AC']}
+- Đã tắt thiết bị điện chưa: ${formData['rep_Power']}
+- Ghế ngồi của HS được sắp xếp gọn gàng: ${formData['rep_Chairs']}
+- Vệ sinh phòng máy: ${formData['rep_Clean']}
+- Việc tuân thủ nội quy của HS: ${formData['rep_Rules']}
+- Danh sách vi phạm: ${formData['rep_Violations']}`;
 
       // 4. Lưu vào Clipboard
       navigator.clipboard.writeText(reportContent).then(() => {
