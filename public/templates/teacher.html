@@ -547,6 +547,19 @@
       overflow-wrap: anywhere;
       line-height: 1.5;
     }
+    .dashboard-layout .ip-management-address-cell {
+      width: 220px;
+      max-width: 220px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .dashboard-layout .ip-management-address {
+      display: inline-block;
+      max-width: 220px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
     .ip-list-badge {
       display: inline-block; 
       background: #e2e8f0; 
@@ -5792,8 +5805,8 @@
                 ${isStarred ? '⭐' : '☆'}
               </button>
             </td>
-            <td>
-              <code style="background:${isStarred ? '#fef08a' : '#eff6ff'}; color:${isStarred ? '#854d0e' : '#1d4ed8'}; padding:3px 6px; border-radius:4px; font-weight:bold;">${item.ip_address}</code>
+            <td class="ip-management-address-cell">
+              <code class="ip-management-address" style="background:${isStarred ? '#fef08a' : '#eff6ff'}; color:${isStarred ? '#854d0e' : '#1d4ed8'}; padding:3px 6px; border-radius:4px; font-weight:bold;">${item.ip_address}</code>
               ${isStarred ? '<span style="font-size:11px; color:#d97706; display:block; font-weight:600;">(Máy chủ / GV)</span>' : ''}
             </td>
             <td class="ip-management-cell">${accountsHtml}</td>
