@@ -45,6 +45,33 @@ const uploadMemeImageToR2 = async imageDataUrl => {
   };
 };
 
+const uploadQuestionImageToR2 = async imageDataUrl => {
+  const matches = typeof imageDataUrl === 'string'
+    ? imageDataUrl.match(/^data:image\/(jpeg|png|webp|gif|avif);base64,([A-Za-z0-9+/]+={0,2})$/i)
+    : null;
+  if (!matches) throw new Error('Dữ liệu ảnh câu hỏi không hợp lệ.');
+  if (!BUCKET_NAME || !PUBLIC_URL) throw new Error('Thiếu cấu hình lưu trữ ảnh Cloudflare R2.');
+
+  const inputBuffer = Buffer.from(matches[2], 'base64');
+  if (inputBuffer.length === 0 || inputBuffer.length > 4 * 1024 * 1024) {
+    throw new Error('Ảnh câu hỏi phải nhỏ hơn hoặc bằng 4 MB.');
+  }
+
+  const webpBuffer = await sharp(inputBuffer).rotate().webp({ quality: 80 }).toBuffer();
+  const fileName = `question_${Date.now()}_${randomUUID()}.webp`;
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: fileName,
+    Body: webpBuffer,
+    ContentType: 'image/webp'
+  }));
+
+  return {
+    imageUrl: `${PUBLIC_URL.replace(/\/$/, "")}/${fileName}`,
+    key: fileName
+  };
+};
+
 const getR2ObjectKey = imageUrl => {
   if (!PUBLIC_URL || typeof imageUrl !== 'string') return null;
   try {
@@ -1505,9 +1532,24 @@ exports.handler = async (event) => {
       const { data, error } = await query;
       if (error) return createResponse(false, null, "Lỗi tải danh sách bài thi: " + error.message);
 
-      const quizzes = (data || []).map(q => ({
+      const quizRows = data || [];
+      let imageQuizIds = new Set();
+      if (body.only_published && quizRows.length > 0) {
+        const { data: imageQuestions, error: imageQuestionsError } = await supabase
+          .from('questions')
+          .select('quiz_id')
+          .not('img', 'is', null)
+          .in('quiz_id', quizRows.map(quiz => quiz.id));
+        if (imageQuestionsError) {
+          return createResponse(false, null, "Lỗi tải thông tin hình ảnh câu hỏi: " + imageQuestionsError.message);
+        }
+        imageQuizIds = new Set((imageQuestions || []).map(question => String(question.quiz_id)));
+      }
+
+      const quizzes = quizRows.map(q => ({
         ...q,
-        question_count: q.questions?.[0]?.count || 0
+        question_count: q.questions?.[0]?.count || 0,
+        has_question_images: imageQuizIds.has(String(q.id))
       }));
       if (body.only_published && body.student_id) {
         const { data: student, error: studentError } = await supabase
@@ -1601,6 +1643,31 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Vui lòng nhập đầy đủ loại câu hỏi và nội dung đề bài!");
       }
 
+      let existingQuestion = null;
+      if (id) {
+        const { data: question, error: questionError } = await supabase
+          .from('questions')
+          .select('id, quiz_id, img')
+          .eq('id', id)
+          .maybeSingle();
+        if (questionError) return createResponse(false, null, "Lỗi tải câu hỏi cần sửa: " + questionError.message);
+        if (!question || String(question.quiz_id) !== String(quiz_id)) {
+          return createResponse(false, null, "Không tìm thấy câu hỏi trong bài thi này.");
+        }
+        existingQuestion = question;
+      }
+
+      let uploadedImage = null;
+      if (Object.prototype.hasOwnProperty.call(body, 'img') && typeof body.img === 'string' && body.img) {
+        try {
+          uploadedImage = await uploadQuestionImageToR2(body.img);
+        } catch (uploadError) {
+          return createResponse(false, null, "Lỗi xử lý hoặc tải ảnh câu hỏi lên Cloudflare R2: " + uploadError.message);
+        }
+      } else if (Object.prototype.hasOwnProperty.call(body, 'img') && body.img !== null && body.img !== '') {
+        return createResponse(false, null, "Dữ liệu ảnh câu hỏi không hợp lệ.");
+      }
+
       const payload = {
         quiz_id,
         type,
@@ -1612,6 +1679,8 @@ exports.handler = async (event) => {
         order_index: Number(order_index) || 1,
         updated_at: new Date().toISOString()
       };
+      if (uploadedImage) payload.img = uploadedImage.imageUrl;
+      else if (Object.prototype.hasOwnProperty.call(body, 'img')) payload.img = null;
 
       let result;
       if (id) {
@@ -1620,7 +1689,38 @@ exports.handler = async (event) => {
         result = await supabase.from('questions').insert([payload]).select().single();
       }
 
-      if (result.error) return createResponse(false, null, "Lỗi lưu câu hỏi: " + result.error.message);
+      if (result.error) {
+        if (uploadedImage) {
+          try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: uploadedImage.key }));
+          } catch (cleanupError) {
+            console.error("Không thể xóa ảnh mới sau khi lưu câu hỏi thất bại:", cleanupError);
+          }
+        }
+        return createResponse(false, null, "Lỗi lưu câu hỏi: " + result.error.message);
+      }
+
+      if (uploadedImage && existingQuestion?.img) {
+        const oldImageKey = getR2ObjectKey(existingQuestion.img);
+        if (oldImageKey) {
+          try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: oldImageKey }));
+          } catch (deleteError) {
+            console.error(`Đã cập nhật câu hỏi ${id} nhưng không thể xóa ảnh cũ khỏi R2:`, deleteError);
+            return createResponse(true, { question: result.data }, "Đã cập nhật câu hỏi nhưng chưa thể xóa ảnh cũ khỏi R2.");
+          }
+        }
+      } else if (body.img === null && existingQuestion?.img) {
+        const oldImageKey = getR2ObjectKey(existingQuestion.img);
+        if (oldImageKey) {
+          try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: oldImageKey }));
+          } catch (deleteError) {
+            console.error(`Đã cập nhật câu hỏi ${id} nhưng không thể xóa ảnh khỏi R2:`, deleteError);
+            return createResponse(true, { question: result.data }, "Đã cập nhật câu hỏi nhưng chưa thể xóa ảnh cũ khỏi R2.");
+          }
+        }
+      }
       return createResponse(true, { question: result.data }, id ? "Đã cập nhật câu hỏi!" : "Đã thêm câu hỏi mới!");
     }
 
@@ -1630,8 +1730,25 @@ exports.handler = async (event) => {
         return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
       }
 
+      const { data: question, error: questionError } = await supabase
+        .from('questions')
+        .select('id, img')
+        .eq('id', body.question_id)
+        .maybeSingle();
+      if (questionError) return createResponse(false, null, "Lỗi tải câu hỏi cần xóa: " + questionError.message);
+      if (!question) return createResponse(false, null, "Không tìm thấy câu hỏi cần xóa.");
+
       const { error } = await supabase.from('questions').delete().eq('id', body.question_id);
       if (error) return createResponse(false, null, "Lỗi xóa câu hỏi: " + error.message);
+      const imageKey = getR2ObjectKey(question.img);
+      if (imageKey) {
+        try {
+          await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: imageKey }));
+        } catch (deleteError) {
+          console.error(`Đã xóa câu hỏi ${body.question_id} nhưng không thể xóa ảnh khỏi R2:`, deleteError);
+          return createResponse(true, null, "Đã xóa câu hỏi nhưng chưa thể xóa ảnh khỏi R2.");
+        }
+      }
       return createResponse(true, null, "Đã xóa câu hỏi!");
     }
 
@@ -1677,7 +1794,7 @@ exports.handler = async (event) => {
 
       const { data: questions, error: qError } = await supabase
         .from('questions')
-        .select('id, quiz_id, type, prompt, data, order_index, points')
+        .select('id, quiz_id, type, prompt, data, order_index, points, img')
         .eq('quiz_id', quiz_id)
         .order('order_index', { ascending: true })
         .order('created_at', { ascending: true });

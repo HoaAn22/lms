@@ -3902,6 +3902,13 @@
         badge.textContent = studentExamLocked ? "Đã khóa" : `Khối ${quiz.grade === "ALL" ? "mọi lớp" : quiz.grade || "mọi lớp"}`;
         card.appendChild(badge);
 
+        if (quiz.has_question_images) {
+          const imageBadge = document.createElement("div");
+          imageBadge.className = "quiz-badge";
+          imageBadge.textContent = "📷 Có hình minh họa";
+          card.appendChild(imageBadge);
+        }
+
         const title = document.createElement("h4");
         title.textContent = quiz.title;
         card.appendChild(title);

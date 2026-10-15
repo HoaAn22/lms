@@ -2807,6 +2807,16 @@
               </small>
             </div>
 
+            <div class="form-group">
+              <label for="q-edit-image">Hình ảnh câu hỏi (tùy chọn):</label>
+              <input type="file" id="q-edit-image" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onchange="handleQuestionImageSelection(event)">
+              <small style="display:block; margin-top:5px; color:#64748b;">Ảnh tối đa 4 MB; sẽ được chuyển sang WebP và lưu trữ an toàn.</small>
+              <div id="q-edit-image-preview-wrap" style="display:none; align-items:flex-start; gap:10px; margin-top:10px;">
+                <img id="q-edit-image-preview" alt="Xem trước hình ảnh câu hỏi" style="display:block; max-width:240px; max-height:180px; object-fit:contain; border:1px solid #e2e8f0; border-radius:8px; background:#fff;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="removeQuestionImage()">Xóa ảnh</button>
+              </div>
+            </div>
+
             <!-- VÙNG BUILDER ĐỘNG THEO TỪNG LOẠI CÂU HỎI -->
             <div id="q-dynamic-builder" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 14px;"></div>
 
@@ -7078,6 +7088,8 @@
     let quizzesCache = [];
     let currentEditingQuizId = null;
     let currentQuizQuestions = [];
+    let selectedQuestionImageData = null;
+    let questionImageRemoved = false;
 
     const QUESTION_TYPE_LABELS = {
       single_choice: "🔘 1 Đáp án",
@@ -7307,7 +7319,10 @@
         tr.innerHTML = `
           <td style="font-weight: bold; text-align: center;">#${q.order_index}</td>
           <td><span class="badge-role teacher">${QUESTION_TYPE_LABELS[q.type] || q.type}</span></td>
-          <td style="white-space: normal; max-width: 480px;">${q.prompt}</td>
+          <td style="white-space: normal; max-width: 480px;">
+            ${q.img ? `<img src="${q.img}" alt="Ảnh câu hỏi" loading="lazy" style="display:block; max-width:180px; max-height:110px; object-fit:contain; margin-bottom:8px; border:1px solid #e2e8f0; border-radius:6px;">` : ''}
+            ${q.prompt}
+          </td>
           <td><strong>${q.points}</strong> đ</td>
           <td>
             <div class="quiz-question-row-actions">
@@ -7334,9 +7349,55 @@
       document.getElementById("q-edit-points").value = existingQ ? existingQ.points : 10;
       document.getElementById("q-edit-prompt").value = existingQ ? existingQ.prompt : "";
       document.getElementById("q-edit-explanation").value = existingQ ? (existingQ.explanation || "") : "";
+      document.getElementById("q-edit-image").value = "";
+      selectedQuestionImageData = null;
+      questionImageRemoved = false;
+      setQuestionImagePreview(existingQ?.img || "");
 
       renderDynamicQuestionBuilder(existingQ);
       modal.classList.add("show");
+    }
+
+    function setQuestionImagePreview(imageUrl) {
+      const previewWrap = document.getElementById("q-edit-image-preview-wrap");
+      const preview = document.getElementById("q-edit-image-preview");
+      preview.src = imageUrl || "";
+      previewWrap.style.display = imageUrl ? "flex" : "none";
+    }
+
+    function handleQuestionImageSelection(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(file.type)) {
+        event.target.value = "";
+        showTeacherNotification("Chỉ hỗ trợ ảnh JPEG, PNG, WebP, GIF hoặc AVIF.");
+        return;
+      }
+      if (file.size > 4 * 1024 * 1024) {
+        event.target.value = "";
+        showTeacherNotification("Ảnh câu hỏi phải nhỏ hơn hoặc bằng 4 MB.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== "string" || !reader.result.startsWith("data:image/")) {
+          showTeacherNotification("Không thể đọc tệp ảnh đã chọn.");
+          return;
+        }
+        selectedQuestionImageData = reader.result;
+        questionImageRemoved = false;
+        setQuestionImagePreview(reader.result);
+      };
+      reader.onerror = () => showTeacherNotification("Đã xảy ra lỗi khi đọc tệp ảnh.");
+      reader.readAsDataURL(file);
+    }
+
+    function removeQuestionImage() {
+      selectedQuestionImageData = null;
+      questionImageRemoved = true;
+      document.getElementById("q-edit-image").value = "";
+      setQuestionImagePreview("");
     }
 
     function closeQuestionModal() {
@@ -7607,7 +7668,8 @@
             solution,
             explanation: document.getElementById("q-edit-explanation").value,
             points: document.getElementById("q-edit-points").value,
-            order_index: document.getElementById("q-edit-order").value
+            order_index: document.getElementById("q-edit-order").value,
+            img: selectedQuestionImageData || (questionImageRemoved ? null : undefined)
           })
         });
         const result = await res.json();

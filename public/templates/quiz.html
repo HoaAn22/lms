@@ -129,6 +129,15 @@
       typeLabel.style.cssText = "display:block; margin-top:5px;";
       typeLabel.textContent = `${QUESTION_TYPE_LABELS[question.type] || "Câu hỏi"} · ${Number(question.points) || 1} điểm`;
       heading.appendChild(typeLabel);
+
+      if (question.img) {
+        const image = document.createElement("img");
+        image.src = question.img;
+        image.alt = `Hình minh họa câu ${questionIndex + 1}`;
+        image.loading = "lazy";
+        image.style.cssText = "display:block; max-width:100%; max-height:360px; object-fit:contain; margin:0 0 12px; border:1px solid #e2e8f0; border-radius:8px; background:#fff;";
+        card.appendChild(image);
+      }
       card.appendChild(heading);
 
       const data = question.data || {};
