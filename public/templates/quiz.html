@@ -22,14 +22,15 @@
       <!-- Màn hình bắt đầu -->
       <div id="quiz-intro">
         <div class="placeholder-card mb-4">
-          <h4>Quy chế phòng thi</h4>
-          <p>Đề thi gồm <strong>5 câu trắc nghiệm</strong>. Nộp bài sẽ tự động đồng bộ kết quả lên Google Sheets và thưởng thêm Xu vào tài khoản.</p>
+          <h4 id="quiz-intro-title">Quy chế phòng thi</h4>
+          <p id="quiz-intro-description">Hãy đọc kỹ từng câu hỏi trước khi nộp bài.</p>
         </div>
-        <button onclick="startQuiz()" class="btn btn-primary btn-block">Bắt Đầu Làm Bài</button>
+        <button id="btn-start-quiz" onclick="startQuiz()" class="btn btn-primary btn-block">Bắt Đầu Làm Bài</button>
       </div>
 
       <!-- Màn hình làm bài -->
       <div id="quiz-screen" class="hidden">
+        <p id="quiz-timer" class="status-msg" aria-live="polite"></p>
         <div id="quiz-container"></div>
         <button onclick="submitQuiz()" class="btn btn-success btn-block mt-4">Nộp Bài Thi</button>
       </div>
@@ -42,7 +43,7 @@
           <p id="save-status" class="status-msg"></p>
         </div>
         <div class="grid-2 mt-4">
-          <button onclick="restartQuiz()" class="btn btn-secondary">Làm Lại</button>
+          <button id="btn-restart-quiz" onclick="restartQuiz()" class="btn btn-secondary">Làm Lại</button>
           <a href="/student" class="btn btn-primary">Quay Về Trang Học Sinh</a>
         </div>
       </div>
@@ -76,8 +77,197 @@
     }
 
     let questionsData = [];
+    let currentQuiz = null;
+    let isManagedQuiz = false;
+    let quizTimer = null;
+    let isSubmittingQuiz = false;
+    const quizId = new URLSearchParams(window.location.search).get("quiz_id");
+    const QUESTION_TYPE_LABELS = {
+      single_choice: "Trắc nghiệm 1 đáp án",
+      multiple_choice: "Trắc nghiệm nhiều đáp án",
+      ordering: "Sắp xếp thứ tự",
+      matching: "Nối cặp",
+      fill_in_the_blank: "Điền vào chỗ trống"
+    };
+
+    function appendPromptWithBlanks(container, prompt, questionIndex) {
+      const blankPattern = /\{\{(b\d+)\}\}/gi;
+      let lastIndex = 0;
+      let match;
+      while ((match = blankPattern.exec(prompt)) !== null) {
+        container.appendChild(document.createTextNode(prompt.slice(lastIndex, match.index)));
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "q-blank-input";
+        input.dataset.blankId = match[1];
+        input.setAttribute("aria-label", `Câu ${questionIndex + 1}, chỗ trống ${match[1]}`);
+        input.style.cssText = "display:inline-block; width:min(220px, 100%); margin:4px; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px;";
+        container.appendChild(input);
+        lastIndex = blankPattern.lastIndex;
+      }
+      container.appendChild(document.createTextNode(prompt.slice(lastIndex)));
+    }
+
+    function createQuestionCard(question, questionIndex) {
+      const card = document.createElement("div");
+      card.className = "question-item";
+
+      const heading = document.createElement("div");
+      heading.className = "question-text";
+      const number = document.createElement("strong");
+      number.textContent = `Câu ${questionIndex + 1} `;
+      heading.appendChild(number);
+
+      if (question.type === "fill_in_the_blank") {
+        appendPromptWithBlanks(heading, question.prompt || "", questionIndex);
+      } else {
+        heading.appendChild(document.createTextNode(question.prompt || ""));
+      }
+
+      const typeLabel = document.createElement("small");
+      typeLabel.className = "sub-text";
+      typeLabel.style.cssText = "display:block; margin-top:5px;";
+      typeLabel.textContent = `${QUESTION_TYPE_LABELS[question.type] || "Câu hỏi"} · ${Number(question.points) || 1} điểm`;
+      heading.appendChild(typeLabel);
+      card.appendChild(heading);
+
+      const data = question.data || {};
+      const optionsGroup = document.createElement("div");
+      optionsGroup.className = "options-group";
+
+      if (question.type === "single_choice" || question.type === "multiple_choice") {
+        (Array.isArray(data.options) ? data.options : []).forEach((option, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option-item";
+          const input = document.createElement("input");
+          input.type = question.type === "single_choice" ? "radio" : "checkbox";
+          input.name = `question_${questionIndex}`;
+          input.value = option.id;
+          const text = document.createElement("span");
+          text.textContent = option.text || `Phương án ${optionIndex + 1}`;
+          label.append(input, text);
+          optionsGroup.appendChild(label);
+        });
+      } else if (question.type === "ordering") {
+        const items = Array.isArray(data.items) ? data.items : [];
+        items.forEach((item, itemIndex) => {
+          const row = document.createElement("label");
+          row.className = "option-item";
+          row.style.cursor = "default";
+          const text = document.createElement("span");
+          text.style.flex = "1";
+          text.textContent = item.text || `Mục ${itemIndex + 1}`;
+          const select = document.createElement("select");
+          select.className = "q-order-position";
+          select.dataset.itemId = item.id;
+          select.setAttribute("aria-label", `Vị trí của mục ${itemIndex + 1}`);
+          select.style.cssText = "max-width:110px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;";
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Chọn thứ tự";
+          select.appendChild(placeholder);
+          items.forEach((_, positionIndex) => {
+            const option = document.createElement("option");
+            option.value = String(positionIndex + 1);
+            option.textContent = `Vị trí ${positionIndex + 1}`;
+            select.appendChild(option);
+          });
+          row.append(text, select);
+          optionsGroup.appendChild(row);
+        });
+      } else if (question.type === "matching") {
+        const leftItems = Array.isArray(data.left_items) ? data.left_items : [];
+        const rightItems = Array.isArray(data.right_items) ? data.right_items : [];
+        leftItems.forEach((item, itemIndex) => {
+          const row = document.createElement("label");
+          row.className = "option-item";
+          const text = document.createElement("span");
+          text.style.flex = "1";
+          text.textContent = item.text || `Mục ${itemIndex + 1}`;
+          const select = document.createElement("select");
+          select.className = "q-match-answer";
+          select.dataset.leftId = item.id;
+          select.setAttribute("aria-label", `Chọn cặp nối cho mục ${itemIndex + 1}`);
+          select.style.cssText = "max-width: min(55%, 280px); padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;";
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Chọn cặp tương ứng";
+          select.appendChild(placeholder);
+          rightItems.forEach(right => {
+            const option = document.createElement("option");
+            option.value = right.id;
+            option.textContent = right.text || "—";
+            select.appendChild(option);
+          });
+          row.append(text, select);
+          optionsGroup.appendChild(row);
+        });
+      }
+
+      if (optionsGroup.childElementCount) card.appendChild(optionsGroup);
+      return card;
+    }
+
+    async function loadManagedQuiz() {
+      const startButton = document.getElementById("btn-start-quiz");
+      startButton.disabled = true;
+      startButton.textContent = "Đang tải đề thi...";
+      const response = await fetch("/.netlify/functions/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get_student_quiz_questions",
+          quiz_id: quizId,
+          student_id: user?.id,
+          student_school: user?.school || "",
+          student_grade: user?.grade || ""
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Không thể tải đề thi.");
+      currentQuiz = result.data.quiz;
+      questionsData = result.data.questions || [];
+      if (questionsData.length === 0) throw new Error("Bài thi này chưa có câu hỏi.");
+      isManagedQuiz = true;
+      document.querySelector(".topbar-student h2").textContent = currentQuiz.title;
+      document.getElementById("quiz-intro-title").textContent = currentQuiz.title;
+      document.getElementById("quiz-intro-description").textContent =
+        `${questionsData.length} câu hỏi${Number(currentQuiz.time_limit_minutes) > 0 ? ` · Thời gian ${currentQuiz.time_limit_minutes} phút` : " · Không giới hạn thời gian"} · Nộp bài để xem kết quả và nhận xu thưởng.`;
+      startButton.disabled = false;
+      startButton.textContent = "Bắt Đầu Làm Bài";
+    }
+
+    if (quizId) {
+      loadManagedQuiz().catch(error => {
+        document.getElementById("quiz-intro-description").textContent = error.message || "Không thể tải đề thi.";
+        const button = document.getElementById("btn-start-quiz");
+        button.disabled = true;
+        button.textContent = "Không thể bắt đầu";
+      });
+    }
 
     async function startQuiz() {
+      if (isManagedQuiz) {
+        try {
+          const lockResponse = await fetch("/.netlify/functions/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "get_school_exam_status", school: user?.school || "" })
+          });
+          const lockResult = await lockResponse.json();
+          if (!lockResponse.ok || !lockResult.success) throw new Error(lockResult.message || "Không thể kiểm tra trạng thái phòng thi.");
+          if (lockResult.data.is_exam_locked) throw new Error("Bài thi hiện đang khóa.");
+          renderQuestions();
+          document.getElementById("quiz-intro").classList.add("hidden");
+          document.getElementById("quiz-screen").classList.remove("hidden");
+          document.getElementById("btn-restart-quiz").hidden = true;
+          startManagedQuizTimer();
+        } catch (err) {
+          alert(err.message || "Không thể bắt đầu bài thi.");
+        }
+        return;
+      }
+
       // Kiểm tra trạng thái khóa bài thi trước khi tải câu hỏi
       try {
         const checkRes = await fetch("/.netlify/functions/auth", {
@@ -113,6 +303,13 @@
       const container = document.getElementById("quiz-container");
       container.innerHTML = "";
 
+      if (isManagedQuiz) {
+        questionsData.forEach((question, questionIndex) => {
+          container.appendChild(createQuestionCard(question, questionIndex));
+        });
+        return;
+      }
+
       questionsData.forEach((q, qIndex) => {
         const qDiv = document.createElement("div");
         qDiv.className = "question-item";
@@ -135,7 +332,120 @@
       });
     }
 
-    async function submitQuiz() {
+    function getManagedQuizAnswers() {
+      const answers = {};
+      let unanswered = false;
+      questionsData.forEach((question, index) => {
+        let value;
+        if (question.type === "single_choice") {
+          value = document.querySelector(`input[name="question_${index}"]:checked`)?.value || "";
+          if (!value) unanswered = true;
+        } else if (question.type === "multiple_choice") {
+          value = [...document.querySelectorAll(`input[name="question_${index}"]:checked`)].map(input => input.value);
+          if (value.length === 0) unanswered = true;
+        } else if (question.type === "ordering") {
+          const selects = [...document.querySelectorAll(`#quiz-container .question-item:nth-child(${index + 1}) .q-order-position`)];
+          const positions = selects.map(select => Number(select.value));
+          if (positions.some(position => !position) || new Set(positions).size !== positions.length) {
+            unanswered = true;
+            value = [];
+          } else {
+            value = selects.slice().sort((a, b) => Number(a.value) - Number(b.value)).map(select => select.dataset.itemId);
+          }
+        } else if (question.type === "matching") {
+          const selects = [...document.querySelectorAll(`#quiz-container .question-item:nth-child(${index + 1}) .q-match-answer`)];
+          value = selects.map(select => ({ left: select.dataset.leftId, right: select.value }));
+          if (value.some(pair => !pair.right) || new Set(value.map(pair => pair.right)).size !== value.length) unanswered = true;
+        } else if (question.type === "fill_in_the_blank") {
+          value = {};
+          document.querySelectorAll(`#quiz-container .question-item:nth-child(${index + 1}) .q-blank-input`).forEach(input => {
+            value[input.dataset.blankId] = input.value.trim();
+          });
+          if (Object.values(value).some(answer => !answer)) unanswered = true;
+        }
+        answers[question.id] = { value };
+      });
+      return { answers, unanswered };
+    }
+
+    function startManagedQuizTimer() {
+      const duration = Number(currentQuiz?.time_limit_minutes) * 60;
+      const timer = document.getElementById("quiz-timer");
+      if (!duration) {
+        timer.textContent = "Không giới hạn thời gian";
+        return;
+      }
+      let remaining = duration;
+      const updateTimer = () => {
+        const minutes = Math.floor(remaining / 60).toString().padStart(2, "0");
+        const seconds = (remaining % 60).toString().padStart(2, "0");
+        timer.textContent = `Thời gian còn lại: ${minutes}:${seconds}`;
+        if (remaining <= 60) timer.style.color = "#dc2626";
+        if (remaining <= 0) {
+          clearInterval(quizTimer);
+          submitQuiz(true);
+          return;
+        }
+        remaining -= 1;
+      };
+      updateTimer();
+      quizTimer = setInterval(updateTimer, 1000);
+    }
+
+    async function submitManagedQuiz(forceSubmit = false) {
+      if (isSubmittingQuiz) return;
+      const { answers, unanswered } = getManagedQuizAnswers();
+      if (unanswered && !forceSubmit && !confirm("Bạn chưa hoàn thành hết các câu hỏi. Vẫn muốn nộp bài?")) return;
+
+      isSubmittingQuiz = true;
+      const submitButton = document.querySelector("#quiz-screen button.btn-success");
+      submitButton.disabled = true;
+      submitButton.textContent = "Đang chấm bài...";
+      try {
+        const response = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit_quiz_answers",
+            quiz_id: currentQuiz.id,
+            student_id: user.id,
+            answers
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || "Không thể nộp bài.");
+
+        clearInterval(quizTimer);
+        document.getElementById("quiz-screen").classList.add("hidden");
+        document.getElementById("quiz-result").classList.remove("hidden");
+        document.getElementById("score-text").textContent = `${result.data.score} / 10 Điểm`;
+        const saveStatus = document.getElementById("save-status");
+        saveStatus.className = "status-msg status-success";
+        saveStatus.textContent = `Đã chấm bài thành công! Bạn nhận được ${result.data.earned_coins} xu.`;
+
+        const details = document.createElement("div");
+        details.className = "mt-4";
+        (result.data.details || []).forEach((detail, index) => {
+          const row = document.createElement("p");
+          row.style.marginTop = "8px";
+          row.textContent = `Câu ${index + 1}: ${detail.is_correct ? "Đúng" : "Chưa đúng"}${detail.explanation ? ` — ${detail.explanation}` : ""}`;
+          details.appendChild(row);
+        });
+        document.querySelector("#quiz-result .placeholder-card").appendChild(details);
+      } catch (error) {
+        alert(error.message || "Không thể nộp bài.");
+        submitButton.disabled = false;
+        submitButton.textContent = "Nộp Bài Thi";
+        isSubmittingQuiz = false;
+      }
+    }
+
+    async function submitQuiz(forceSubmit = false) {
+      if (isManagedQuiz) {
+        await submitManagedQuiz(forceSubmit);
+        return;
+      }
+
       let correctCount = 0;
       let unAnswered = false;
 

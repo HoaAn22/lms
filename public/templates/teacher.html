@@ -26,6 +26,40 @@
     .school-action-buttons > .btn { justify-content: center; }
     .school-delete-controls { display: flex; flex: 0 0 100%; align-items: center; gap: 8px; }
     .school-actions-toggle { flex-shrink: 0; }
+    .report-menu {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .report-menu-trigger {
+      list-style: none;
+      cursor: pointer;
+    }
+    .report-menu-trigger::-webkit-details-marker {
+      display: none;
+    }
+    .report-menu-options {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 20;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      width: max-content;
+      min-width: 220px;
+      padding: 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+    }
+    .report-menu[open] .report-menu-options {
+      display: flex;
+    }
+    .report-menu-options .btn {
+      width: 100%;
+      text-align: left;
+    }
     
     .card-header-collapse {
       display: flex;
@@ -952,6 +986,119 @@
       background-color: #f5f9ff;
     }
 
+    .dashboard-layout .quiz-questions-manager {
+      overflow: hidden;
+      padding: 0;
+      border: 1px solid #bfdbfe !important;
+      border-top: 4px solid #3b82f6 !important;
+      box-shadow: 0 14px 34px rgba(37, 99, 235, 0.09);
+    }
+
+    .quiz-questions-manager-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 26px;
+      border-bottom: 1px solid #e8eef7;
+      background: linear-gradient(120deg, #f8fbff, #fff 72%);
+    }
+
+    .quiz-questions-manager-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .quiz-questions-manager-icon {
+      display: grid;
+      flex: 0 0 46px;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      background: #eff6ff;
+      font-size: 22px;
+    }
+
+    .quiz-questions-manager-eyebrow {
+      display: block;
+      margin-bottom: 4px;
+      color: #2563eb;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .quiz-questions-manager-title {
+      overflow: hidden;
+      margin: 0;
+      color: #172554;
+      font-size: 19px;
+      letter-spacing: -0.025em;
+      text-overflow: ellipsis;
+    }
+
+    .quiz-questions-manager-description {
+      margin-top: 5px;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .quiz-questions-manager-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .quiz-questions-manager-actions .btn {
+      min-height: 42px;
+      border-radius: 10px;
+    }
+
+    .quiz-questions-table-wrap {
+      overflow-x: auto;
+      padding: 8px 18px 14px;
+    }
+
+    .dashboard-layout .quiz-questions-table {
+      min-width: 680px;
+    }
+
+    .dashboard-layout .quiz-questions-table th:first-child,
+    .dashboard-layout .quiz-questions-table td:first-child {
+      text-align: center;
+    }
+
+    .dashboard-layout .quiz-questions-table td:nth-child(3) {
+      min-width: 240px;
+      max-width: 520px;
+      white-space: normal;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .quiz-question-row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .dashboard-layout .quiz-questions-table .badge-role.teacher {
+      display: inline-block;
+      padding: 5px 9px;
+      border: 1px solid #dbeafe;
+      border-radius: 999px;
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: normal;
+    }
+
     .dashboard-layout .school-row-item {
       padding: 14px 16px;
       border-color: #e2e8f0;
@@ -1120,6 +1267,45 @@
       .dashboard-layout .card {
         padding: 18px 15px;
         border-radius: 15px;
+      }
+
+      .dashboard-layout .quiz-questions-manager {
+        padding: 0;
+      }
+
+      .quiz-questions-manager-header {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 18px 16px;
+      }
+
+      .quiz-questions-manager-heading {
+        align-items: flex-start;
+      }
+
+      .quiz-questions-manager-icon {
+        flex-basis: 40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 19px;
+      }
+
+      .quiz-questions-manager-title {
+        font-size: 17px;
+      }
+
+      .quiz-questions-manager-actions {
+        display: grid;
+        grid-template-columns: 1fr auto;
+      }
+
+      .quiz-questions-manager-actions .btn {
+        padding: 10px 12px;
+      }
+
+      .quiz-questions-table-wrap {
+        padding: 4px 10px 10px;
       }
 
       .dashboard-layout #create-school-form > div {
@@ -1642,7 +1828,15 @@
           <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
               <h3 style="margin: 0; font-size: 18px; color: #1e293b;">📍 Tra Cứu & Giám Sát Điểm Danh</h3>
-              <button onclick="openReportModal()" class="btn btn-primary">Báo cáo cuối buổi</button>
+              <details class="report-menu">
+                <summary class="btn btn-primary report-menu-trigger">Tạo báo cáo</summary>
+                <div class="report-menu-options">
+                  <button type="button" onclick="closeReportMenu(this); openStartReportModal();" class="btn btn-secondary">Báo cáo đầu buổi</button>
+                  <button type="button" onclick="closeReportMenu(this); openProfessionalReportModal(1);" class="btn btn-secondary">Báo cáo chuyên môn 1</button>
+                  <button type="button" onclick="closeReportMenu(this); openProfessionalReportModal(2);" class="btn btn-secondary">Báo cáo chuyên môn 2</button>
+                  <button type="button" onclick="closeReportMenu(this); openReportModal();" class="btn btn-secondary">Báo cáo cuối buổi</button>
+                </div>
+              </details>
             </div>
             
             <div class="grid-2 mt-2">
@@ -1855,7 +2049,127 @@
           </div>
         </div>
 
-        <div id="tab-exam" class="tab-panel"><div class="placeholder-card"><h4>Quản lý đề thi</h4></div></div>
+        <!-- TAB: QUẢN LÝ ĐỀ THI & NGÂN HÀNG CÂU HỎI -->
+        <div id="tab-exam" class="tab-panel">
+          <!-- KHỐI 1: TẠO / SỬA BÀI THI -->
+          <div class="card form-container mb-4">
+            <div class="card-header-collapse" onclick="toggleCardBody('quiz-form-body', 'quiz-form-toggle-icon')">
+              <h3 id="quiz-form-title" style="margin: 0; font-size: 16px; color: #1e293b;">📝 Tạo Bài Thi Mới</h3>
+              <span id="quiz-form-toggle-icon" style="font-size: 18px; font-weight: bold; color: #64748b;">▼</span>
+            </div>
+
+            <div id="quiz-form-body" class="card-body-collapsible" style="margin-top: 16px;">
+              <form id="quiz-manage-form" onsubmit="submitSaveQuiz(event)">
+                <input type="hidden" id="exam-quiz-id">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="exam-quiz-title">Tên bài thi (*):</label>
+                    <input type="text" id="exam-quiz-title" required placeholder="VD: Bài Kiểm Tra Định Kỳ 1 - Tin Học 7" autocomplete="off">
+                  </div>
+                  <div class="form-group">
+                    <label for="exam-quiz-grade">Khối lớp:</label>
+                    <select id="exam-quiz-grade">
+                      <option value="6">Khối 6</option>
+                      <option value="7" selected>Khối 7</option>
+                      <option value="8">Khối 8</option>
+                      <option value="9">Khối 9</option>
+                      <option value="ALL">Tất cả khối</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label for="exam-quiz-time">Thời gian làm bài (Phút - Để 0 nếu không giới hạn):</label>
+                    <input type="number" id="exam-quiz-time" min="0" max="300" value="15">
+                  </div>
+                  <div class="form-group">
+                    <label for="exam-quiz-coins">Xu thưởng tối đa (khi đạt 10 điểm):</label>
+                    <input type="number" id="exam-quiz-coins" min="0" max="1000" value="50">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="exam-quiz-desc">Mô tả / Quy chế bài thi:</label>
+                  <input type="text" id="exam-quiz-desc" placeholder="VD: Học sinh làm bài nghiêm túc, nộp bài để nhận xu...">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                  <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                    <input type="checkbox" id="exam-quiz-published" checked>
+                    Phát hành ngay (Cho phép học sinh nhìn thấy bài thi)
+                  </label>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="resetQuizForm()">Làm mới</button>
+                    <button type="submit" id="btn-save-quiz" class="btn btn-primary">💾 Lưu Bài Thi</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- KHỐI 2: DANH SÁCH BÀI THI -->
+          <div class="card mb-4">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="margin: 0; font-size: 16px; color: #1e293b;">📚 Danh Sách Bài Thi</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="loadQuizzesList()">🔄 Làm mới</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;">STT</th>
+                    <th>Tên bài thi</th>
+                    <th>Khối</th>
+                    <th>Số câu hỏi</th>
+                    <th>Thời gian</th>
+                    <th>Thưởng tối đa</th>
+                    <th>Trạng thái</th>
+                    <th style="width: 240px;">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="quizzes-list-tbody">
+                  <tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">Đang tải danh sách bài thi...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- KHỐI 3: QUẢN LÝ CÂU HỎI CỦA BÀI THI ĐANG CHỌN -->
+          <div id="quiz-questions-manager" class="card quiz-questions-manager" style="display: none;">
+            <div class="quiz-questions-manager-header">
+              <div class="quiz-questions-manager-heading">
+                <span class="quiz-questions-manager-icon" aria-hidden="true">📋</span>
+                <div style="min-width: 0;">
+                  <span class="quiz-questions-manager-eyebrow">Quản lý câu hỏi bài thi</span>
+                  <h3 id="current-editing-quiz-title" class="quiz-questions-manager-title">---</h3>
+                  <p class="quiz-questions-manager-description">Thêm mới, chỉnh sửa hoặc sắp xếp câu hỏi trong bài thi này.</p>
+                </div>
+              </div>
+              <div class="quiz-questions-manager-actions">
+                <button type="button" class="btn btn-primary" onclick="openQuestionModal()">➕ Thêm Câu Hỏi Mới</button>
+                <button type="button" class="btn btn-secondary" onclick="closeQuestionsManager()">Đóng</button>
+              </div>
+            </div>
+            <div class="quiz-questions-table-wrap">
+              <table class="data-table quiz-questions-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">Thứ tự</th>
+                    <th style="width: 150px;">Dạng câu hỏi</th>
+                    <th>Nội dung câu hỏi (Prompt)</th>
+                    <th style="width: 80px;">Điểm</th>
+                    <th style="width: 150px;">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="quiz-questions-tbody">
+                  <tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">Chưa có câu hỏi nào.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div id="tab-grading" class="tab-panel"><div class="placeholder-card"><h4>Bảng điểm & Thống kê</h4></div></div>
 
         <!-- TAB 6: LỊCH SỬ ĐĂNG NHẬP VÀ QUẢN LÝ IP -->
@@ -2313,7 +2627,190 @@
           </div>
         </div>
       </div>
+      <!-- Modal Tạo Báo Cáo Đầu Buổi -->
+      <div id="startReportModal" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 18px; color: #1e293b;">📝 Báo Cáo Đầu Buổi Dạy</h3>
+            <button type="button" onclick="closeStartReportModal()" aria-label="Đóng báo cáo đầu buổi" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
 
+          <div style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-bottom: 16px;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repStart_Teacher">Tên giáo viên:</label>
+              <input type="text" id="repStart_Teacher" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_TA">Tên trợ giảng:</label>
+                <input type="text" id="repStart_TA" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_Room">Phòng máy:</label>
+                <input type="text" id="repStart_Room" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_TotalPC">Tổng số máy:</label>
+                <input type="text" id="repStart_TotalPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_BrokenPC">Tổng số máy bị lỗi:</label>
+                <input type="text" id="repStart_BrokenPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repStart_MissingPC">Số máy còn thiếu cho HS:</label>
+              <input type="text" id="repStart_MissingPC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_Netsupport">Tình trạng Netsupport:</label>
+                <input type="text" id="repStart_Netsupport" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repStart_Speaker">Tình trạng loa, âm ly:</label>
+                <input type="text" id="repStart_Speaker" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repStart_AC">Tình trạng máy lạnh, máy quạt:</label>
+              <input type="text" id="repStart_AC" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" onclick="closeStartReportModal()" class="btn btn-secondary">Hủy</button>
+            <button type="button" id="btnCopyStartReport" onclick="generateAndCopyStartReport()" class="btn btn-primary" style="background: #16a34a; border-color: #15803d;">📋 Tạo & Lưu báo cáo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Tạo Báo Cáo Chuyên Môn -->
+      <div id="professionalReportModal" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 id="professionalReportTitle" style="margin: 0; font-size: 18px; color: #1e293b;">📝 Báo Cáo Chuyên Môn</h3>
+            <button type="button" onclick="closeProfessionalReportModal()" aria-label="Đóng báo cáo chuyên môn" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <div style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-bottom: 16px;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repPro_Teacher">Tên giáo viên:</label>
+              <input type="text" id="repPro_Teacher" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_Class">Lớp:</label>
+                <input type="text" id="repPro_Class" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_Subject">Môn:</label>
+                <input type="text" id="repPro_Subject" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_Materials">Tài liệu dạy:</label>
+                <input type="text" id="repPro_Materials" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_Content">Nội dung dạy:</label>
+                <input type="text" id="repPro_Content" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_PlannedLessons">Số tiết dự kiến:</label>
+                <input type="text" id="repPro_PlannedLessons" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="repPro_TaughtLessons">Số tiết đã dạy:</label>
+                <input type="text" id="repPro_TaughtLessons" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repPro_CompletionCount">Số lần hoàn thành bài tổng hợp:</label>
+              <input type="text" id="repPro_CompletionCount" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repPro_FlashGM">Tỷ lệ kết quả Flash GM (GMT 1 (%), GMT 2 (%)):</label>
+              <input type="text" id="repPro_FlashGM" value="GMT 1  ( %), GMT 2 ( %)" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repPro_FlashOT">Tỷ lệ kết quả Flash OT (OT 1 (%), OT 2 (%), OT 3 (%)):</label>
+              <input type="text" id="repPro_FlashOT" value="OT 1 ( %), OT 2 ( %), OT 3 ( %)" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="repPro_Gmetrix">Tỷ lệ kết quả điểm Gmetrix (GMT 1 (%), GMT 2 (%)):</label>
+              <input type="text" id="repPro_Gmetrix" value="GMT 1 ( %), GMT 2 ( %)" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" onclick="closeProfessionalReportModal()" class="btn btn-secondary">Hủy</button>
+            <button type="button" id="btnCopyProfessionalReport" onclick="generateAndCopyProfessionalReport()" class="btn btn-primary" style="background: #16a34a; border-color: #15803d;">📋 Tạo & Lưu báo cáo</button>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Tạo / Chỉnh sửa Câu Hỏi Đa Dạng -->
+      <div id="question-editor-modal" class="modal-backdrop" onclick="if(event.target === this) closeQuestionModal()">
+        <div class="modal-card" style="max-width: 680px; width: 95%; max-height: 90vh; overflow-y: auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 id="question-modal-title" style="margin: 0; font-size: 18px; color: #1e293b;">➕ Thêm Câu Hỏi</h3>
+            <button type="button" onclick="closeQuestionModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+          </div>
+
+          <form id="question-editor-form" onsubmit="submitSaveQuestion(event)">
+            <input type="hidden" id="q-edit-id">
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="q-edit-type">Loại câu hỏi (*):</label>
+                <select id="q-edit-type" onchange="renderDynamicQuestionBuilder()">
+                  <option value="single_choice">🔘 Trắc nghiệm 1 đáp án</option>
+                  <option value="multiple_choice">☑️ Trắc nghiệm nhiều đáp án</option>
+                  <option value="ordering">🔢 Sắp xếp thứ tự</option>
+                  <option value="matching">🔗 Nối từ / Ghép cặp</option>
+                  <option value="fill_in_the_blank">✍️ Điền vào chỗ trống</option>
+                </select>
+              </div>
+              <div class="grid-2" style="gap: 10px;">
+                <div class="form-group">
+                  <label for="q-edit-order">Thứ tự câu:</label>
+                  <input type="number" id="q-edit-order" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                  <label for="q-edit-points">Điểm số:</label>
+                  <input type="number" id="q-edit-points" min="0.1" step="0.1" value="1" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="q-edit-prompt">Nội dung câu hỏi / Đề bài (*):</label>
+              <textarea id="q-edit-prompt" rows="3" required placeholder="Nhập nội dung câu hỏi..." oninput="onPromptInputUpdate()"></textarea>
+              <small id="q-prompt-hint" style="display: none; color: #2563eb; font-size: 12px; margin-top: 4px;">
+                💡 Mẹo: Dùng ký hiệu <strong>{{b1}}</strong>, <strong>{{b2}}</strong>... ngay trong đề bài để đánh dấu vị trí ô trống cần điền.
+              </small>
+            </div>
+
+            <!-- VÙNG BUILDER ĐỘNG THEO TỪNG LOẠI CÂU HỎI -->
+            <div id="q-dynamic-builder" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 14px;"></div>
+
+            <div class="form-group">
+              <label for="q-edit-explanation">Giải thích đáp án (Tùy chọn):</label>
+              <input type="text" id="q-edit-explanation" placeholder="Giải thích hiển thị sau khi học sinh nộp bài...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+              <button type="button" class="btn btn-secondary" onclick="closeQuestionModal()">Hủy</button>
+              <button type="submit" id="btn-submit-question" class="btn btn-primary">💾 Lưu Câu Hỏi</button>
+            </div>
+          </form>
+        </div>
+      </div>
       <footer class="site-footer">
         <div class="footer-content">
           <div class="footer-signature">
@@ -3037,6 +3534,9 @@
       } else if (tabId === 'tab-attendance') {
         loadClassSchedules();
         fetchActiveClassesForDate();
+      }
+      else if (tabId === 'tab-exam') {
+        loadQuizzesList();
       }
     }
 
@@ -6222,6 +6722,201 @@
     /* ========================================================
    LOGIC TẠO BÁO CÁO CUỐI BUỔI DẠY VÀ COPY VÀO CLIPBOARD
    ======================================================== */
+    const startReportFieldIds = ['repStart_Teacher', 'repStart_TA', 'repStart_Room', 'repStart_TotalPC', 'repStart_BrokenPC', 'repStart_MissingPC', 'repStart_Netsupport', 'repStart_Speaker', 'repStart_AC'];
+    const endReportFieldIds = ['rep_Teacher', 'rep_TA', 'rep_Room', 'rep_TotalPC', 'rep_Docs', 'rep_BrokenPC', 'rep_MissingPC', 'rep_Netsupport', 'rep_Speaker', 'rep_AC', 'rep_Power', 'rep_Chairs', 'rep_Clean', 'rep_Rules', 'rep_Violations'];
+    const professionalReportDefaultValues = {
+      repPro_FlashGM: 'GMT 1  ( %), GMT 2 ( %)',
+      repPro_FlashOT: 'OT 1 ( %), OT 2 ( %), OT 3 ( %)',
+      repPro_Gmetrix: 'GMT 1 ( %), GMT 2 ( %)'
+    };
+    const reportFormLoadVersions = new Map();
+
+    function closeReportMenu(menuItem) {
+      const menu = menuItem.closest('.report-menu');
+      if (menu) menu.open = false;
+    }
+
+    async function requestTeacherReportStorage(action, reportType, reportData) {
+      const teacher = getCurrentTeacherSession();
+      if (!teacher || teacher.role !== 'teacher' || !teacher.username || !teacher.sessionToken) {
+        throw new Error('Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.');
+      }
+
+      const response = await fetch('/.netlify/functions/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          report_type: reportType,
+          report_data: reportData,
+          teacher_username: teacher.username,
+          teacher_session_token: teacher.sessionToken
+        })
+      });
+
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (error) {
+        const responseDetails = responseText.trim().slice(0, 200);
+        throw new Error(`Máy chủ trả về phản hồi không phải JSON (HTTP ${response.status})${responseDetails ? `: ${responseDetails}` : '.'}`);
+      }
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Không thể xử lý báo cáo.');
+      }
+      return result.data;
+    }
+
+    async function loadTeacherReportForm(reportType, fieldIds, buttonId, reportName, defaultValues = {}) {
+      const formKey = fieldIds.join(',');
+      const loadVersion = (reportFormLoadVersions.get(formKey) || 0) + 1;
+      reportFormLoadVersions.set(formKey, loadVersion);
+      const button = document.getElementById(buttonId);
+      if (button) button.disabled = true;
+      fieldIds.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) {
+          field.value = defaultValues[id] || '';
+          field.disabled = true;
+        }
+      });
+
+      try {
+        const result = await requestTeacherReportStorage('load', reportType);
+        if (reportFormLoadVersions.get(formKey) !== loadVersion) return;
+        const savedData = result?.report_data;
+        if (savedData) {
+          fieldIds.forEach(id => {
+            const field = document.getElementById(id);
+            if (field && typeof savedData[id] === 'string' && savedData[id] !== '') field.value = savedData[id];
+          });
+        }
+      } catch (error) {
+        if (reportFormLoadVersions.get(formKey) === loadVersion) {
+          console.error(`Lỗi khi tải ${reportName} từ cơ sở dữ liệu:`, error);
+          showTeacherNotification(`Không thể tải ${reportName} từ cơ sở dữ liệu: ${error.message}`);
+        }
+      } finally {
+        if (reportFormLoadVersions.get(formKey) === loadVersion) {
+          fieldIds.forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.disabled = false;
+          });
+          if (button) button.disabled = false;
+        }
+      }
+    }
+
+    async function saveTeacherReportAndCopy(reportType, reportName, reportData, reportContent, buttonId, closeModal) {
+      const button = document.getElementById(buttonId);
+      if (button) button.disabled = true;
+
+      try {
+        await requestTeacherReportStorage('save', reportType, reportData);
+      } catch (error) {
+        console.error(`Lỗi khi lưu ${reportName} vào cơ sở dữ liệu:`, error);
+        showTeacherNotification(`Không thể lưu ${reportName} vào cơ sở dữ liệu: ${error.message}`);
+        if (button) button.disabled = false;
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(reportContent);
+        showTeacherNotification(`Đã lưu ${reportName} vào cơ sở dữ liệu và Clipboard thành công.`);
+        closeModal();
+      } catch (error) {
+        console.error(`Lỗi khi copy ${reportName} vào clipboard:`, error);
+        showTeacherNotification(`Đã lưu ${reportName} vào cơ sở dữ liệu nhưng không thể copy vào Clipboard. Hãy thử lại trên máy tính.`);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    function openStartReportModal() {
+      const modal = document.getElementById('startReportModal');
+      if (modal) {
+        modal.classList.add('show');
+      }
+      loadTeacherReportForm('start_of_class', startReportFieldIds, 'btnCopyStartReport', 'báo cáo đầu buổi');
+    }
+
+    function closeStartReportModal() {
+      const modal = document.getElementById('startReportModal');
+      if (modal) {
+        modal.classList.remove('show');
+      }
+    }
+
+    function generateAndCopyStartReport() {
+      const formData = {};
+      startReportFieldIds.forEach(id => {
+        const field = document.getElementById(id);
+        formData[id] = field ? field.value : "";
+      });
+
+      const reportContent = `BÁO CÁO ĐẦU BUỔI DẠY
+- Tên giáo viên: ${formData['repStart_Teacher']}
+- Tên trợ giảng: ${formData['repStart_TA']}
+- Phòng máy: ${formData['repStart_Room']}
+- Tổng số máy: ${formData['repStart_TotalPC']}
+- Tổng số máy bị lỗi: ${formData['repStart_BrokenPC']}
+- Số máy còn thiếu cho HS: ${formData['repStart_MissingPC']}
+- Tình trạng Netsupport: ${formData['repStart_Netsupport']}
+- Tình trạng loa, âm ly: ${formData['repStart_Speaker']}
+- Tình trạng máy lạnh, máy quạt: ${formData['repStart_AC']}`;
+
+      saveTeacherReportAndCopy('start_of_class', 'báo cáo đầu buổi', formData, reportContent, 'btnCopyStartReport', closeStartReportModal);
+    }
+
+    const professionalReportFieldIds = ['repPro_Teacher', 'repPro_Class', 'repPro_Subject', 'repPro_Materials', 'repPro_Content', 'repPro_PlannedLessons', 'repPro_TaughtLessons', 'repPro_CompletionCount', 'repPro_FlashGM', 'repPro_FlashOT', 'repPro_Gmetrix'];
+    let currentProfessionalReportNumber = 1;
+
+    function openProfessionalReportModal(reportNumber) {
+      if (reportNumber !== 1 && reportNumber !== 2) {
+        showTeacherNotification("Báo cáo chuyên môn không hợp lệ.");
+        return;
+      }
+
+      currentProfessionalReportNumber = reportNumber;
+      const title = document.getElementById('professionalReportTitle');
+      if (title) title.textContent = `📝 Báo Cáo Chuyên Môn ${reportNumber}`;
+
+      const modal = document.getElementById('professionalReportModal');
+      if (modal) modal.classList.add('show');
+      loadTeacherReportForm(`professional_${reportNumber}`, professionalReportFieldIds, 'btnCopyProfessionalReport', `báo cáo chuyên môn ${reportNumber}`, professionalReportDefaultValues);
+    }
+
+    function closeProfessionalReportModal() {
+      const modal = document.getElementById('professionalReportModal');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function generateAndCopyProfessionalReport() {
+      const reportNumber = currentProfessionalReportNumber;
+      const formData = {};
+      professionalReportFieldIds.forEach(id => {
+        const field = document.getElementById(id);
+        const value = field ? field.value : "";
+        formData[id] = value.trim() ? value : professionalReportDefaultValues[id] || value;
+      });
+
+      const reportContent = `BÁO CÁO CHUYÊN MÔN ${reportNumber}
+- Tên giáo viên: ${formData['repPro_Teacher']}
+- Lớp: ${formData['repPro_Class']}
+- Môn: ${formData['repPro_Subject']}
+- Tài liệu dạy: ${formData['repPro_Materials']}
+- Nội dung dạy: ${formData['repPro_Content']}
+- Số tiết dự kiến: ${formData['repPro_PlannedLessons']}
+- Số tiết đã dạy: ${formData['repPro_TaughtLessons']}
+- Số lần hoàn thành bài tổng hợp: ${formData['repPro_CompletionCount']}
+- Tỷ lệ kết quả Flash GM: ${formData['repPro_FlashGM']}
+- Tỷ lệ kết quả Flash OT: ${formData['repPro_FlashOT']}
+- Tỷ lệ kết quả điểm Gmetrix: ${formData['repPro_Gmetrix']}`;
+
+      saveTeacherReportAndCopy(`professional_${reportNumber}`, `báo cáo chuyên môn ${reportNumber}`, formData, reportContent, 'btnCopyProfessionalReport', closeProfessionalReportModal);
+    }
+
     function openReportModal() {
       const school = document.getElementById("view-att-school-select")?.value || "";
       const date = document.getElementById("view-att-date-picker")?.value || new Date().toISOString().split('T')[0];
@@ -6236,20 +6931,7 @@
         modal.classList.add('show'); 
       }
 
-      // --- THÊM ĐOẠN NÀY ĐỂ TẢI DỮ LIỆU ĐÃ LƯU ---
-      const savedDataStr = localStorage.getItem('saved_report_form_data');
-      if (savedDataStr) {
-          try {
-              const savedData = JSON.parse(savedDataStr);
-              const fields = ['rep_Teacher', 'rep_TA', 'rep_Room', 'rep_TotalPC', 'rep_Docs', 'rep_BrokenPC', 'rep_MissingPC', 'rep_Netsupport', 'rep_Speaker', 'rep_AC', 'rep_Power', 'rep_Chairs', 'rep_Clean', 'rep_Rules', 'rep_Violations'];
-              fields.forEach(id => {
-                  if (savedData[id] !== undefined) {
-                      const el = document.getElementById(id);
-                      if (el) el.value = savedData[id];
-                  }
-              });
-          } catch (e) { console.error("Lỗi khi nạp dữ liệu cũ:", e); }
-      }
+      loadTeacherReportForm('end_of_class', endReportFieldIds, 'btnCopyReport', 'báo cáo cuối buổi');
 
       // Tải danh sách lớp vào dropdown
       fetch(`/.netlify/functions/attendance?action=get_active_classes_by_date&school=${encodeURIComponent(school)}&date=${date}`)
@@ -6355,15 +7037,12 @@
       }
 
       // 1. Thu thập dữ liệu từ Form
-      const fieldIds = ['rep_Teacher', 'rep_TA', 'rep_Room', 'rep_TotalPC', 'rep_Docs', 'rep_BrokenPC', 'rep_MissingPC', 'rep_Netsupport', 'rep_Speaker', 'rep_AC', 'rep_Power', 'rep_Chairs', 'rep_Clean', 'rep_Rules', 'rep_Violations'];
       const formData = {};
-      fieldIds.forEach(id => {
+      endReportFieldIds.forEach(id => {
           const el = document.getElementById(id);
           formData[id] = el ? el.value : "";
       });
-
-      // 2. Lưu dữ liệu vào bộ nhớ máy (LocalStorage)
-      localStorage.setItem('saved_report_form_data', JSON.stringify(formData));
+      formData.classesInfo = classesInfo;
 
       // 3. Ghép chuỗi báo cáo
       const reportContent = `BÁO CÁO CUỐI BUỔI DẠY
@@ -6384,14 +7063,584 @@
 - Việc tuân thủ nội quy của HS: ${formData['rep_Rules']}
 - Danh sách vi phạm: ${formData['rep_Violations']}`;
 
-      // 4. Lưu vào Clipboard
-      navigator.clipboard.writeText(reportContent).then(() => {
-          showTeacherNotification("Đã lưu báo cáo vào Clipboard thành công! Thông tin của bạn đã được ghi nhớ cho lần sau.");
-          closeReportModal();
-      }).catch(err => {
-          console.error('Lỗi khi copy vào clipboard: ', err);
-          showTeacherNotification("Có lỗi xảy ra, trình duyệt của bạn chặn quyền truy cập Clipboard. Hãy thử lại trên máy tính.");
+      saveTeacherReportAndCopy('end_of_class', 'báo cáo cuối buổi', formData, reportContent, 'btnCopyReport', closeReportModal);
+    }
+  /* ========================================================
+       QUẢN LÝ BÀI THI (QUIZZES) & CÂU HỎI ĐA DẠNG (QUESTIONS)
+       ======================================================== */
+    let quizzesCache = [];
+    let currentEditingQuizId = null;
+    let currentQuizQuestions = [];
+
+    const QUESTION_TYPE_LABELS = {
+      single_choice: "🔘 1 Đáp án",
+      multiple_choice: "☑️ Nhiều đáp án",
+      ordering: "🔢 Sắp xếp",
+      matching: "🔗 Nối cặp",
+      fill_in_the_blank: "✍️ Điền từ"
+    };
+
+    async function loadQuizzesList() {
+      const tbody = document.getElementById("quizzes-list-tbody");
+      if (!tbody) return;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Đang tải danh sách bài thi... ⏳</td></tr>`;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_quizzes" })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        quizzesCache = result.data.quizzes || [];
+        renderQuizzesTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">${err.message || "Lỗi tải danh sách bài thi"}</td></tr>`;
+      }
+    }
+
+    function renderQuizzesTable() {
+      const tbody = document.getElementById("quizzes-list-tbody");
+      if (quizzesCache.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">Chưa có bài thi nào. Hãy tạo bài thi mới ở khung bên trên!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      quizzesCache.forEach((quiz, idx) => {
+        const tr = document.createElement("tr");
+        const timeText = quiz.time_limit_minutes > 0 ? `${quiz.time_limit_minutes} phút` : "Không giới hạn";
+        const statusBadge = quiz.is_published
+          ? `<span class="ban-status active">Đang mở</span>`
+          : `<span class="ban-status banned">Đang ẩn</span>`;
+
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>
+            <strong style="color: #1e293b;">${quiz.title}</strong>
+            ${quiz.description ? `<div style="font-size: 12px; color: #64748b;">${quiz.description}</div>` : ""}
+          </td>
+          <td>Khối ${quiz.grade || "All"}</td>
+          <td><strong>${quiz.question_count || 0}</strong> câu</td>
+          <td>${timeText}</td>
+          <td><span class="badge-coin">🪙 +${quiz.reward_coins || 0}</span></td>
+          <td>${statusBadge}</td>
+          <td>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="openQuestionsManager('${quiz.id}')">📋 Câu hỏi (${quiz.question_count || 0})</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="fillQuizFormForEdit('${quiz.id}')">✏️ Sửa</button>
+              <button type="button" class="btn btn-sm" style="background: #ef4444; color: #fff;" onclick="deleteQuizItem('${quiz.id}')">🗑️</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
+    }
+
+    function resetQuizForm() {
+      document.getElementById("exam-quiz-id").value = "";
+      document.getElementById("exam-quiz-title").value = "";
+      document.getElementById("exam-quiz-grade").value = "7";
+      document.getElementById("exam-quiz-time").value = "15";
+      document.getElementById("exam-quiz-coins").value = "50";
+      document.getElementById("exam-quiz-desc").value = "";
+      document.getElementById("exam-quiz-published").checked = true;
+      document.getElementById("quiz-form-title").textContent = "📝 Tạo Bài Thi Mới";
+    }
+
+    function fillQuizFormForEdit(quizId) {
+      const quiz = quizzesCache.find(q => q.id === quizId);
+      if (!quiz) return;
+
+      document.getElementById("exam-quiz-id").value = quiz.id;
+      document.getElementById("exam-quiz-title").value = quiz.title || "";
+      document.getElementById("exam-quiz-grade").value = quiz.grade || "7";
+      document.getElementById("exam-quiz-time").value = quiz.time_limit_minutes || 0;
+      document.getElementById("exam-quiz-coins").value = quiz.reward_coins ?? 50;
+      document.getElementById("exam-quiz-desc").value = quiz.description || "";
+      document.getElementById("exam-quiz-published").checked = Boolean(quiz.is_published);
+      document.getElementById("quiz-form-title").textContent = `✏️ Chỉnh Sửa Bài Thi: ${quiz.title}`;
+
+      const formBody = document.getElementById("quiz-form-body");
+      if (formBody.classList.contains("collapsed")) {
+        toggleCardBody("quiz-form-body", "quiz-form-toggle-icon");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function submitSaveQuiz(e) {
+      e.preventDefault();
+      const teacher = getCurrentTeacherSession();
+      if (!teacher?.sessionToken) {
+        showTeacherNotification("Phiên đăng nhập giáo viên đã hết hạn. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      const btn = document.getElementById("btn-save-quiz");
+      btn.disabled = true;
+
+      try {
+        const payload = {
+          action: "save_quiz",
+          teacher_username: teacher.username,
+          teacher_session_token: teacher.sessionToken,
+          id: document.getElementById("exam-quiz-id").value || null,
+          title: document.getElementById("exam-quiz-title").value,
+          grade: document.getElementById("exam-quiz-grade").value,
+          time_limit_minutes: document.getElementById("exam-quiz-time").value,
+          reward_coins: document.getElementById("exam-quiz-coins").value,
+          description: document.getElementById("exam-quiz-desc").value,
+          is_published: document.getElementById("exam-quiz-published").checked
+        };
+
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        showTeacherNotification(result.message);
+        resetQuizForm();
+        loadQuizzesList();
+      } catch (err) {
+        showTeacherNotification(err.message || "Lỗi khi lưu bài thi!");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteQuizItem(quizId) {
+      const quiz = quizzesCache.find(q => q.id === quizId);
+      if (!quiz) return;
+      if (!await showStyledConfirm(`Bạn có chắc chắn muốn xóa bài thi "${quiz.title}" và toàn bộ câu hỏi bên trong không?`)) return;
+
+      const teacher = getCurrentTeacherSession();
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete_quiz",
+            quiz_id: quizId,
+            teacher_username: teacher?.username,
+            teacher_session_token: teacher?.sessionToken
+          })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        showTeacherNotification(result.message);
+        if (currentEditingQuizId === quizId) closeQuestionsManager();
+        loadQuizzesList();
+      } catch (err) {
+        showTeacherNotification(err.message || "Không thể xóa bài thi!");
+      }
+    }
+
+    /* ---------------- QUẢN LÝ CÂU HỎI TRONG BÀI THI ---------------- */
+    async function openQuestionsManager(quizId) {
+      const quiz = quizzesCache.find(q => q.id === quizId);
+      if (!quiz) return;
+
+      currentEditingQuizId = quizId;
+      document.getElementById("current-editing-quiz-title").textContent = quiz.title;
+      const managerCard = document.getElementById("quiz-questions-manager");
+      managerCard.style.display = "block";
+
+      await loadQuizQuestions(quizId);
+      managerCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function closeQuestionsManager() {
+      currentEditingQuizId = null;
+      currentQuizQuestions = [];
+      document.getElementById("quiz-questions-manager").style.display = "none";
+    }
+
+    async function loadQuizQuestions(quizId) {
+      const tbody = document.getElementById("quiz-questions-tbody");
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải câu hỏi... ⏳</td></tr>`;
+
+      const teacher = getCurrentTeacherSession();
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get_quiz_questions",
+            quiz_id: quizId,
+            teacher_username: teacher?.username,
+            teacher_session_token: teacher?.sessionToken
+          })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        currentQuizQuestions = result.data.questions || [];
+        renderQuizQuestionsTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">${err.message}</td></tr>`;
+      }
+    }
+
+    function renderQuizQuestionsTable() {
+      const tbody = document.getElementById("quiz-questions-tbody");
+      if (currentQuizQuestions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 24px; color: #64748b;">Bài thi này chưa có câu hỏi nào. Hãy bấm "➕ Thêm Câu Hỏi Mới"!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      currentQuizQuestions.forEach(q => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight: bold; text-align: center;">#${q.order_index}</td>
+          <td><span class="badge-role teacher">${QUESTION_TYPE_LABELS[q.type] || q.type}</span></td>
+          <td style="white-space: normal; max-width: 480px;">${q.prompt}</td>
+          <td><strong>${q.points}</strong> đ</td>
+          <td>
+            <div class="quiz-question-row-actions">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openQuestionModal('${q.id}')">✏️ Sửa</button>
+              <button type="button" class="btn btn-sm" style="background: #ef4444; color: #fff;" onclick="deleteQuestionItem('${q.id}')">🗑️ Xóa</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* ---------------- TRÌNH TẠO CÂU HỎI ĐỘNG (DYNAMIC BUILDER) ---------------- */
+    function openQuestionModal(questionId = null) {
+      if (!currentEditingQuizId) return;
+
+      const modal = document.getElementById("question-editor-modal");
+      const existingQ = questionId ? currentQuizQuestions.find(item => item.id === questionId) : null;
+
+      document.getElementById("q-edit-id").value = existingQ ? existingQ.id : "";
+      document.getElementById("question-modal-title").textContent = existingQ ? "✏️ Chỉnh Sửa Câu Hỏi" : "➕ Thêm Câu Hỏi Mới";
+      document.getElementById("q-edit-type").value = existingQ ? existingQ.type : "single_choice";
+      document.getElementById("q-edit-order").value = existingQ ? existingQ.order_index : (currentQuizQuestions.length + 1);
+      document.getElementById("q-edit-points").value = existingQ ? existingQ.points : 1;
+      document.getElementById("q-edit-prompt").value = existingQ ? existingQ.prompt : "";
+      document.getElementById("q-edit-explanation").value = existingQ ? (existingQ.explanation || "") : "";
+
+      renderDynamicQuestionBuilder(existingQ);
+      modal.classList.add("show");
+    }
+
+    function closeQuestionModal() {
+      document.getElementById("question-editor-modal").classList.remove("show");
+    }
+
+    function renderDynamicQuestionBuilder(existingQ = null) {
+      const type = document.getElementById("q-edit-type").value;
+      const container = document.getElementById("q-dynamic-builder");
+      const promptHint = document.getElementById("q-prompt-hint");
+      promptHint.style.display = type === "fill_in_the_blank" ? "block" : "none";
+
+      if (type === "single_choice" || type === "multiple_choice") {
+        const inputType = type === "single_choice" ? "radio" : "checkbox";
+        const options = existingQ?.data?.options || [
+          { id: "opt_1", text: "" },
+          { id: "opt_2", text: "" },
+          { id: "opt_3", text: "" },
+          { id: "opt_4", text: "" }
+        ];
+        const correctList = existingQ?.solution?.correct_answers || ["opt_1"];
+
+        container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size: 13px; color: #334155;">Danh sách phương án & Chọn đáp án đúng:</strong>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addChoiceOptionRow('${inputType}')">+ Thêm phương án</button>
+          </div>
+          <div id="q-choices-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+
+        options.forEach(opt => {
+          addChoiceOptionRow(inputType, opt.id, opt.text, correctList.includes(opt.id));
+        });
+      } 
+      else if (type === "ordering") {
+        // Khi sửa câu hỏi Sắp xếp, hiển thị các mục theo đúng thứ tự đúng trong solution.correct_order
+        let orderedItems = [
+          { id: "step_1", text: "" },
+          { id: "step_2", text: "" },
+          { id: "step_3", text: "" }
+        ];
+        if (existingQ?.data?.items && existingQ?.solution?.correct_order) {
+          const itemMap = new Map(existingQ.data.items.map(i => [i.id, i]));
+          orderedItems = existingQ.solution.correct_order.map(id => itemMap.get(id)).filter(Boolean);
+        }
+
+        container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size: 13px; color: #334155;">Nhập các bước theo ĐÚNG THỨ TỰ chuẩn (Hệ thống sẽ tự động xáo trộn khi thi):</strong>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addOrderingRow()">+ Thêm bước</button>
+          </div>
+          <div id="q-ordering-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+        orderedItems.forEach(item => addOrderingRow(item.id, item.text));
+      } 
+      else if (type === "matching") {
+        let pairsData = [
+          { leftText: "", rightText: "" },
+          { leftText: "", rightText: "" }
+        ];
+        if (existingQ?.data?.left_items && existingQ?.data?.right_items && existingQ?.solution?.pairs) {
+          const leftMap = new Map(existingQ.data.left_items.map(i => [i.id, i.text]));
+          const rightMap = new Map(existingQ.data.right_items.map(i => [i.id, i.text]));
+          pairsData = existingQ.solution.pairs.map(p => ({
+            leftText: leftMap.get(p.left) || "",
+            rightText: rightMap.get(p.right) || ""
+          }));
+        }
+
+        container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size: 13px; color: #334155;">Nhập các cặp tương ứng (Cột A ↔ Cột B):</strong>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addMatchingRow()">+ Thêm cặp nối</button>
+          </div>
+          <div id="q-matching-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+        pairsData.forEach(p => addMatchingRow(p.leftText, p.rightText));
+      } 
+      else if (type === "fill_in_the_blank") {
+        container.innerHTML = `
+          <strong style="font-size: 13px; color: #334155; display: block; margin-bottom: 8px;">Đáp án cho từng chỗ trống (Ngăn cách các đáp án chấp nhận được bằng dấu phẩy):</strong>
+          <div id="q-blanks-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+        syncBlanksWithPrompt(existingQ?.solution?.answers || {});
+      }
+    }
+
+    function addChoiceOptionRow(inputType, optId = "", text = "", isCorrect = false) {
+      const list = document.getElementById("q-choices-list");
+      const id = optId || `opt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const row = document.createElement("div");
+      row.className = "q-choice-row";
+      row.dataset.optId = id;
+      row.style.cssText = "display: flex; align-items: center; gap: 8px;";
+      row.innerHTML = `
+        <input type="${inputType}" name="q_correct_choice" value="${id}" ${isCorrect ? "checked" : ""} title="Đánh dấu là đáp án đúng" style="width: 18px; height: 18px; cursor: pointer;">
+        <input type="text" class="q-choice-text" value="${text.replace(/"/g, '&quot;')}" required placeholder="Nhập nội dung đáp án..." style="flex: 1;">
+        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function addOrderingRow(stepId = "", text = "") {
+      const list = document.getElementById("q-ordering-list");
+      const id = stepId || `step_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const row = document.createElement("div");
+      row.className = "q-order-row";
+      row.dataset.stepId = id;
+      row.style.cssText = "display: flex; align-items: center; gap: 8px;";
+      row.innerHTML = `
+        <span style="font-size: 12px; font-weight: bold; color: #64748b; width: 24px;">☰</span>
+        <input type="text" class="q-order-text" value="${text.replace(/"/g, '&quot;')}" required placeholder="Nhập nội dung bước..." style="flex: 1;">
+        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function addMatchingRow(leftVal = "", rightVal = "") {
+      const list = document.getElementById("q-matching-list");
+      const row = document.createElement("div");
+      row.className = "q-match-row";
+      row.style.cssText = "display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: 8px;";
+      row.innerHTML = `
+        <input type="text" class="q-match-left" value="${leftVal.replace(/"/g, '&quot;')}" required placeholder="Nội dung Cột A...">
+        <span style="color: #64748b; font-weight: bold;">↔</span>
+        <input type="text" class="q-match-right" value="${rightVal.replace(/"/g, '&quot;')}" required placeholder="Nội dung Cột B tương ứng...">
+        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function onPromptInputUpdate() {
+      const type = document.getElementById("q-edit-type").value;
+      if (type === "fill_in_the_blank") {
+        const currentAnswers = {};
+        document.querySelectorAll(".q-blank-input").forEach(inp => {
+          currentAnswers[inp.dataset.blankId] = inp.value.split(",").map(s => s.trim()).filter(Boolean);
+        });
+        syncBlanksWithPrompt(currentAnswers);
+      }
+    }
+
+    function syncBlanksWithPrompt(savedAnswers = {}) {
+      const promptText = document.getElementById("q-edit-prompt").value;
+      const list = document.getElementById("q-blanks-list");
+      if (!list) return;
+
+      const matches = [...promptText.matchAll(/\{\{([a-zA-Z0-9_-]+)\}\}/g)];
+      const blankIds = [...new Set(matches.map(m => m[1]))];
+
+      if (blankIds.length === 0) {
+        list.innerHTML = `<div style="color: #b45309; font-size: 13px;">⚠️ Hãy gõ <code>{{b1}}</code>, <code>{{b2}}</code>... vào ô Đề bài phía trên để tạo chỗ trống.</div>`;
+        return;
+      }
+
+      list.innerHTML = "";
+      blankIds.forEach(bId => {
+        const prevVal = Array.isArray(savedAnswers[bId]) ? savedAnswers[bId].join(", ") : "";
+        const row = document.createElement("div");
+        row.style.cssText = "display: flex; align-items: center; gap: 10px;";
+        row.innerHTML = `
+          <code style="background: #dbeafe; color: #1e40af; padding: 6px 10px; border-radius: 6px; font-weight: bold;">{{${bId}}}</code>
+          <input type="text" class="q-blank-input" data-blank-id="${bId}" value="${prevVal.replace(/"/g, '&quot;')}" required placeholder="VD: LAN, mạng cục bộ" style="flex: 1;">
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    async function submitSaveQuestion(e) {
+      e.preventDefault();
+      const type = document.getElementById("q-edit-type").value;
+      const prompt = document.getElementById("q-edit-prompt").value.trim();
+
+      let data = {};
+      let solution = {};
+
+      if (type === "single_choice" || type === "multiple_choice") {
+        const rows = [...document.querySelectorAll(".q-choice-row")];
+        if (rows.length < 2) {
+          showTeacherNotification("Vui lòng thêm ít nhất 2 phương án trả lời!");
+          return;
+        }
+        const options = [];
+        const correct_answers = [];
+        rows.forEach(r => {
+          const id = r.dataset.optId;
+          const text = r.querySelector(".q-choice-text").value.trim();
+          const checked = r.querySelector("input[name='q_correct_choice']").checked;
+          options.push({ id, text });
+          if (checked) correct_answers.push(id);
+        });
+        if (correct_answers.length === 0) {
+          showTeacherNotification("Vui lòng tích chọn ít nhất 1 đáp án đúng!");
+          return;
+        }
+        data = { options, shuffle: true };
+        solution = { correct_answers };
+      } 
+      else if (type === "ordering") {
+        const rows = [...document.querySelectorAll(".q-order-row")];
+        if (rows.length < 2) {
+          showTeacherNotification("Cần ít nhất 2 bước để sắp xếp!");
+          return;
+        }
+        const items = rows.map(r => ({
+          id: r.dataset.stepId,
+          text: r.querySelector(".q-order-text").value.trim()
+        }));
+        const correct_order = items.map(i => i.id);
+        // Xáo trộn vị trí trong data.items để học sinh không nhìn thấy thứ tự chuẩn ban đầu
+        const shuffledItems = [...items].sort(() => Math.random() - 0.5);
+        data = { items: shuffledItems };
+        solution = { correct_order };
+      } 
+      else if (type === "matching") {
+        const rows = [...document.querySelectorAll(".q-match-row")];
+        if (rows.length < 2) {
+          showTeacherNotification("Cần ít nhất 2 cặp nối!");
+          return;
+        }
+        const left_items = [];
+        const right_items = [];
+        const pairs = [];
+        rows.forEach((r, idx) => {
+          const lId = `L_${idx + 1}`;
+          const rId = `R_${idx + 1}`;
+          left_items.push({ id: lId, text: r.querySelector(".q-match-left").value.trim() });
+          right_items.push({ id: rId, text: r.querySelector(".q-match-right").value.trim() });
+          pairs.push({ left: lId, right: rId });
+        });
+        data = { left_items, right_items: [...right_items].sort(() => Math.random() - 0.5) };
+        solution = { pairs };
+      } 
+      else if (type === "fill_in_the_blank") {
+        const inputs = [...document.querySelectorAll(".q-blank-input")];
+        if (inputs.length === 0) {
+          showTeacherNotification("Đề bài chưa có ký hiệu chỗ trống {{b1}}, {{b2}}...");
+          return;
+        }
+        const blanks = [];
+        const answers = {};
+        inputs.forEach(inp => {
+          const bId = inp.dataset.blankId;
+          blanks.push({ id: bId });
+          answers[bId] = inp.value.split(",").map(s => s.trim()).filter(Boolean);
+        });
+        data = { blanks, case_sensitive: false };
+        solution = { answers };
+      }
+
+      const teacher = getCurrentTeacherSession();
+      const btn = document.getElementById("btn-submit-question");
+      btn.disabled = true;
+
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_question",
+            teacher_username: teacher?.username,
+            teacher_session_token: teacher?.sessionToken,
+            id: document.getElementById("q-edit-id").value || null,
+            quiz_id: currentEditingQuizId,
+            type,
+            prompt,
+            data,
+            solution,
+            explanation: document.getElementById("q-edit-explanation").value,
+            points: document.getElementById("q-edit-points").value,
+            order_index: document.getElementById("q-edit-order").value
+          })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        showTeacherNotification(result.message);
+        closeQuestionModal();
+        await loadQuizQuestions(currentEditingQuizId);
+        loadQuizzesList();
+      } catch (err) {
+        showTeacherNotification(err.message || "Không thể lưu câu hỏi!");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteQuestionItem(questionId) {
+      if (!await showStyledConfirm("Bạn có chắc chắn muốn xóa câu hỏi này khỏi đề thi?")) return;
+
+      const teacher = getCurrentTeacherSession();
+      try {
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete_question",
+            question_id: questionId,
+            teacher_username: teacher?.username,
+            teacher_session_token: teacher?.sessionToken
+          })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+
+        showTeacherNotification(result.message);
+        await loadQuizQuestions(currentEditingQuizId);
+        loadQuizzesList();
+      } catch (err) {
+        showTeacherNotification(err.message || "Lỗi xóa câu hỏi!");
+      }
     }
   </script>
 </body>

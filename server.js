@@ -5,6 +5,7 @@ const path = require("path");
 
 const authHandler = require("./netlify/functions/auth").handler;
 const attendanceHandler = require("./netlify/functions/attendance").handler;
+const reportsHandler = require("./netlify/functions/reports").handler;
 const PORT = Number(process.env.PORT || 8888);
 
 const MIME_TYPES = {
@@ -27,7 +28,8 @@ const ROUTE_MAP = {
 
 const FUNCTION_MAP = {
   "/.netlify/functions/auth": authHandler,
-  "/.netlify/functions/attendance": attendanceHandler
+  "/.netlify/functions/attendance": attendanceHandler,
+  "/.netlify/functions/reports": reportsHandler
 };
 
 const server = http.createServer(async (req, res) => {

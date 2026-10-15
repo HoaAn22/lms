@@ -207,6 +207,57 @@ const pickMemeByOriginalRarity = (memes) => {
   return memes[Math.floor(Math.random() * memes.length)];
 };
 
+// Hàm chấm điểm từng câu hỏi theo loại (Server-side Grading)
+const checkQuestionAnswer = (type, studentAnswer, solution) => {
+  if (!studentAnswer || !solution) return false;
+
+  switch (type) {
+    case 'single_choice':
+      return Array.isArray(solution.correct_answers) &&
+        solution.correct_answers.includes(studentAnswer.value);
+
+    case 'multiple_choice': {
+      const selected = new Set(Array.isArray(studentAnswer.value) ? studentAnswer.value : []);
+      const correct = new Set(Array.isArray(solution.correct_answers) ? solution.correct_answers : []);
+      if (selected.size !== correct.size || correct.size === 0) return false;
+      for (const id of correct) {
+        if (!selected.has(id)) return false;
+      }
+      return true;
+    }
+
+    case 'ordering':
+      return Array.isArray(studentAnswer.value) &&
+        Array.isArray(solution.correct_order) &&
+        JSON.stringify(studentAnswer.value) === JSON.stringify(solution.correct_order);
+
+    case 'matching': {
+      const pairs = Array.isArray(solution.pairs) ? solution.pairs : [];
+      const userPairs = Array.isArray(studentAnswer.value) ? studentAnswer.value : [];
+      if (pairs.length === 0 || userPairs.length !== pairs.length) return false;
+      return pairs.every(solPair =>
+        userPairs.some(ansPair => ansPair.left === solPair.left && ansPair.right === solPair.right)
+      );
+    }
+
+    case 'fill_in_the_blank': {
+      const answersObj = solution.answers || {};
+      const entries = Object.entries(answersObj);
+      if (entries.length === 0) return false;
+      return entries.every(([blankId, acceptedList]) => {
+        const userVal = String(studentAnswer.value?.[blankId] || '').trim().toLowerCase();
+        if (!userVal) return false;
+        return (Array.isArray(acceptedList) ? acceptedList : []).some(
+          valid => String(valid).trim().toLowerCase() === userVal
+        );
+      });
+    }
+
+    default:
+      return false;
+  }
+};
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
@@ -393,7 +444,6 @@ exports.handler = async (event) => {
       const missingLogs = enrichedLogs.filter(l => l.role === 'student' && (!l.students || !l.students.class_name));
 
       const missingIds = [...new Set(missingLogs.flatMap(l => [l.student_id, l.user_id]).filter(Boolean))];
-      // Loại bỏ điều kiện !l.student_id để luôn dùng username làm phương án cứu cánh cuối cùng
       const missingUsernames = [...new Set(missingLogs.filter(l => l.username).map(l => l.username))];
 
       let fallbackClassMapById = {};
@@ -421,19 +471,19 @@ exports.handler = async (event) => {
         let finalClassName = "";
 
         if (log.students && log.students.class_name) {
-          finalClassName = log.students.class_name; // Mức 1: Bảng gốc còn liên kết tốt
+          finalClassName = log.students.class_name;
         } else if (log.student_id && fallbackClassMapById[log.student_id]) {
-          finalClassName = fallbackClassMapById[log.student_id]; // Mức 2: ID còn tồn tại nhưng mất liên kết Join
+          finalClassName = fallbackClassMapById[log.student_id];
         } else if (log.user_id && fallbackClassMapById[log.user_id]) {
-          finalClassName = fallbackClassMapById[log.user_id]; // Mức 2: Bản ghi cũ lưu ID học sinh trong user_id
+          finalClassName = fallbackClassMapById[log.user_id];
         } else if (log.username && fallbackClassMapByUsername[log.username]) {
-          finalClassName = fallbackClassMapByUsername[log.username]; // Mức 3: ID đã chết nhưng Username vẫn khớp với tài khoản tạo lại
+          finalClassName = fallbackClassMapByUsername[log.username];
         } else if ((log.student_id && Object.prototype.hasOwnProperty.call(fallbackClassMapById, log.student_id)) ||
                    (log.user_id && Object.prototype.hasOwnProperty.call(fallbackClassMapById, log.user_id)) ||
                    (log.username && Object.prototype.hasOwnProperty.call(fallbackClassMapByUsername, log.username))) {
           finalClassName = "Chưa cập nhật lớp";
         } else {
-          finalClassName = "Tài khoản đã xóa"; // Mức 4: Xóa hoàn toàn
+          finalClassName = "Tài khoản đã xóa";
         }
 
         return { ...log, class_name: finalClassName };
@@ -1140,30 +1190,23 @@ exports.handler = async (event) => {
     // 1. Quét R2 tìm ảnh chưa có thông tin
     if (action === "scan_pending_memes") {
       try {
-        // Lấy danh sách file trong R2 Bucket
         const data = await s3Client.send(new ListObjectsV2Command({
           Bucket: BUCKET_NAME
         }));
         
         const r2Files = data.Contents || [];
-
-        // Lấy danh sách link ảnh đã được lưu trong Supabase
         const { data: dbMemes } = await supabase.from('meme').select('image');
         const dbUrls = (dbMemes || []).map(m => m.image || '');
 
-        // Lọc ra các file R2 mà tên file (Key) CHƯA tồn tại trong Supabase
         const pendingMemes = r2Files.filter(file => {
-          // Chỉ lấy file ảnh (bỏ qua thư mục hoặc file khác định dạng)
           if (!file.Key.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return false;
-          
           return !dbUrls.some(url => url.includes(file.Key));
         }).map(file => {
-          // Bỏ dấu "/" ở cuối URL gốc nếu có để tránh trùng lặp gạch chéo
           const baseUrl = PUBLIC_URL.replace(/\/$/, "");
           let safeUrl = `${baseUrl}/${file.Key}`;
 
           return {
-            driveId: file.Key, // Giữ nguyên key driveId để giao diện Frontend không phải sửa lại code
+            driveId: file.Key,
             fileName: file.Key,
             directUrl: safeUrl 
           };
@@ -1182,7 +1225,6 @@ exports.handler = async (event) => {
 
       let finalImageUrl = image_url;
 
-      // Nếu dữ liệu là dạng Base64 từ giao diện kéo thả, chuyển sang WebP và tải lên R2
       if (image_url.startsWith('data:image')) {
         try {
           const uploadedImage = await uploadMemeImageToR2(image_url);
@@ -1192,7 +1234,6 @@ exports.handler = async (event) => {
         }
       }
 
-      // Lưu URL chuẩn của Cloudflare R2 vào cơ sở dữ liệu Supabase
       const { error } = await supabase.from('meme').insert([{ 
         image: finalImageUrl, 
         slogan: slogan.trim(), 
@@ -1295,6 +1336,8 @@ exports.handler = async (event) => {
       return createResponse(true, null, "Đã xóa meme khỏi hệ thống!");
     }
 
+    /*========================================================================*/
+    /*                    QUAY GACHA & CHIA SẺ PHẦN THƯỞNG                    */
     /*========================================================================*/
 
     if (action === "pull_gacha") {
@@ -1442,6 +1485,314 @@ exports.handler = async (event) => {
       await supabase.from('items').update({ meme_id_list: recipList }).eq('student_id', recipient.id);
 
       return createResponse(true, { updated_meme_id_list: senderList, recipient_name: recipient.full_name || recipient.username }, `Đã tặng thẻ cho ${recipient.full_name || recipient.username}!`);
+    }
+
+    /*========================================================================*/
+    /*                    QUẢN LÝ ĐỀ THI (QUIZZES) & CÂU HỎI                  */
+    /*========================================================================*/
+
+    // 1. Lấy danh sách Bài thi (Quizzes)
+    if (action === "get_quizzes") {
+      let query = supabase
+        .from('quizzes')
+        .select('*, questions(count)')
+        .order('created_at', { ascending: false });
+
+      if (body.only_published) {
+        query = query.eq('is_published', true);
+      }
+
+      const { data, error } = await query;
+      if (error) return createResponse(false, null, "Lỗi tải danh sách bài thi: " + error.message);
+
+      const quizzes = (data || []).map(q => ({
+        ...q,
+        question_count: q.questions?.[0]?.count || 0
+      }));
+      if (body.only_published && body.student_id) {
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('school, grade')
+          .eq('id', body.student_id)
+          .maybeSingle();
+        if (studentError) return createResponse(false, null, "Lỗi xác minh học sinh: " + studentError.message);
+        if (!student) return createResponse(false, null, "Không tìm thấy tài khoản học sinh.");
+        const studentGrade = String(student.grade || '7').trim().toUpperCase();
+        const assignedQuizzes = quizzes.filter(quiz => {
+          const quizSchool = typeof quiz.school === 'string' ? quiz.school.trim() : '';
+          const quizGrade = String(quiz.grade || '').trim().toUpperCase();
+          return (!quizSchool || quizSchool === student.school)
+            && (!quizGrade || quizGrade === 'ALL' || !studentGrade || quizGrade === studentGrade);
+        });
+        return createResponse(true, { quizzes: assignedQuizzes });
+      }
+      return createResponse(true, { quizzes });
+    }
+
+    // 2. Tạo mới hoặc Cập nhật Bài thi (Quiz)
+    if (action === "save_quiz") {
+      if (!await verifyTeacherSession(body.teacher_username, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const { id, title, description, school, grade, time_limit_minutes, reward_coins, is_published } = body;
+      if (!title || !title.trim()) {
+        return createResponse(false, null, "Tên bài thi không được để trống!");
+      }
+
+      const payload = {
+        title: title.trim(),
+        description: description ? description.trim() : "",
+        school: school || null,
+        grade: grade || "7",
+        time_limit_minutes: Number(time_limit_minutes) || 0,
+        reward_coins: Number(reward_coins) ?? 50,
+        is_published: Boolean(is_published),
+        updated_at: new Date().toISOString()
+      };
+
+      let result;
+      if (id) {
+        result = await supabase.from('quizzes').update(payload).eq('id', id).select().single();
+      } else {
+        result = await supabase.from('quizzes').insert([payload]).select().single();
+      }
+
+      if (result.error) return createResponse(false, null, "Lỗi lưu bài thi: " + result.error.message);
+      return createResponse(true, { quiz: result.data }, id ? "Đã cập nhật bài thi!" : "Đã tạo bài thi mới!");
+    }
+
+    // 3. Xóa Bài thi
+    if (action === "delete_quiz") {
+      if (!await verifyTeacherSession(body.teacher_username, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const { error } = await supabase.from('quizzes').delete().eq('id', body.quiz_id);
+      if (error) return createResponse(false, null, "Lỗi xóa bài thi: " + error.message);
+      return createResponse(true, null, "Đã xóa bài thi và toàn bộ câu hỏi bên trong!");
+    }
+
+    // 4. Lấy danh sách câu hỏi của 1 Bài thi (Dành cho Giáo viên: lấy cả cột solution)
+    if (action === "get_quiz_questions") {
+      if (!await verifyTeacherSession(body.teacher_username, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('quiz_id', body.quiz_id)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (error) return createResponse(false, null, "Lỗi tải câu hỏi: " + error.message);
+      return createResponse(true, { questions: data || [] });
+    }
+
+    // 5. Thêm mới hoặc Sửa Câu hỏi (Question)
+    if (action === "save_question") {
+      if (!await verifyTeacherSession(body.teacher_username, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const { id, quiz_id, type, prompt, data, solution, explanation, points, order_index } = body;
+      if (!quiz_id || !type || !prompt || !prompt.trim()) {
+        return createResponse(false, null, "Vui lòng nhập đầy đủ loại câu hỏi và nội dung đề bài!");
+      }
+
+      const payload = {
+        quiz_id,
+        type,
+        prompt: prompt.trim(),
+        data: data || {},
+        solution: solution || {},
+        explanation: explanation ? explanation.trim() : "",
+        points: Number(points) || 1,
+        order_index: Number(order_index) || 1,
+        updated_at: new Date().toISOString()
+      };
+
+      let result;
+      if (id) {
+        result = await supabase.from('questions').update(payload).eq('id', id).select().single();
+      } else {
+        result = await supabase.from('questions').insert([payload]).select().single();
+      }
+
+      if (result.error) return createResponse(false, null, "Lỗi lưu câu hỏi: " + result.error.message);
+      return createResponse(true, { question: result.data }, id ? "Đã cập nhật câu hỏi!" : "Đã thêm câu hỏi mới!");
+    }
+
+    // 6. Xóa Câu hỏi
+    if (action === "delete_question") {
+      if (!await verifyTeacherSession(body.teacher_username, body.teacher_session_token)) {
+        return createResponse(false, null, "Phiên giáo viên không hợp lệ hoặc đã hết hạn. Hãy đăng nhập lại.");
+      }
+
+      const { error } = await supabase.from('questions').delete().eq('id', body.question_id);
+      if (error) return createResponse(false, null, "Lỗi xóa câu hỏi: " + error.message);
+      return createResponse(true, null, "Đã xóa câu hỏi!");
+    }
+
+    // 7. Lấy đề thi cho Học sinh làm bài (Ẩn tuyệt đối cột solution)
+    if (action === "get_student_quiz_questions") {
+      const { quiz_id, student_id: studentId } = body;
+      if (!quiz_id || !studentId) return createResponse(false, null, "Thiếu mã bài thi hoặc học sinh!");
+
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('id, school, grade')
+        .eq('id', studentId)
+        .maybeSingle();
+      if (studentError) return createResponse(false, null, "Lỗi xác minh học sinh: " + studentError.message);
+      if (!student) return createResponse(false, null, "Không tìm thấy tài khoản học sinh.");
+
+      const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('id, title, description, time_limit_minutes, reward_coins, is_published, school, grade')
+        .eq('id', quiz_id)
+        .single();
+
+      if (quizError || !quiz || !quiz.is_published) {
+        return createResponse(false, null, "Bài thi không tồn tại hoặc đang đóng!");
+      }
+
+      const quizSchool = typeof quiz.school === 'string' ? quiz.school.trim() : '';
+      const quizGrade = String(quiz.grade || '').trim().toUpperCase();
+      const studentGrade = String(student.grade || '7').trim().toUpperCase();
+      if ((quizSchool && quizSchool !== student.school)
+        || (quizGrade && quizGrade !== 'ALL' && studentGrade && quizGrade !== studentGrade)) {
+        return createResponse(false, null, "Bài thi này không dành cho trường hoặc khối lớp của bạn.");
+      }
+      if (student.school) {
+        const { data: school, error: schoolError } = await supabase
+          .from('schools')
+          .select('is_exam_locked')
+          .eq('name', student.school)
+          .maybeSingle();
+        if (schoolError) return createResponse(false, null, "Lỗi kiểm tra trạng thái phòng thi: " + schoolError.message);
+        if (school?.is_exam_locked) return createResponse(false, null, "Bài thi hiện đang khóa.");
+      }
+
+      const { data: questions, error: qError } = await supabase
+        .from('questions')
+        .select('id, quiz_id, type, prompt, data, order_index, points')
+        .eq('quiz_id', quiz_id)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (qError) return createResponse(false, null, "Lỗi tải đề thi: " + qError.message);
+      return createResponse(true, { quiz, questions: questions || [] });
+    }
+
+    // 8. Chấm điểm bài thi cho Học sinh (Server-side Grading)
+    if (action === "submit_quiz_answers") {
+      const { quiz_id, student_id, answers } = body;
+      if (!quiz_id || !student_id || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
+        return createResponse(false, null, "Dữ liệu nộp bài không hợp lệ!");
+      }
+
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('id, school, grade')
+        .eq('id', student_id)
+        .maybeSingle();
+      if (studentError) return createResponse(false, null, "Lỗi xác minh học sinh: " + studentError.message);
+      if (!student) return createResponse(false, null, "Không tìm thấy tài khoản học sinh.");
+
+      const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('id, reward_coins, is_published, school, grade')
+        .eq('id', quiz_id)
+        .maybeSingle();
+
+      if (quizError) return createResponse(false, null, "Lỗi kiểm tra bài thi: " + quizError.message);
+      if (!quiz || !quiz.is_published) {
+        return createResponse(false, null, "Bài thi đã đóng, không thể nộp bài!");
+      }
+      const quizSchool = typeof quiz.school === 'string' ? quiz.school.trim() : '';
+      const quizGrade = String(quiz.grade || '').trim().toUpperCase();
+      const studentGrade = String(student.grade || '7').trim().toUpperCase();
+      if ((quizSchool && quizSchool !== student.school)
+        || (quizGrade && quizGrade !== 'ALL' && studentGrade && quizGrade !== studentGrade)) {
+        return createResponse(false, null, "Bài thi này không dành cho trường hoặc khối lớp của bạn.");
+      }
+      if (student.school) {
+        const { data: school, error: schoolError } = await supabase
+          .from('schools')
+          .select('is_exam_locked')
+          .eq('name', student.school)
+          .maybeSingle();
+        if (schoolError) return createResponse(false, null, "Lỗi kiểm tra trạng thái phòng thi: " + schoolError.message);
+        if (school?.is_exam_locked) return createResponse(false, null, "Bài thi hiện đang khóa.");
+      }
+
+      const { data: questions, error: qError } = await supabase
+        .from('questions')
+        .select('id, type, points, solution, explanation')
+        .eq('quiz_id', quiz_id);
+
+      if (qError) return createResponse(false, null, "Lỗi tải câu hỏi để chấm điểm: " + qError.message);
+      if (!questions || questions.length === 0) {
+        return createResponse(false, null, "Không tìm thấy câu hỏi để chấm điểm!");
+      }
+
+      let earnedPoints = 0;
+      let totalPoints = 0;
+      const details = [];
+
+      for (const q of questions) {
+        const pts = Number(q.points) || 1;
+        totalPoints += pts;
+        const studentAns = answers[q.id];
+        const isCorrect = checkQuestionAnswer(q.type, studentAns, q.solution);
+        if (isCorrect) earnedPoints += pts;
+
+        details.push({
+          question_id: q.id,
+          is_correct: isCorrect,
+          explanation: q.explanation || ""
+        });
+      }
+
+      const finalScore = totalPoints > 0 ? Number(((earnedPoints / totalPoints) * 10).toFixed(1)) : 0;
+      const maxReward = Number(quiz.reward_coins) || 0;
+      const earnedCoins = Math.round((finalScore / 10) * maxReward);
+      let itemData = null;
+      if (earnedCoins > 0) {
+        const { data, error: itemError } = await supabase
+          .from('items')
+          .select('coins, total_coins')
+          .eq('student_id', student_id)
+          .maybeSingle();
+        if (itemError) return createResponse(false, null, "Lỗi tải số dư xu: " + itemError.message);
+        if (!data) return createResponse(false, null, "Không tìm thấy tài khoản xu của học sinh.");
+        itemData = data;
+      }
+
+      const { error: submissionError } = await supabase.from('quiz_submissions').insert([{
+        quiz_id,
+        student_id,
+        answers,
+        score: finalScore,
+        earned_coins: earnedCoins
+      }]);
+      if (submissionError) return createResponse(false, null, "Lỗi lưu bài nộp: " + submissionError.message);
+
+      if (itemData) {
+        const { error: rewardError } = await supabase.from('items').update({
+          coins: (Number(itemData.coins) || 0) + earnedCoins,
+          total_coins: (Number(itemData.total_coins) || 0) + earnedCoins
+        }).eq('student_id', student_id);
+        if (rewardError) return createResponse(false, null, "Lỗi cộng xu thưởng: " + rewardError.message);
+      }
+
+      return createResponse(true, {
+        score: finalScore,
+        earned_coins: earnedCoins,
+        details
+      }, `Nộp bài thành công! Bạn đạt ${finalScore}/10 điểm.`);
     }
 
     return createResponse(false, null, "Hành động không hợp lệ.");

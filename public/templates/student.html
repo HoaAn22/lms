@@ -2324,21 +2324,7 @@
           <p class="section-desc">Hoàn thành bài thi đạt điểm cao sẽ được cộng Xu để quay Gacha!</p>
           
           <div class="quiz-grid mt-2" id="quiz-container-box">
-            <div class="quiz-card-item" id="quiz-item-main">
-              <div class="quiz-badge">Trắc nghiệm</div>
-              <h4>Bài Kiểm Tra Định Kỳ 1</h4>
-              <p>Thời gian: Không giới hạn | 5 câu hỏi</p>
-              <p class="reward-hint">Thưởng: Lên tới +50 🪙</p>
-              <button id="btn-do-quiz" onclick="goToQuiz(event)" class="btn btn-primary btn-block mt-2">Vào Làm Bài</button>
-            </div>
-
-            <div class="quiz-card-item disabled">
-              <div class="quiz-badge badge-locked">Sắp mở</div>
-              <h4>Bài Kiểm Tra Giữa Kỳ</h4>
-              <p>Thời gian: 45 phút | 40 câu hỏi</p>
-              <p class="reward-hint">Thưởng: +200 🪙</p>
-              <button class="btn btn-secondary btn-block mt-2" disabled>Chưa Mở</button>
-            </div>
+            <p class="sub-text">Đang tải danh sách bài kiểm tra...</p>
           </div>
         </div>
       </section>
@@ -3891,45 +3877,103 @@
       });
     });
 
-    async function checkStudentExamLockStatus() {
+    let studentExamLocked = false;
+    let studentQuizzes = [];
+
+    function renderStudentQuizzes() {
+      const container = document.getElementById("quiz-container-box");
+      if (!container) return;
+      container.replaceChildren();
+
+      if (studentQuizzes.length === 0) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "sub-text";
+        emptyMessage.textContent = "Hiện chưa có bài kiểm tra nào được phát hành cho bạn.";
+        container.appendChild(emptyMessage);
+        return;
+      }
+
+      studentQuizzes.forEach(quiz => {
+        const card = document.createElement("div");
+        card.className = `quiz-card-item${studentExamLocked || !quiz.question_count ? " disabled" : ""}`;
+
+        const badge = document.createElement("div");
+        badge.className = `quiz-badge${studentExamLocked ? " badge-locked" : ""}`;
+        badge.textContent = studentExamLocked ? "Đã khóa" : `Khối ${quiz.grade === "ALL" ? "mọi lớp" : quiz.grade || "mọi lớp"}`;
+        card.appendChild(badge);
+
+        const title = document.createElement("h4");
+        title.textContent = quiz.title;
+        card.appendChild(title);
+
+        const description = document.createElement("p");
+        description.textContent = quiz.description || `${quiz.question_count} câu hỏi`;
+        card.appendChild(description);
+
+        const details = document.createElement("p");
+        const timeText = Number(quiz.time_limit_minutes) > 0 ? `${quiz.time_limit_minutes} phút` : "Không giới hạn";
+        details.textContent = `Thời gian: ${timeText} | ${quiz.question_count} câu hỏi`;
+        card.appendChild(details);
+
+        const reward = document.createElement("p");
+        reward.className = "reward-hint";
+        reward.textContent = `Thưởng tối đa: ${Number(quiz.reward_coins) || 0} 🪙`;
+        card.appendChild(reward);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `btn ${studentExamLocked || !quiz.question_count ? "btn-secondary" : "btn-primary"} btn-block mt-2`;
+        button.textContent = studentExamLocked ? "Bài thi đang khóa" : quiz.question_count ? "Vào Làm Bài" : "Chưa có câu hỏi";
+        button.disabled = studentExamLocked || !quiz.question_count;
+        button.addEventListener("click", event => goToQuiz(event, quiz.id));
+        card.appendChild(button);
+        container.appendChild(card);
+      });
+    }
+
+    async function loadStudentQuizzes() {
+      const container = document.getElementById("quiz-container-box");
       try {
         const session = getSession();
-        if (!session || !session.school) return;
-
-        const res = await fetch("/.netlify/functions/auth", {
+        const response = await fetch("/.netlify/functions/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get_school_exam_status", school: session.school })
+          body: JSON.stringify({
+            action: "get_quizzes",
+            only_published: true,
+            student_id: session?.id,
+            student_school: session?.school || "",
+            student_grade: session?.grade || ""
+          })
         });
-        const result = await res.json();
-        if (result.success && result.data.is_exam_locked) {
-          const quizItem = document.getElementById("quiz-item-main");
-          if (quizItem) {
-            quizItem.innerHTML = `
-              <div class="quiz-badge badge-locked">Đã khóa</div>
-              <h4>Bài Kiểm Tra Định Kỳ 1</h4>
-              <p style="color: #ef4444; font-weight: bold; margin-top: 12px; font-size: 16px;">🔒 Bài thi đang khóa</p>
-            `;
-            quizItem.classList.add("disabled");
-          }
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || "Không thể tải danh sách bài kiểm tra.");
+
+        studentQuizzes = (result.data.quizzes || []).filter(quiz => {
+          const schoolMatches = !quiz.school || !session?.school || quiz.school === session.school;
+          const quizGrade = String(quiz.grade || "ALL").toUpperCase();
+          const studentGrade = String(session?.grade || "").toUpperCase();
+          const gradeMatches = quizGrade === "ALL" || !studentGrade || quizGrade === studentGrade;
+          return schoolMatches && gradeMatches;
+        });
+        renderStudentQuizzes();
+      } catch (error) {
+        if (container) {
+          container.replaceChildren();
+          const message = document.createElement("p");
+          message.className = "sub-text";
+          message.textContent = error.message || "Không thể tải danh sách bài kiểm tra.";
+          container.appendChild(message);
         }
-      } catch (err) {
-        console.error("Lỗi kiểm tra trạng thái bài thi");
       }
     }
 
-    /* HÀM MỚI: Bắt sự kiện click để kiểm tra trạng thái khóa thực tế ngay lúc ấn nút */
-    async function goToQuiz(e) {
-      e.preventDefault();
-      const btn = e.target;
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Đang kiểm tra phòng thi...";
-
+    async function checkStudentExamLockStatus() {
       try {
         const session = getSession();
         if (!session || !session.school) {
-          window.location.href = "/quiz";
+          studentExamLocked = false;
+          renderStudentQuizzes();
           return;
         }
 
@@ -3939,20 +3983,49 @@
           body: JSON.stringify({ action: "get_school_exam_status", school: session.school })
         });
         const result = await res.json();
-        
-        if (result.success && result.data.is_exam_locked) {
+        if (!res.ok || !result.success) throw new Error(result.message || "Không thể kiểm tra trạng thái phòng thi.");
+        studentExamLocked = Boolean(result.data.is_exam_locked);
+        renderStudentQuizzes();
+      } catch (err) {
+        console.error("Lỗi kiểm tra trạng thái bài thi:", err);
+      }
+    }
+
+    async function goToQuiz(e, quizId) {
+      e.preventDefault();
+      const btn = e.target;
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Đang kiểm tra phòng thi...";
+
+      try {
+        const session = getSession();
+        if (!session || !session.school) {
+          window.location.href = `/quiz?quiz_id=${encodeURIComponent(quizId)}`;
+          return;
+        }
+
+        const res = await fetch("/.netlify/functions/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_school_exam_status", school: session.school })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) throw new Error(result.message || "Không thể kiểm tra phòng thi.");
+        if (result.data.is_exam_locked) {
           alert("Bài thi đã bị khóa.");
-          checkStudentExamLockStatus(); // Cập nhật lại giao diện thành "Đã khóa" ngay lập tức
+          checkStudentExamLockStatus();
         } else {
-          window.location.href = "/quiz";
+          window.location.href = `/quiz?quiz_id=${encodeURIComponent(quizId)}`;
         }
       } catch (err) {
-        alert("Lỗi kết nối khi kiểm tra phòng thi!");
+        alert(err.message || "Lỗi kết nối khi kiểm tra phòng thi!");
         btn.disabled = false;
         btn.textContent = originalText;
       }
     }
 
+    loadStudentQuizzes();
     checkStudentExamLockStatus();
 
     /* ========================================== */
