@@ -989,7 +989,7 @@
 
             <div class="form-group" style="margin-bottom: 16px;">
               <label for="single-coin-delta" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Tăng / Giảm Xu (+ / -):</label>
-              <input type="number" id="single-coin-delta" required placeholder="VD: 50 (để cộng) hoặc -20 (để trừ)" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+              <input type="text" id="single-coin-delta" inputmode="numeric" pattern="^-?[0-9]*$" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
               <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương (+) để cộng thêm xu, số âm (-) để trừ bớt xu.</small>
             </div>
 
@@ -1123,7 +1123,7 @@
 
             <div class="form-group" style="margin-bottom: 16px;">
               <label for="batch-coin-delta" style="font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Nhập số xu (+ / -):</label>
-              <input type="number" id="batch-coin-delta" required placeholder="VD: 50 (để cộng) hoặc -20 (để trừ)" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+              <input type="text" id="batch-coin-delta" inputmode="numeric" pattern="^-?[0-9]*$" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
               <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">Nhập số dương để cộng thêm, số âm để trừ bớt xu.</small>
             </div>
 
