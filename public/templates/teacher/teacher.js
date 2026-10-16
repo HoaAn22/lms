@@ -113,7 +113,7 @@ if (overlay) {
 const user = checkAuth("teacher");
 if (user) document.getElementById("teacher-name").textContent = user.fullName || user.username;
 
-if (window.innerWidth <= 768) document.getElementById('admin-sidebar').classList.add('collapsed');
+if (window.innerWidth <= 800) document.getElementById('admin-sidebar').classList.add('collapsed');
 
 function toggleSidebar() {
     const sidebar = document.getElementById('admin-sidebar');
@@ -654,7 +654,7 @@ function switchTab(tabId) {
     sessionStorage.setItem("teacher_active_tab", tabId);
     hideQuickPageScroll();
 
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 800) {
     const sidebarObj = document.getElementById('admin-sidebar');
     if (sidebarObj) sidebarObj.classList.remove('show-menu');
     const overlayObj = document.getElementById('mobile-nav-overlay');
@@ -1907,7 +1907,7 @@ function saveCurrentFilterState() {
     students: cachedStudentsList
     };
 
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 800) {
     filterState.checkedColsMobile = checkedCols;
     } else {
     filterState.checkedCols = checkedCols;
@@ -1919,9 +1919,11 @@ function saveCurrentFilterState() {
 function restoreFilterAndStudents() {
     const saved = getSavedFilters() || {};
     const togglers = document.querySelectorAll('.col-toggler');
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 800;
+    
+    // CẬP NHẬT: Thêm '7' (cột Xu) vào danh sách mặc định trên mobile
     const selectedCols = isMobile
-    ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '8'])
+    ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '7', '8'])
     : (Array.isArray(saved.checkedCols) ? saved.checkedCols : []);
 
     togglers.forEach(chk => {
@@ -1941,16 +1943,18 @@ function restoreFilterAndStudents() {
     }
 }
 
-let isMobileColumnLayout = window.innerWidth <= 768;
+let isMobileColumnLayout = window.innerWidth <= 800;
 window.addEventListener("resize", () => {
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 800;
     if (isMobile === isMobileColumnLayout) return;
     isMobileColumnLayout = isMobile;
 
     const saved = getSavedFilters() || {};
     const togglers = document.querySelectorAll('.col-toggler');
+    
+    // CẬP NHẬT: Thêm '7' (cột Xu) vào danh sách mặc định khi co về mobile
     const selectedCols = isMobile
-    ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '8'])
+    ? (Array.isArray(saved.checkedColsMobile) ? saved.checkedColsMobile : ['0', '1', '2', '7', '8'])
     : (Array.isArray(saved.checkedCols) ? saved.checkedCols : []);
 
     togglers.forEach(chk => {
