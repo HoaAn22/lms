@@ -1240,8 +1240,8 @@ tr.row-student-bad:hover td {
 }
 
 @media (max-width: 800px) {
-    input[type="checkbox"] {
-    right: 60px;
+    .dropdown-item input[type="checkbox"] {
+    right: 30px;
     }
     .dashboard-layout .topbar {
     min-height: 68px;
